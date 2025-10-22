@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
 import { Suspense } from 'react';
-import { allRoutes, RouteConfig } from '../config/routes';
+import { RouteConfig } from '../types/routing';
+import { RouteGuard, AdminRouteGuard, UserRouteGuard } from '../components/RouteGuard';
 
 interface RouteGeneratorProps {
   routes: RouteConfig[];
@@ -39,45 +40,69 @@ export function RouteGenerator({ routes, fallback }: RouteGeneratorProps) {
   const renderRoute = (route: RouteConfig): React.ReactNode => {
     const Component = route.component;
     
+    if (!Component) {
+      return null;
+    }
+
+    // Determine the appropriate route guard based on route requirements
+    const getRouteGuard = (route: RouteConfig) => {
+      if (route.isPublic) {
+        return null; // No guard needed for public routes
+      }
+      
+      if (route.requiredRole === 'admin') {
+        return AdminRouteGuard;
+      }
+      
+      if (route.requiredRole === 'user' || route.requiresAuth) {
+        return UserRouteGuard;
+      }
+      
+      return RouteGuard; // Default guard
+    };
+
+    const GuardComponent = getRouteGuard(route);
+
     return (
       <Route
         key={route.path}
         path={route.path}
         element={
-          <Suspense fallback={fallback || defaultFallback}>
-            <Component />
-          </Suspense>
+          GuardComponent ? (
+            <GuardComponent>
+              <Suspense fallback={fallback || defaultFallback}>
+                <Component />
+              </Suspense>
+            </GuardComponent>
+          ) : (
+            <Suspense fallback={fallback || defaultFallback}>
+              <Component />
+            </Suspense>
+          )
         }
       />
     );
   };
 
   return (
-    <>
+    <Routes>
       {routes.map(renderRoute)}
-    </>
+    </Routes>
   );
 }
 
 // Generate routes by role
-export function generateRoutesByRole(role: 'user' | 'admin' | 'public') {
-  const routes = allRoutes.filter(route => {
+export function generateRoutesByRole(role: 'user' | 'admin' | 'public', routes: RouteConfig[]) {
+  return routes.filter(route => {
     if (role === 'public') {
       return route.isPublic;
     }
     if (role === 'user') {
-      return route.requiredRole === 'user' || route.requiredRole === undefined;
+      return route.requiredRole === 'user' || route.isPublic;
     }
     if (role === 'admin') {
-      return route.requiredRole === 'admin' || route.requiredRole === undefined;
+      return route.requiredRole === 'admin' || route.isPublic;
     }
     return false;
   });
-
-  return routes;
-}
-
-// Generate all routes
-export function generateAllRoutes() {
-  return allRoutes;
 }

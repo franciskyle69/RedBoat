@@ -1,15 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
-export interface RouteConfig {
-  path: string;
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-  handler: (req: Request, res: Response, next?: NextFunction) => void | Promise<void>;
-  middleware?: Array<(req: Request, res: Response, next: NextFunction) => void>;
-  requiresAuth?: boolean;
-  requiredRole?: 'user' | 'admin';
-  description?: string;
-  tags?: string[];
-}
+// Import centralized types
+import { RouteConfig } from '../types/routing';
 
 // API Route configurations
 export const apiRoutes: RouteConfig[] = [

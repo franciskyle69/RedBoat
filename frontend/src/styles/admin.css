@@ -1275,3 +1275,431 @@
     gap: 0.25rem;
   }
 }
+
+/* Reports specific styles */
+.reports-content {
+  padding: 2rem;
+}
+
+.reports-controls {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.date-range-selector {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.date-range-selector label {
+  font-weight: 500;
+  color: #495057;
+}
+
+.date-range-selector input {
+  padding: 0.5rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.reports-section {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 2rem;
+  min-height: 600px;
+}
+
+.report-types {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  height: fit-content;
+}
+
+.report-types h3 {
+  margin: 0 0 1rem 0;
+  color: #495057;
+  font-size: 1.1rem;
+}
+
+.report-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.report-buttons .admin-button {
+  width: 100%;
+  text-align: left;
+  justify-content: flex-start;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.report-buttons .admin-button:hover {
+  background: #e9ecef;
+  transform: translateX(4px);
+}
+
+.report-buttons .admin-button.active {
+  background: #007bff;
+  color: white;
+}
+
+.report-buttons .admin-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.report-display {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  overflow: hidden;
+}
+
+.report-content {
+  padding: 2rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.report-summary {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+}
+
+.report-summary h3 {
+  margin: 0 0 1rem 0;
+  color: #495057;
+  font-size: 1.2rem;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.summary-label {
+  font-size: 0.9rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.summary-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #495057;
+}
+
+.report-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+}
+
+.report-section h4 {
+  margin: 0 0 1rem 0;
+  color: #495057;
+  font-size: 1.1rem;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 0.5rem;
+}
+
+/* Room type stats */
+.room-type-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.room-type-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #007bff;
+}
+
+.room-type-name {
+  font-weight: 600;
+  color: #495057;
+}
+
+.room-type-bookings {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.room-type-revenue {
+  font-weight: 600;
+  color: #28a745;
+}
+
+/* Daily occupancy */
+.daily-occupancy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.daily-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.daily-date {
+  font-weight: 500;
+  color: #495057;
+}
+
+.daily-occupied {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.daily-rate {
+  font-weight: 600;
+  color: #007bff;
+}
+
+/* Revenue by type */
+.revenue-by-type {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.revenue-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #28a745;
+}
+
+.revenue-type {
+  font-weight: 600;
+  color: #495057;
+}
+
+.revenue-amount {
+  font-weight: 700;
+  color: #28a745;
+  font-size: 1.1rem;
+}
+
+.revenue-bookings {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Payment status */
+.payment-status {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.payment-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.payment-label {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
+.payment-count {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #495057;
+}
+
+/* Top customers */
+.top-customers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.customer-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #ffc107;
+}
+
+.customer-name {
+  font-weight: 600;
+  color: #495057;
+}
+
+.customer-email {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.customer-spent {
+  font-weight: 700;
+  color: #28a745;
+}
+
+.customer-bookings {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Status breakdown */
+.status-breakdown {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.status-name {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+  text-transform: capitalize;
+}
+
+.status-count {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #495057;
+}
+
+/* Room popularity */
+.room-popularity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.popularity-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #17a2b8;
+}
+
+.popularity-type {
+  font-weight: 600;
+  color: #495057;
+}
+
+.popularity-count {
+  font-weight: 600;
+  color: #17a2b8;
+}
+
+/* Booking sources */
+.booking-sources {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.source-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.source-name {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
+.source-count {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #495057;
+}
+
+/* Responsive adjustments for reports */
+@media (max-width: 768px) {
+  .reports-section {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .room-type-item,
+  .revenue-item,
+  .customer-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .daily-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .date-range-selector {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

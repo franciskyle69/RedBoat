@@ -28,18 +28,8 @@ const Housekeeping = lazy(() => import('../pages/Admin/Housekeeping'));
 const Reports = lazy(() => import('../pages/Admin/Reports'));
 const AdminSettings = lazy(() => import('../pages/Admin/Settings'));
 
-export interface RouteConfig {
-  path: string;
-  component: React.ComponentType;
-  title: string;
-  description?: string;
-  icon?: string;
-  requiresAuth?: boolean;
-  requiredRole?: 'user' | 'admin';
-  isPublic?: boolean;
-  isHidden?: boolean;
-  children?: RouteConfig[];
-}
+// Import centralized types
+import { RouteConfig } from '../types/routing';
 
 // Public routes (no authentication required)
 export const publicRoutes: RouteConfig[] = [

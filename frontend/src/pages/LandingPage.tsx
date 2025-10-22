@@ -48,7 +48,7 @@ function LandingPage() {
         <div className="hero-content">
           <div className="hero-text">
             <h1 className="hero-title">
-              Welcome to <span className="brand-name">WebProj</span>
+              Welcome to <span className="brand-name">Red Boat</span>
             </h1>
             <p className="hero-subtitle">
               The ultimate hotel management system designed to streamline your operations 

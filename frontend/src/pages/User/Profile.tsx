@@ -374,7 +374,7 @@ function Profile() {
                 </div>
                 <div className="info-item">
                   <label>Date of Birth:</label>
-                  <span>{formatDate(profile.dateOfBirth)}</span>
+                  <span>{profile.dateOfBirth ? formatDate(profile.dateOfBirth) : "Not provided"}</span>
                 </div>
                 <div className="info-item">
                   <label>Address:</label>
@@ -466,7 +466,7 @@ function Profile() {
                 <li>Include numbers and special characters</li>
                 <li>Don't reuse passwords from other accounts</li>
               </ul>
-            </div>
+        </div>
           )}
         </div>
       </div>

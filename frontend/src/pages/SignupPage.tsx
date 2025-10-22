@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import BackButton from "../components/BackButton";
 import FormInput from "../components/FormInput";
 import GoogleOAuthButton from "../components/GoogleOAuthButton";
+import ReCaptcha, { useReCaptcha } from "../components/ReCaptcha";
+import { getSiteKey } from "../config/recaptcha";
 
 function SignupPage() {
   const [email, setEmail] = useState("");
@@ -21,9 +23,19 @@ function SignupPage() {
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  
+  // reCAPTCHA hook
+  const { token, isVerified, handleVerify, handleExpire, handleError, reset } = useReCaptcha();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check reCAPTCHA verification
+    if (!isVerified) {
+      alert("Please complete the reCAPTCHA verification");
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -41,6 +53,7 @@ function SignupPage() {
           phoneNumber: phoneNumber || undefined,
           dateOfBirth: dateOfBirth || undefined,
           address: Object.values(address).some(val => val) ? address : undefined,
+          recaptchaToken: token,
         }),
       });
 
@@ -56,13 +69,16 @@ function SignupPage() {
         setPhoneNumber("");
         setDateOfBirth("");
         setAddress({ street: "", city: "", state: "", zipCode: "", country: "" });
+        reset(); // Reset reCAPTCHA
         navigate("/verify-code", { replace: true, state: { email } });
       } else {
         alert(data.message || "Signup failed");
+        reset(); // Reset reCAPTCHA on failure
       }
     } catch (err) {
       console.error(err);
       alert("Server error. Please try again.");
+      reset(); // Reset reCAPTCHA on error
     } finally {
       setLoading(false);
     }
@@ -163,10 +179,22 @@ function SignupPage() {
           </div>
         </div>
         
+        {/* reCAPTCHA */}
+        <div style={{ margin: "20px 0", display: "flex", justifyContent: "center" }}>
+          <ReCaptcha
+            siteKey={getSiteKey()}
+            onVerify={handleVerify}
+            onExpire={handleExpire}
+            onError={handleError}
+            theme="light"
+            size="normal"
+          />
+        </div>
+        
         <button
           type="submit"
           style={{ width: "100%", padding: "12px", marginTop: "20px", fontSize: "16px" }}
-          disabled={loading}
+          disabled={loading || !isVerified}
         >
           {loading ? "Signing up..." : "Sign Up"}
         </button>

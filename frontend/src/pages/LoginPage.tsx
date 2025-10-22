@@ -4,15 +4,27 @@ import "../styles/main.css";
 
 import FormInput from "../components/FormInput";
 import GoogleOAuthButton from "../components/GoogleOAuthButton";
+import ReCaptcha, { useReCaptcha } from "../components/ReCaptcha";
+import { getSiteKey } from "../config/recaptcha";
 
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  
+  // reCAPTCHA hook
+  const { token, isVerified, handleVerify, handleExpire, handleError, reset } = useReCaptcha();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check reCAPTCHA verification
+    if (!isVerified) {
+      alert("Please complete the reCAPTCHA verification");
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -22,7 +34,11 @@ function LoginPage() {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ 
+          email, 
+          password,
+          recaptchaToken: token 
+        }),
       });
 
       const data = await res.json();
@@ -31,14 +47,17 @@ function LoginPage() {
         // TODO: Save user info or token if using JWT
         setEmail("");
         setPassword("");
+        reset(); // Reset reCAPTCHA
         const role = data?.data?.role;
         navigate(role === "admin" ? "/admin" : "/dashboard", { replace: true, state: { user: data.data } });
       } else {
         alert(data.message || "Login failed");
+        reset(); // Reset reCAPTCHA on failure
       }
     } catch (err) {
       console.error(err);
       alert("Server error. Please try again.");
+      reset(); // Reset reCAPTCHA on error
     } finally {
       setLoading(false);
     }
@@ -87,10 +106,22 @@ function LoginPage() {
             />
           </div>
 
+          {/* reCAPTCHA */}
+          <div className="form-group">
+            <ReCaptcha
+              siteKey={getSiteKey()}
+              onVerify={handleVerify}
+              onExpire={handleExpire}
+              onError={handleError}
+              theme="light"
+              size="normal"
+            />
+          </div>
+
           {/* Sign In Button */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !isVerified}
             className="btn-primary"
           >
             {loading ? "Signing in..." : "Sign in"}

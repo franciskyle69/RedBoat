@@ -8,6 +8,7 @@ interface NavigationContextType {
   setUserRole: (role: 'user' | 'admin' | null) => void;
   getRouteByPath: (path: string) => RouteConfig | undefined;
   isRouteAccessible: (path: string) => boolean;
+  clearAuthState: () => void;
 }
 
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
@@ -35,11 +36,13 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
           setUserRole(role);
           setNavigationRoutes(getNavigationRoutes(role));
         } else {
+          // Clear authentication state
           setUserRole(null);
           setNavigationRoutes([]);
         }
       } catch (error) {
         console.error('Failed to check auth status:', error);
+        // Clear authentication state on error
         setUserRole(null);
         setNavigationRoutes([]);
       }
@@ -47,6 +50,12 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
 
     checkAuth();
   }, []);
+
+  // Add method to clear authentication state
+  const clearAuthState = () => {
+    setUserRole(null);
+    setNavigationRoutes([]);
+  };
 
   const isRouteAccessible = (path: string): boolean => {
     if (!userRole) return false;
@@ -72,6 +81,7 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
     setUserRole,
     getRouteByPath,
     isRouteAccessible,
+    clearAuthState,
   };
 
   return (

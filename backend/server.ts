@@ -474,6 +474,88 @@ app.get("/me", requireAuth, async (req, res) => {
   return res.json({ data: { username: user.username, email: user.email, role: user.role } });
 });
 
+// Get user profile (detailed information)
+app.get("/profile", requireAuth, async (req, res) => {
+  try {
+    const payload = (req as any).user as { sub: string; email: string };
+    const user = await UserModel.findById(payload.sub).select("-password -googleCalendarTokens");
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    return res.json({ data: user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Update user profile
+app.put("/profile", requireAuth, async (req, res) => {
+  try {
+    const payload = (req as any).user as { sub: string; email: string };
+    const { 
+      firstName, 
+      lastName, 
+      phoneNumber, 
+      dateOfBirth, 
+      address 
+    } = req.body;
+
+    const user = await UserModel.findById(payload.sub);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Update fields if provided
+    if (firstName !== undefined) user.firstName = firstName;
+    if (lastName !== undefined) user.lastName = lastName;
+    if (phoneNumber !== undefined) user.phoneNumber = phoneNumber;
+    if (dateOfBirth !== undefined) user.dateOfBirth = new Date(dateOfBirth);
+    if (address !== undefined) user.address = address;
+    
+    user.updatedAt = new Date();
+    await user.save();
+
+    // Return updated user without sensitive data
+    const updatedUser = await UserModel.findById(payload.sub).select("-password -googleCalendarTokens");
+    return res.json({ 
+      message: "Profile updated successfully", 
+      data: updatedUser 
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Change password
+app.put("/profile/password", requireAuth, async (req, res) => {
+  try {
+    const payload = (req as any).user as { sub: string; email: string };
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Current password and new password are required" });
+    }
+
+    const user = await UserModel.findById(payload.sub);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    // Update password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    user.updatedAt = new Date();
+    await user.save();
+
+    return res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // Promote user to admin (for development/testing)
 app.post("/promote-to-admin", async (req, res) => {
   try {
@@ -1189,6 +1271,211 @@ app.post("/google-calendar/sync-booking/:bookingId", requireAuth, async (req, re
       eventId: response.data.id,
       event: response.data
     });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Create a new room (admin only)
+app.post("/rooms", requireAuth, async (req, res) => {
+  try {
+    const payload = (req as any).user as { sub: string; email: string; role?: string };
+    
+    if (payload.role !== "admin") {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    const { 
+      roomNumber, 
+      roomType, 
+      price, 
+      capacity, 
+      amenities, 
+      description, 
+      images 
+    } = req.body;
+
+    // Validate required fields
+    if (!roomNumber || !roomType || !price || !capacity) {
+      return res.status(400).json({ 
+        message: "Room number, type, price, and capacity are required" 
+      });
+    }
+
+    // Validate room type
+    const validRoomTypes = ["Standard", "Deluxe", "Suite", "Presidential"];
+    if (!validRoomTypes.includes(roomType)) {
+      return res.status(400).json({ 
+        message: "Invalid room type. Must be one of: " + validRoomTypes.join(", ") 
+      });
+    }
+
+    // Check if room number already exists
+    const existingRoom = await RoomModel.findOne({ roomNumber });
+    if (existingRoom) {
+      return res.status(400).json({ message: "Room number already exists" });
+    }
+
+    // Validate price and capacity
+    if (price <= 0) {
+      return res.status(400).json({ message: "Price must be greater than 0" });
+    }
+
+    if (capacity <= 0) {
+      return res.status(400).json({ message: "Capacity must be greater than 0" });
+    }
+
+    // Create new room
+    const newRoom = new RoomModel({
+      roomNumber,
+      roomType,
+      price,
+      capacity,
+      amenities: amenities || [],
+      description: description || "",
+      images: images || [],
+      isAvailable: true
+    });
+
+    const savedRoom = await newRoom.save();
+
+    res.status(201).json({ 
+      message: "Room created successfully", 
+      data: savedRoom 
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Update a room (admin only)
+app.put("/rooms/:id", requireAuth, async (req, res) => {
+  try {
+    const payload = (req as any).user as { sub: string; email: string; role?: string };
+    
+    if (payload.role !== "admin") {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    const roomId = req.params.id;
+    const { 
+      roomNumber, 
+      roomType, 
+      price, 
+      capacity, 
+      amenities, 
+      description, 
+      images,
+      isAvailable 
+    } = req.body;
+
+    const room = await RoomModel.findById(roomId);
+    if (!room) {
+      return res.status(404).json({ message: "Room not found" });
+    }
+
+    // Validate room type if provided
+    if (roomType) {
+      const validRoomTypes = ["Standard", "Deluxe", "Suite", "Presidential"];
+      if (!validRoomTypes.includes(roomType)) {
+        return res.status(400).json({ 
+          message: "Invalid room type. Must be one of: " + validRoomTypes.join(", ") 
+        });
+      }
+    }
+
+    // Check if room number already exists (if changing room number)
+    if (roomNumber && roomNumber !== room.roomNumber) {
+      const existingRoom = await RoomModel.findOne({ roomNumber });
+      if (existingRoom) {
+        return res.status(400).json({ message: "Room number already exists" });
+      }
+    }
+
+    // Update room fields
+    if (roomNumber) room.roomNumber = roomNumber;
+    if (roomType) room.roomType = roomType;
+    if (price !== undefined) {
+      if (price <= 0) {
+        return res.status(400).json({ message: "Price must be greater than 0" });
+      }
+      room.price = price;
+    }
+    if (capacity !== undefined) {
+      if (capacity <= 0) {
+        return res.status(400).json({ message: "Capacity must be greater than 0" });
+      }
+      room.capacity = capacity;
+    }
+    if (amenities !== undefined) room.amenities = amenities;
+    if (description !== undefined) room.description = description;
+    if (images !== undefined) room.images = images;
+    if (isAvailable !== undefined) room.isAvailable = isAvailable;
+    
+    room.updatedAt = new Date();
+
+    const updatedRoom = await room.save();
+
+    res.json({ 
+      message: "Room updated successfully", 
+      data: updatedRoom 
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Delete a room (admin only)
+app.delete("/rooms/:id", requireAuth, async (req, res) => {
+  try {
+    const payload = (req as any).user as { sub: string; email: string; role?: string };
+    
+    if (payload.role !== "admin") {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    const roomId = req.params.id;
+    const room = await RoomModel.findById(roomId);
+    
+    if (!room) {
+      return res.status(404).json({ message: "Room not found" });
+    }
+
+    // Check if room has any bookings
+    const existingBookings = await BookingModel.find({ 
+      room: roomId,
+      status: { $in: ["confirmed", "checked-in"] }
+    });
+
+    if (existingBookings.length > 0) {
+      return res.status(400).json({ 
+        message: "Cannot delete room with active bookings. Please cancel bookings first." 
+      });
+    }
+
+    await RoomModel.findByIdAndDelete(roomId);
+
+    res.json({ message: "Room deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get all rooms (admin only - includes unavailable rooms)
+app.get("/admin/rooms", requireAuth, async (req, res) => {
+  try {
+    const payload = (req as any).user as { sub: string; email: string; role?: string };
+    
+    if (payload.role !== "admin") {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    const rooms = await RoomModel.find({}).sort({ roomNumber: 1 });
+    res.json({ data: rooms });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

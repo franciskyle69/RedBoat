@@ -845,6 +845,406 @@
   cursor: not-allowed;
 }
 
+/* Room Management Styles */
+.admin-content {
+  padding: 20px;
+}
+
+.admin-section {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.admin-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.admin-section-header h3 {
+  margin: 0;
+  color: #1a202c;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.admin-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.admin-button.primary {
+  background: #e53e3e;
+  color: white;
+}
+
+.admin-button.primary:hover {
+  background: #c53030;
+}
+
+.admin-button.secondary {
+  background: #6b7280;
+  color: white;
+}
+
+.admin-button.secondary:hover {
+  background: #4b5563;
+}
+
+.admin-button.small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.admin-button.warning {
+  background: #f59e0b;
+  color: white;
+}
+
+.admin-button.warning:hover {
+  background: #d97706;
+}
+
+.admin-button.success {
+  background: #10b981;
+  color: white;
+}
+
+.admin-button.success:hover {
+  background: #059669;
+}
+
+.admin-button.danger {
+  background: #ef4444;
+  color: white;
+}
+
+.admin-button.danger:hover {
+  background: #dc2626;
+}
+
+/* Form Styles */
+.admin-form-container {
+  padding: 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.admin-form-container h4 {
+  margin: 0 0 20px 0;
+  color: #1a202c;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 6px;
+  color: #374151;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #e53e3e;
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Amenities and Images */
+.amenities-container,
+.images-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.amenities-list,
+.images-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #f9fafb;
+}
+
+.amenity-tag,
+.image-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: #e53e3e;
+  color: white;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.remove-amenity,
+.remove-image {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.remove-amenity:hover,
+.remove-image:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.add-amenity,
+.add-image {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.add-amenity input,
+.add-image input {
+  flex: 1;
+  margin: 0;
+}
+
+.add-amenity button,
+.add-image button {
+  padding: 8px 12px;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-amenity button:hover,
+.add-image button:hover {
+  background: #059669;
+}
+
+/* Room Cards */
+.rooms-list {
+  padding: 20px;
+}
+
+.no-rooms {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+  font-size: 16px;
+}
+
+.rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.room-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s;
+}
+
+.room-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.room-card.unavailable {
+  opacity: 0.7;
+  background: #f8f9fa;
+}
+
+.room-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.room-header h4 {
+  margin: 0;
+  color: #1a202c;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.room-status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.room-status.available {
+  background: #d4edda;
+  color: #155724;
+}
+
+.room-status.unavailable {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.room-details {
+  margin-bottom: 16px;
+}
+
+.room-details p {
+  margin: 8px 0;
+  color: #374151;
+  font-size: 14px;
+}
+
+.room-amenities {
+  margin-top: 12px;
+}
+
+.room-amenities strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #374151;
+  font-size: 14px;
+}
+
+.amenities-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.room-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Message Styles */
+.message {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin: 16px 20px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.message.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.message.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* Responsive Design for Room Management */
+@media (max-width: 768px) {
+  .admin-content {
+    padding: 12px;
+  }
+  
+  .admin-section-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .rooms-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .room-actions {
+    flex-direction: column;
+  }
+  
+  .add-amenity,
+  .add-image {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 /* Responsive Design for Admin Calendar */
 @media (max-width: 768px) {
   .admin-calendar-content {

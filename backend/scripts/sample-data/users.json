@@ -1,0 +1,28 @@
+[
+  {
+    "username": "admin",
+    "email": "admin@webproj.com",
+    "password": "$2b$10$rQZ8K9mNpL3vXyWzA1B2CeD4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S9T0",
+    "role": "admin",
+    "firstName": "Admin",
+    "lastName": "User",
+    "phone": "+1234567890",
+    "isEmailVerified": true,
+    "profilePicture": null,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  },
+  {
+    "username": "john_doe",
+    "email": "john@example.com",
+    "password": "$2b$10$rQZ8K9mNpL3vXyWzA1B2CeD4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S9T0",
+    "role": "user",
+    "firstName": "John",
+    "lastName": "Doe",
+    "phone": "+1234567891",
+    "isEmailVerified": true,
+    "profilePicture": null,
+    "createdAt": "2024-01-02T00:00:00.000Z",
+    "updatedAt": "2024-01-02T00:00:00.000Z"
+  }
+]

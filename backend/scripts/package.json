@@ -1,0 +1,13 @@
+{
+  "name": "webproj-import-scripts",
+  "version": "1.0.0",
+  "description": "MongoDB import scripts for WebProj Hotel Management System",
+  "scripts": {
+    "import": "node import-data.js",
+    "clear": "node clear-data.js"
+  },
+  "dependencies": {
+    "mongoose": "^7.0.0",
+    "dotenv": "^16.0.0"
+  }
+}

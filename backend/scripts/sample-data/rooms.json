@@ -1,0 +1,26 @@
+[
+  {
+    "roomNumber": "101",
+    "roomType": "Standard",
+    "price": 150,
+    "capacity": 2,
+    "amenities": ["WiFi", "TV", "Air Conditioning", "Mini Bar"],
+    "status": "available",
+    "description": "Comfortable standard room with modern amenities",
+    "images": [],
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  },
+  {
+    "roomNumber": "102",
+    "roomType": "Deluxe",
+    "price": 250,
+    "capacity": 3,
+    "amenities": ["WiFi", "TV", "Air Conditioning", "Mini Bar", "Balcony", "Room Service"],
+    "status": "available",
+    "description": "Spacious deluxe room with balcony and premium amenities",
+    "images": [],
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+]

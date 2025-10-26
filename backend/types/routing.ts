@@ -1,5 +1,15 @@
-// Backend routing types (re-export from frontend for consistency)
-export * from '../../frontend/src/types/routing';
+// Backend routing types
+export interface RouteConfig {
+  path: string;
+  method: string;
+  handler: (req: any, res: any) => Promise<void>;
+  title?: string;
+  description?: string;
+  tags?: string[];
+  requiresAuth?: boolean;
+  requiredRole?: 'user' | 'admin';
+  middleware?: any[];
+}
 
 // Backend-specific types
 export interface RouteMetadata {

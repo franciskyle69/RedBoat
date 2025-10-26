@@ -54,6 +54,38 @@ function Reports() {
     }
   };
 
+  const downloadPDF = async (reportType: string) => {
+    try {
+      const params = new URLSearchParams({
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate
+      });
+
+      const response = await fetch(`http://localhost:5000/reports/${reportType}/pdf?${params}`, {
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `${reportType}-report-${dateRange.startDate}-to-${dateRange.endDate}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        setMessage(`PDF downloaded successfully!`);
+      } else {
+        setMessage(`Failed to download PDF`);
+      }
+    } catch (error) {
+      console.error(`Error downloading PDF:`, error);
+      setMessage(`Error downloading PDF`);
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -332,6 +364,15 @@ function Reports() {
 
           {activeReport && (
             <div className="report-display">
+              <div className="report-actions">
+                <button 
+                  className="admin-button admin-button-secondary"
+                  onClick={() => downloadPDF(activeReport)}
+                  style={{ marginBottom: '20px' }}
+                >
+                  📄 Download PDF
+                </button>
+              </div>
               {activeReport === 'occupancy' && renderOccupancyReport()}
               {activeReport === 'revenue' && renderRevenueReport()}
               {activeReport === 'bookings' && renderBookingsReport()}

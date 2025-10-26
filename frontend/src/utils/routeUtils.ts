@@ -317,5 +317,4 @@ export const validateRouteParam = (param: string, value: string, type: keyof typ
   return pattern ? pattern.test(value) : false;
 };
 
-// Import routeParamSchema from types
-import { routeParamSchema } from '../types/routing';
+// Note: routeParamSchema is already imported at the top

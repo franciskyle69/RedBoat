@@ -1,0 +1,100 @@
+<div class="section">
+  <h3>Summary</h3>
+  <div class="summary-grid">
+    <div class="summary-item">
+      <div class="summary-label">Total Rooms</div>
+      <div class="summary-value">{{summary.totalRooms}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">Total Bookings</div>
+      <div class="summary-value">{{summary.totalBookings}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">Total Room Nights</div>
+      <div class="summary-value">{{summary.totalRoomNights}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">Occupancy Rate</div>
+      <div class="summary-value percentage">{{summary.occupancyRate}}%</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Room Type Performance</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Room Type</th>
+        <th>Bookings</th>
+        <th>Revenue</th>
+        <th>Avg. Revenue per Booking</th>
+        <th>Performance</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each roomTypeBreakdown}}
+      <tr>
+        <td><strong>{{@key}}</strong></td>
+        <td>{{bookings}}</td>
+        <td class="currency">{{formatCurrency revenue}}</td>
+        <td class="currency">{{formatCurrency avgRevenuePerBooking}}</td>
+        <td>
+          {{#if isTopPerformer}}
+            <span style="color: #059669;">★ Top Performer</span>
+          {{else if isLowPerformer}}
+            <span style="color: #dc2626;">⚠ Needs Attention</span>
+          {{else}}
+            <span style="color: #6b7280;">✓ Good</span>
+          {{/if}}
+        </td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h3>Daily Occupancy Trends</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Occupied Rooms</th>
+        <th>Total Rooms</th>
+        <th>Occupancy Rate</th>
+        <th>Trend</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each dailyOccupancy}}
+      <tr>
+        <td><strong>{{formatDate date}}</strong></td>
+        <td>{{occupiedRooms}}</td>
+        <td>{{totalRooms}}</td>
+        <td class="percentage">{{occupancyRate}}%</td>
+        <td>
+          {{#if trendUp}}
+            <span style="color: #059669;">↗ {{trendPercentage}}%</span>
+          {{else if trendDown}}
+            <span style="color: #dc2626;">↘ {{trendPercentage}}%</span>
+          {{else}}
+            <span style="color: #6b7280;">→ Stable</span>
+          {{/if}}
+        </td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+
+{{#if insights}}
+<div class="section">
+  <h3>Key Insights</h3>
+  <ul>
+    {{#each insights}}
+    <li>{{this}}</li>
+    {{/each}}
+  </ul>
+</div>
+{{/if}}

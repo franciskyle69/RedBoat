@@ -48,7 +48,16 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
       }
     };
 
-    checkAuth();
+    // Add a timeout to prevent hanging
+    const timeoutId = setTimeout(() => {
+      console.log('Auth check timeout - proceeding without authentication');
+      setUserRole(null);
+      setNavigationRoutes([]);
+    }, 5000); // 5 second timeout
+
+    checkAuth().finally(() => {
+      clearTimeout(timeoutId);
+    });
   }, []);
 
   // Add method to clear authentication state

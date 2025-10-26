@@ -1,0 +1,130 @@
+<div class="section">
+  <h3>Revenue Summary</h3>
+  <div class="summary-grid">
+    <div class="summary-item">
+      <div class="summary-label">Total Revenue</div>
+      <div class="summary-value currency">{{formatCurrency summary.totalRevenue}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">Total Bookings</div>
+      <div class="summary-value">{{summary.totalBookings}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">Average Booking Value</div>
+      <div class="summary-value currency">{{formatCurrency summary.averageBookingValue}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">Revenue per Day</div>
+      <div class="summary-value currency">{{formatCurrency summary.revenuePerDay}}</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Revenue by Room Type</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Room Type</th>
+        <th>Bookings</th>
+        <th>Revenue</th>
+        <th>Avg. Revenue per Booking</th>
+        <th>Market Share</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each revenueByRoomType}}
+      <tr>
+        <td><strong>{{@key}}</strong></td>
+        <td>{{bookings}}</td>
+        <td class="currency">{{formatCurrency revenue}}</td>
+        <td class="currency">{{formatCurrency avgRevenuePerBooking}}</td>
+        <td class="percentage">{{marketShare}}%</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h3>Payment Status Analysis</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Payment Status</th>
+        <th>Count</th>
+        <th>Percentage</th>
+        <th>Total Amount</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each paymentStatusBreakdown}}
+      <tr>
+        <td><strong>{{@key}}</strong></td>
+        <td>{{count}}</td>
+        <td class="percentage">{{percentage}}%</td>
+        <td class="currency">{{formatCurrency totalAmount}}</td>
+        <td>
+          {{#if isPaid}}
+            <span class="status-confirmed">✓ Paid</span>
+          {{else if isPending}}
+            <span class="status-pending">⏳ Pending</span>
+          {{else}}
+            <span class="status-cancelled">✗ {{@key}}</span>
+          {{/if}}
+        </td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h3>Top Customers</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Rank</th>
+        <th>Customer Name</th>
+        <th>Email</th>
+        <th>Total Spent</th>
+        <th>Bookings</th>
+        <th>Avg. per Booking</th>
+        <th>Customer Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each topCustomers}}
+      <tr>
+        <td><strong>#{{rank}}</strong></td>
+        <td><strong>{{name}}</strong></td>
+        <td>{{email}}</td>
+        <td class="currency">{{formatCurrency totalSpent}}</td>
+        <td>{{bookings}}</td>
+        <td class="currency">{{formatCurrency avgPerBooking}}</td>
+        <td>
+          {{#if isHighValue}}
+            <span style="color: #059669;">★ High Value</span>
+          {{else if isMediumValue}}
+            <span style="color: #d97706;">● Medium Value</span>
+          {{else}}
+            <span style="color: #6b7280;">○ Standard</span>
+          {{/if}}
+        </td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+
+{{#if insights}}
+<div class="section">
+  <h3>Revenue Insights</h3>
+  <ul>
+    {{#each insights}}
+    <li>{{this}}</li>
+    {{/each}}
+  </ul>
+</div>
+{{/if}}

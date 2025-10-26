@@ -1,7 +1,8 @@
 // Consolidated route guard component - replaces multiple redundant guard files
 import React, { useState, useEffect, Suspense } from 'react';
 import { Navigate, useLocation, Outlet } from 'react-router-dom';
-import { routingManager, RoutePermission } from '../utils/routeUtils';
+import { routingManager } from '../utils/routeUtils';
+import { RoutePermission } from '../types/routing';
 import { UserContext } from '../types/routing';
 
 interface RouteGuardProps {
@@ -53,7 +54,18 @@ export function RouteGuard({
       }
     };
 
-    checkAuth();
+    // Add timeout to prevent hanging
+    const timeoutId = setTimeout(() => {
+      console.log('RouteGuard auth check timeout - proceeding without authentication');
+      setUserContext({
+        isAuthenticated: false,
+        loading: false
+      });
+    }, 3000); // 3 second timeout
+
+    checkAuth().finally(() => {
+      clearTimeout(timeoutId);
+    });
   }, []);
 
   useEffect(() => {

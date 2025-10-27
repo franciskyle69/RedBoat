@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import BackButton from "../components/BackButton";
 import FormInput from "../components/FormInput";
@@ -12,6 +12,14 @@ function ResetPassword() {
   const location = useLocation();
   const navigate = useNavigate();
   const email = (location.state as any)?.email as string | undefined;
+  const code = (location.state as any)?.code as string | undefined;
+
+  // Redirect if missing required state
+  useEffect(() => {
+    if (!email || !code) {
+      navigate("/forgot-password", { replace: true });
+    }
+  }, [email, code, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,12 +35,17 @@ function ResetPassword() {
       return;
     }
 
+    if (!email || !code) {
+      setError("Missing email or verification code. Please start the reset process again.");
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch("http://localhost:5000/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, newPassword: password }),
+        body: JSON.stringify({ email, code, newPassword: password }),
       });
 
       const data = await res.json().catch(() => ({}));

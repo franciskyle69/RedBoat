@@ -6,8 +6,10 @@ import FormInput from "../components/FormInput";
 function VerifyCodePage() {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const location = useLocation();
   const email = (location.state as any)?.email as string | undefined;
+  const isPasswordReset = (location.state as any)?.isPasswordReset as boolean | undefined;
   const navigate = useNavigate();
 
   const handleVerify = async (e: React.FormEvent) => {
@@ -15,8 +17,35 @@ function VerifyCodePage() {
     if (!email || !code) return;
     
     setLoading(true);
+    setError(null);
+    
     try {
-      const res = await fetch("http://localhost:5000/verify-email", {
+      let endpoint, successMessage, redirectPath;
+      
+      if (isPasswordReset) {
+        // For password reset, verify the code first
+        const verifyResponse = await fetch("http://localhost:5000/verify-reset-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, code }),
+        });
+
+        if (!verifyResponse.ok) {
+          const data = await verifyResponse.json().catch(() => ({}));
+          throw new Error(data?.message || "Invalid reset code");
+        }
+
+        // Code is valid, redirect to reset password page
+        navigate("/reset-password", { replace: true, state: { email, code } });
+        return;
+      } else {
+        // For email verification (signup)
+        endpoint = "http://localhost:5000/verify-email";
+        successMessage = "Email verified successfully! Your account has been created.";
+        redirectPath = "/";
+      }
+
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code }),
@@ -25,14 +54,13 @@ function VerifyCodePage() {
       const data = await res.json();
 
       if (res.ok) {
-        alert("Email verified successfully! Your account has been created.");
-        navigate("/", { replace: true });
+        alert(successMessage);
+        navigate(redirectPath, { replace: true });
       } else {
-        alert(data.message || "Verification failed");
+        throw new Error(data.message || "Verification failed");
       }
-    } catch (err) {
-      console.error(err);
-      alert("Server error. Please try again.");
+    } catch (err: any) {
+      setError(err?.message || "Verification failed");
     } finally {
       setLoading(false);
     }
@@ -50,12 +78,29 @@ function VerifyCodePage() {
         marginBottom: 12
       }}>
         {email ? (
-          <strong>We sent a code to {email}. Enter it below.</strong>
+          <strong>
+            {isPasswordReset 
+              ? `We sent a password reset code to ${email}. Enter it below.`
+              : `We sent a verification code to ${email}. Enter it below.`
+            }
+          </strong>
         ) : (
           <strong>Enter the code sent to your email.</strong>
         )}
       </div>
-      <h2>Verify Code</h2>
+      <h2>{isPasswordReset ? "Verify Reset Code" : "Verify Code"}</h2>
+      {error && (
+        <div style={{
+          background: "#fef2f2",
+          border: "1px solid #fecaca",
+          color: "#dc2626",
+          padding: "10px 12px",
+          borderRadius: 8,
+          marginBottom: 12
+        }}>
+          {error}
+        </div>
+      )}
       <form onSubmit={handleVerify}>
         <FormInput
           label="Verification Code"

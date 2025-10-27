@@ -23,6 +23,13 @@ const pendingVerifications = new Map<string, {
   expires: number 
 }>();
 
+// Store password reset tokens (in production, use Redis or database)
+const passwordResetTokens = new Map<string, {
+  email: string;
+  code: string;
+  expires: number;
+}>();
+
 export class AuthController {
   // SIGNUP
   static async signup(req: Request, res: Response) {
@@ -214,16 +221,126 @@ export class AuthController {
     }
   }
 
+  // FORGOT PASSWORD - Generate reset token
+  static async forgotPassword(req: Request, res: Response) {
+    try {
+      const { email } = req.body as { email?: string };
+
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Generate 6-digit verification code
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const expires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+      // Store the reset token
+      passwordResetTokens.set(email, {
+        email,
+        code: verificationCode,
+        expires
+      });
+
+      // Send email with reset code
+      const subject = "Your RedBoat account password reset code";
+      const html = `
+        <div style="background:#f6f8fb;padding:24px 0;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">
+            <tr>
+              <td style="padding:20px 24px;background:#0ea5e9;color:#ffffff;">
+                <h1 style="margin:0;font-size:18px;">RedBoat</h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:24px;">
+                <h2 style="margin:0 0 8px;font-size:18px;color:#0f172a;">Password reset code</h2>
+                <p style="margin:0 0 16px;color:#334155;">Use the verification code below to reset your password.</p>
+                <div style="display:inline-block;padding:12px 20px;border:1px dashed #0ea5e9;border-radius:8px;font-size:24px;letter-spacing:6px;font-weight:700;color:#0ea5e9;">
+                  ${verificationCode}
+                </div>
+                <p style="margin:16px 0 0;color:#64748b;font-size:12px;">This code expires in 10 minutes. If you did not request this, you can safely ignore this email.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 24px;background:#f8fafc;color:#64748b;font-size:12px;text-align:center;">
+                © RedBoat
+              </td>
+            </tr>
+          </table>
+        </div>
+      `;
+
+      await sendEmail(email, subject, html);
+
+      return res.json({ message: "Password reset code sent to your email" });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Server error" });
+    }
+  }
+
+  // VERIFY RESET CODE
+  static async verifyResetCode(req: Request, res: Response) {
+    try {
+      const { email, code } = req.body as { email?: string; code?: string };
+
+      if (!email || !code) {
+        return res.status(400).json({ message: "Email and code are required" });
+      }
+
+      const resetToken = passwordResetTokens.get(email);
+      if (!resetToken) {
+        return res.status(400).json({ message: "No password reset request found for this email" });
+      }
+
+      if (Date.now() > resetToken.expires) {
+        passwordResetTokens.delete(email);
+        return res.status(400).json({ message: "Reset code has expired" });
+      }
+
+      if (resetToken.code !== code) {
+        return res.status(400).json({ message: "Invalid reset code" });
+      }
+
+      // Code is valid, allow password reset
+      return res.json({ message: "Reset code verified successfully" });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Server error" });
+    }
+  }
+
   // RESET PASSWORD
   static async resetPassword(req: Request, res: Response) {
     try {
-      const { email, newPassword } = req.body as {
+      const { email, code, newPassword } = req.body as {
         email?: string;
+        code?: string;
         newPassword?: string;
       };
 
-      if (!email || !newPassword) {
-        return res.status(400).json({ message: "email and newPassword are required" });
+      if (!email || !code || !newPassword) {
+        return res.status(400).json({ message: "Email, code, and newPassword are required" });
+      }
+
+      // Verify the reset token
+      const resetToken = passwordResetTokens.get(email);
+      if (!resetToken) {
+        return res.status(400).json({ message: "No password reset request found for this email" });
+      }
+
+      if (Date.now() > resetToken.expires) {
+        passwordResetTokens.delete(email);
+        return res.status(400).json({ message: "Reset code has expired" });
+      }
+
+      if (resetToken.code !== code) {
+        return res.status(400).json({ message: "Invalid reset code" });
       }
 
       const user = await User.findOne({ email });
@@ -234,6 +351,9 @@ export class AuthController {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       user.password = hashedPassword;
       await user.save();
+
+      // Clean up the reset token
+      passwordResetTokens.delete(email);
 
       return res.json({ message: "Password updated successfully" });
     } catch (err) {

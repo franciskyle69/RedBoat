@@ -9,6 +9,9 @@ export interface IRoom extends Document {
   isAvailable: boolean;
   description?: string;
   images: string[];
+  housekeepingStatus?: 'clean' | 'dirty' | 'in-progress';
+  lastCleanedAt?: Date;
+  assignedHousekeeper?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,6 +25,9 @@ const RoomSchema = new Schema<IRoom>({
   isAvailable: { type: Boolean, default: true },
   description: { type: String },
   images: [{ type: String }],
+  housekeepingStatus: { type: String, enum: ['clean', 'dirty', 'in-progress'], default: 'clean' },
+  lastCleanedAt: { type: Date },
+  assignedHousekeeper: { type: String },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

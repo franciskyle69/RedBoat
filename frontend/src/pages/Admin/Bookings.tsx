@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "../../styles/main.css";
+import { useNotifications } from "../../contexts/NotificationContext";
 
 interface Booking {
   _id: string;
@@ -30,6 +31,7 @@ interface Booking {
 }
 
 function Bookings() {
+  const { notify } = useNotifications();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
@@ -39,16 +41,24 @@ function Bookings() {
 
   useEffect(() => {
     fetchBookings();
+    const id = setInterval(() => fetchBookings(true), 15000);
+    return () => clearInterval(id);
   }, []);
 
-  const fetchBookings = async () => {
+  const fetchBookings = async (silent = false) => {
     try {
       const response = await fetch("http://localhost:5000/bookings", {
         credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
-        setBookings(data.data);
+        const next: Booking[] = data.data || [];
+        if (silent && bookings.length > 0) {
+          const prevPending = new Set(bookings.filter(b => b.status === 'pending').map(b => b._id));
+          const newPending = next.filter(b => b.status === 'pending' && !prevPending.has(b._id));
+          newPending.forEach(b => notify(`New booking request for Room ${b.room.roomNumber}`, 'info', 6000, '/admin/bookings'));
+        }
+        setBookings(next);
       }
     } catch (error) {
       console.error("Error fetching bookings:", error);
@@ -73,14 +83,14 @@ function Bookings() {
         setShowModal(false);
         setAdminNotes("");
         setSelectedBooking(null);
-        alert("Booking status updated successfully!");
+        notify("Booking status updated", 'success');
       } else {
         const error = await response.json();
-        alert(error.message || "Failed to update booking status");
+        notify(error.message || "Failed to update booking status", 'error');
       }
     } catch (error) {
       console.error("Error updating booking status:", error);
-      alert("Error updating booking status");
+      notify("Error updating booking status", 'error');
     }
   };
 
@@ -93,14 +103,14 @@ function Bookings() {
 
       if (response.ok) {
         await fetchBookings();
-        alert("Guest checked in successfully!");
+        notify("Guest checked in", 'success');
       } else {
         const error = await response.json();
-        alert(error.message || "Failed to check in guest");
+        notify(error.message || "Failed to check in guest", 'error');
       }
     } catch (error) {
       console.error("Error checking in guest:", error);
-      alert("Error checking in guest");
+      notify("Error checking in guest", 'error');
     }
   };
 
@@ -113,14 +123,14 @@ function Bookings() {
 
       if (response.ok) {
         await fetchBookings();
-        alert("Guest checked out successfully!");
+        notify("Guest checked out", 'success');
       } else {
         const error = await response.json();
-        alert(error.message || "Failed to check out guest");
+        notify(error.message || "Failed to check out guest", 'error');
       }
     } catch (error) {
       console.error("Error checking out guest:", error);
-      alert("Error checking out guest");
+      notify("Error checking out guest", 'error');
     }
   };
 
@@ -156,6 +166,45 @@ function Bookings() {
       case "checked-out": return "#6b7280";
       case "cancelled": return "#ef4444";
       default: return "#6b7280";
+    }
+  };
+
+  const approveCancel = async (bookingId: string) => {
+    try {
+      const res = await fetch(`http://localhost:5000/bookings/${bookingId}/approve-cancel`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      if (res.ok) {
+        notify('Cancellation approved', 'success');
+        fetchBookings();
+      } else {
+        const err = await res.json();
+        notify(err.message || 'Failed to approve cancellation', 'error');
+      }
+    } catch (e) {
+      notify('Error approving cancellation', 'error');
+    }
+  };
+
+  const declineCancel = async (bookingId: string) => {
+    const note = window.prompt('Optional note to user:', '');
+    try {
+      const res = await fetch(`http://localhost:5000/bookings/${bookingId}/decline-cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ adminNotes: note || undefined })
+      });
+      if (res.ok) {
+        notify('Cancellation declined', 'success');
+        fetchBookings();
+      } else {
+        const err = await res.json();
+        notify(err.message || 'Failed to decline cancellation', 'error');
+      }
+    } catch (e) {
+      notify('Error declining cancellation', 'error');
     }
   };
 
@@ -284,26 +333,41 @@ function Bookings() {
                     >
                       {booking.status.replace("-", " ").toUpperCase()}
                     </span>
+                    {booking.cancellationRequested && (
+                      <span className="status-badge" style={{ background: '#fef3c7', color: '#92400e', marginLeft: 6 }}>
+                        Cancel Requested
+                      </span>
+                    )}
                   </td>
                   <td>
                     <div className="action-buttons">
-                      {booking.status === "pending" && (
+                      {(booking.status === "pending" || booking.cancellationRequested) && (
                         <>
-                          <button 
-                            className="btn-accept"
-                            onClick={() => {
-                              setSelectedBooking(booking);
-                              setShowModal(true);
-                            }}
-                          >
-                            Accept
-                          </button>
-                          <button 
-                            className="btn-decline"
-                            onClick={() => updateBookingStatus(booking._id, "cancelled")}
-                          >
-                            Decline
-                          </button>
+                          {booking.status === "pending" && (
+                            <>
+                              <button 
+                                className="btn-accept"
+                                onClick={() => {
+                                  setSelectedBooking(booking);
+                                  setShowModal(true);
+                                }}
+                              >
+                                Accept
+                              </button>
+                              <button 
+                                className="btn-decline"
+                                onClick={() => updateBookingStatus(booking._id, "cancelled")}
+                              >
+                                Decline
+                              </button>
+                            </>
+                          )}
+                          {booking.cancellationRequested && (
+                            <>
+                              <button className="btn-warning" onClick={() => approveCancel(booking._id)}>Approve Cancel</button>
+                              <button className="btn-decline" onClick={() => declineCancel(booking._id)}>Decline Cancel</button>
+                            </>
+                          )}
                         </>
                       )}
                       {booking.status === "confirmed" && (

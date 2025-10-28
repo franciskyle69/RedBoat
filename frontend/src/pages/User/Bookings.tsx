@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { useNotifications } from "../../contexts/NotificationContext";
 import "../../styles/main.css";
 
 interface UserBooking {
@@ -24,6 +25,7 @@ interface UserBooking {
 
 function Bookings() {
   const [searchParams] = useSearchParams();
+  const { notify } = useNotifications();
   const [bookings, setBookings] = useState<UserBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState<UserBooking | null>(null);
@@ -43,7 +45,7 @@ function Bookings() {
 
   const fetchBookings = async () => {
     try {
-      const response = await fetch("http://localhost:5000/user-bookings", {
+      const response = await fetch("http://localhost:5000/bookings/user-bookings", {
         credentials: "include",
       });
       if (response.ok) {
@@ -58,30 +60,31 @@ function Bookings() {
   };
 
   const cancelBooking = async (bookingId: string) => {
-    if (!window.confirm("Are you sure you want to cancel this booking?")) {
+    const reason = window.prompt("Please confirm cancellation (optional reason):", "");
+    if (reason === null) {
       return;
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/bookings/${bookingId}/status`, {
-        method: "PUT",
+      const response = await fetch(`http://localhost:5000/bookings/${bookingId}/request-cancel`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ status: "cancelled" }),
+        body: JSON.stringify({ reason: reason || undefined }),
       });
 
       if (response.ok) {
         await fetchBookings();
-        alert("Booking cancelled successfully!");
+        notify("Cancellation request sent. Awaiting admin response.", "success");
       } else {
         const error = await response.json();
-        alert(error.message || "Failed to cancel booking");
+        notify(error.message || "Failed to request cancellation", "error");
       }
     } catch (error) {
       console.error("Error cancelling booking:", error);
-      alert("Error cancelling booking");
+      notify("Error requesting cancellation", "error");
     }
   };
 
@@ -268,7 +271,7 @@ function Bookings() {
                     className="btn-cancel-booking"
                     onClick={() => cancelBooking(booking._id)}
                   >
-                    Cancel Booking
+                    Request Cancel
                   </button>
                 )}
               </div>

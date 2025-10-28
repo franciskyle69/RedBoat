@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { routingManager, useNavigationRoutes, useBreadcrumbs } from '../utils/routeUtils';
+import { routingManager } from '../utils/routeUtils';
+import { allRoutes } from '../config/routes';
+import NotificationBell from './NotificationBell';
 import { useNavigation } from '../contexts/NavigationContext';
 import { RouteBreadcrumbs } from './RouteBreadcrumbs';
 
@@ -25,8 +27,8 @@ export function SmartNavigation({
   const [userContext, setUserContext] = useState<any>(null);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
 
-  const navigationRoutes = useNavigationRoutes();
-  const breadcrumbs = useBreadcrumbs();
+  const navigationRoutes = allRoutes.filter(r => !r.isHidden);
+  const breadcrumbs = [] as any[];
   const { clearAuthState } = useNavigation();
 
   useEffect(() => {
@@ -60,7 +62,7 @@ export function SmartNavigation({
       return;
     }
 
-    const results = navigationRoutes.filter(route => 
+    const results = navigationRoutes.filter((route: any) => 
       route.title.toLowerCase().includes(query.toLowerCase()) ||
       route.description?.toLowerCase().includes(query.toLowerCase())
     );
@@ -148,6 +150,11 @@ export function SmartNavigation({
           </div>
         )}
 
+        {/* Notification Bell - visible on every page */}
+        <div className="nav-user" style={{ marginRight: '12px' }}>
+          <NotificationBell />
+        </div>
+
         {/* User Menu */}
         {showUserMenu && userContext && (
           <div className="nav-user">
@@ -202,7 +209,7 @@ export function SmartNavigation({
       <div className="nav-main">
         <div className="nav-sidebar">
           <nav className="nav-menu">
-            {navigationRoutes.map((route) => (
+            {navigationRoutes.map((route: any) => (
               <Link
                 key={route.path}
                 to={route.path}

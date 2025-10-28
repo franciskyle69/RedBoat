@@ -12,5 +12,8 @@ router.post('/', requireAuth, asyncHandler(BookingController.createBooking));
 router.put('/:id/status', requireAuth, requireAdmin, asyncHandler(BookingController.updateBookingStatus));
 router.put('/:id/checkin', requireAuth, requireAdmin, asyncHandler(BookingController.checkInBooking));
 router.put('/:id/checkout', requireAuth, requireAdmin, asyncHandler(BookingController.checkOutBooking));
+router.post('/:id/request-cancel', requireAuth, asyncHandler(BookingController.requestCancellation));
+router.post('/:id/approve-cancel', requireAuth, requireAdmin, asyncHandler(BookingController.approveCancellation));
+router.post('/:id/decline-cancel', requireAuth, requireAdmin, asyncHandler(BookingController.declineCancellation));
 
 export default router;

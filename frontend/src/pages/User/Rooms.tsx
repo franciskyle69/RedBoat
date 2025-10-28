@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import RoomCalendar from "../../components/RoomCalendar";
+import { useNotifications } from "../../contexts/NotificationContext";
 import "../../styles/main.css";
 
 interface Room {
@@ -16,6 +17,7 @@ interface Room {
 
 function Rooms() {
   const navigate = useNavigate();
+  const { notify } = useNotifications();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
@@ -99,7 +101,7 @@ function Rooms() {
       });
 
       if (response.ok) {
-        alert("Booking request submitted successfully! Please wait for admin approval.");
+        notify("Booking request submitted. Waiting for admin confirmation.", "success", 4000, "/user/bookings");
         setShowBookingModal(false);
         setSelectedRoom(null);
         setBookingForm({
@@ -110,11 +112,11 @@ function Rooms() {
         });
       } else {
         const error = await response.json();
-        alert(error.message || "Failed to submit booking request");
+        notify(error.message || "Failed to submit booking request", "error");
       }
     } catch (error) {
       console.error("Error submitting booking:", error);
-      alert("Error submitting booking request");
+      notify("Error submitting booking request", "error");
     }
   };
 

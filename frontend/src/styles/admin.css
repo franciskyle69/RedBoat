@@ -1156,6 +1156,22 @@
   color: #721c24;
 }
 
+/* Housekeeping status badges */
+.room-status.clean {
+  background: #d1fae5; /* green-100 */
+  color: #065f46;      /* green-900 */
+}
+
+.room-status.dirty {
+  background: #fee2e2; /* red-100 */
+  color: #991b1b;      /* red-900 */
+}
+
+.room-status.in-progress {
+  background: #fef3c7; /* amber-100 */
+  color: #92400e;      /* amber-900 */
+}
+
 .room-details {
   margin-bottom: 16px;
 }

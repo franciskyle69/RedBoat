@@ -391,6 +391,77 @@ export class RoomController {
     }
   }
 
+  // Get housekeeping overview (admin only)
+  static async getHousekeepingOverview(req: AuthenticatedRequest, res: Response) {
+    try {
+      const payload = req.user!;
+      if (payload.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const rooms = await Room.find({}).sort({ roomNumber: 1 });
+      const summary = rooms.reduce(
+        (acc: any, room: any) => {
+          const status = room.housekeepingStatus || 'clean';
+          acc.counts[status] = (acc.counts[status] || 0) + 1;
+          return acc;
+        },
+        { counts: { clean: 0, dirty: 0, 'in-progress': 0 } }
+      );
+
+      res.json({ data: rooms, summary });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+
+  // Update housekeeping status for a room (admin only)
+  static async updateHousekeepingStatus(req: AuthenticatedRequest, res: Response) {
+    try {
+      const payload = req.user!;
+      if (payload.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const roomId = req.params.id;
+      const { housekeepingStatus, assignedHousekeeper } = req.body as {
+        housekeepingStatus?: 'clean' | 'dirty' | 'in-progress';
+        assignedHousekeeper?: string;
+      };
+
+      const room = await Room.findById(roomId);
+      if (!room) {
+        return res.status(404).json({ message: "Room not found" });
+      }
+
+      const validStatuses = ['clean', 'dirty', 'in-progress'];
+      if (
+        housekeepingStatus !== undefined &&
+        !validStatuses.includes(housekeepingStatus as any)
+      ) {
+        return res.status(400).json({ message: "Invalid housekeeping status" });
+      }
+
+      if (housekeepingStatus !== undefined) {
+        (room as any).housekeepingStatus = housekeepingStatus;
+        if (housekeepingStatus === 'clean') {
+          (room as any).lastCleanedAt = new Date();
+        }
+      }
+      if (assignedHousekeeper !== undefined) {
+        (room as any).assignedHousekeeper = assignedHousekeeper;
+      }
+      room.updatedAt = new Date();
+
+      const updated = await room.save();
+      res.json({ message: "Housekeeping status updated", data: updated });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+
   // Create sample rooms (admin only)
   static async createSampleRooms(req: AuthenticatedRequest, res: Response) {
     try {

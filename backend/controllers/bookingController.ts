@@ -1,6 +1,8 @@
 import { Response } from 'express';
 import { Booking } from '../models/Booking';
 import { Room } from '../models/Room';
+import { NotificationController } from './notificationController';
+import { User } from '../models/User';
 import { AuthenticatedRequest } from '../middleware/auth';
 
 export class BookingController {
@@ -94,6 +96,10 @@ export class BookingController {
       const savedBooking = await booking.save();
       await savedBooking.populate("room", "roomNumber roomType price");
 
+      // Notify user (booking received) and admin (new request)
+      await NotificationController.createForUser(payload.sub, 'success', 'Booking request submitted. Awaiting confirmation.', '/user/bookings');
+      // Ideally notify all admins; for now, skip or implement an admin broadcast if admin IDs known
+
       res.status(201).json({ 
         message: "Booking created successfully", 
         data: savedBooking 
@@ -142,6 +148,111 @@ export class BookingController {
     } catch (err) {
       console.error(err);
       res.status(500).json({ message: "Server error" });
+    }
+  }
+
+  // Request cancellation (user)
+  static async requestCancellation(req: AuthenticatedRequest, res: Response) {
+    try {
+      const payload = req.user!;
+      const bookingId = req.params.id;
+      const { reason } = req.body as { reason?: string };
+
+      const booking = await Booking.findById(bookingId).populate("user", "_id");
+      if (!booking) {
+        return res.status(404).json({ message: "Booking not found" });
+      }
+
+      // Only the owner can request cancellation
+      if ((booking.user as any)._id.toString() !== payload.sub) {
+        return res.status(403).json({ message: "Not authorized to cancel this booking" });
+      }
+
+      // Only pending or confirmed bookings can request cancellation
+      if (!['pending', 'confirmed'].includes(booking.status)) {
+        return res.status(400).json({ message: "Only pending or confirmed bookings can be cancelled" });
+      }
+
+      booking.cancellationRequested = true;
+      if (reason) booking.cancellationReason = reason;
+      booking.updatedAt = new Date();
+      await booking.save();
+
+      // Notify admins of the cancellation request
+      const admins = await User.find({ role: 'admin' }).select('_id');
+      await Promise.all(
+        admins.map(a => NotificationController.createForUser(a._id.toString(), 'warning', 'Cancellation requested by a user', '/admin/bookings'))
+      );
+
+      res.json({ message: "Cancellation request submitted", data: booking });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+
+  // Approve cancellation (admin)
+  static async approveCancellation(req: AuthenticatedRequest, res: Response) {
+    try {
+      const payload = req.user!;
+      if (payload.role !== 'admin') {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const bookingId = req.params.id;
+      const booking = await Booking.findById(bookingId).populate('user', '_id');
+      if (!booking) {
+        return res.status(404).json({ message: 'Booking not found' });
+      }
+      if (!booking.cancellationRequested) {
+        return res.status(400).json({ message: 'No cancellation request to approve' });
+      }
+
+      booking.status = 'cancelled';
+      booking.cancellationRequested = false;
+      booking.updatedAt = new Date();
+      await booking.save();
+
+      // Notify user
+      await NotificationController.createForUser((booking.user as any)._id.toString(), 'success', 'Your booking cancellation was approved.', '/user/bookings');
+
+      res.json({ message: 'Cancellation approved', data: booking });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Server error' });
+    }
+  }
+
+  // Decline cancellation (admin)
+  static async declineCancellation(req: AuthenticatedRequest, res: Response) {
+    try {
+      const payload = req.user!;
+      if (payload.role !== 'admin') {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const bookingId = req.params.id;
+      const { adminNotes } = req.body as { adminNotes?: string };
+      const booking = await Booking.findById(bookingId).populate('user', '_id');
+      if (!booking) {
+        return res.status(404).json({ message: 'Booking not found' });
+      }
+      if (!booking.cancellationRequested) {
+        return res.status(400).json({ message: 'No cancellation request to decline' });
+      }
+
+      booking.cancellationRequested = false;
+      if (adminNotes) booking.adminNotes = adminNotes;
+      booking.updatedAt = new Date();
+      await booking.save();
+
+      // Notify user
+      await NotificationController.createForUser((booking.user as any)._id.toString(), 'warning', 'Your cancellation request was declined.', '/user/bookings');
+
+      res.json({ message: 'Cancellation declined', data: booking });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Server error' });
     }
   }
 

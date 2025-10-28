@@ -1,6 +1,7 @@
 import { Link, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "../../styles/main.css";
+import NotificationBell from "../../components/NotificationBell";
 
 function UserDashboard() {
   const [loading, setLoading] = useState(true);
@@ -35,6 +36,7 @@ function UserDashboard() {
       <header className="user-header">
         <h2 className="user-title">Hotel Guest Dashboard</h2>
         <nav className="user-nav">
+          <NotificationBell />
           <Link to="/dashboard" className="user-nav-link active">Dashboard</Link>
           <Link to="/user/profile" className="user-nav-link">Profile</Link>
           <Link to="/user/bookings" className="user-nav-link">Bookings</Link>

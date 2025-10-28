@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "../../styles/main.css";
+import { useNotifications } from "../../contexts/NotificationContext";
 
 interface Room {
   _id: string;
@@ -14,9 +15,13 @@ interface Room {
   images: string[];
   createdAt: string;
   updatedAt: string;
+  housekeepingStatus?: 'clean' | 'dirty' | 'in-progress';
+  lastCleanedAt?: string;
+  assignedHousekeeper?: string;
 }
 
 function RoomManagement() {
+  const { notify } = useNotifications();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -42,7 +47,7 @@ function RoomManagement() {
 
   const fetchRooms = async () => {
     try {
-      const response = await fetch("http://localhost:5000/admin/rooms", {
+      const response = await fetch("http://localhost:5000/rooms/admin", {
         credentials: "include",
       });
       if (response.ok) {
@@ -51,10 +56,12 @@ function RoomManagement() {
       } else {
         console.warn("Failed to fetch rooms:", response.status);
         setRooms([]);
+        notify("Failed to fetch rooms", "error");
       }
     } catch (error) {
       console.error("Error fetching rooms:", error);
       setRooms([]);
+      notify("Error fetching rooms", "error");
     } finally {
       setLoading(false);
     }
@@ -90,16 +97,19 @@ function RoomManagement() {
 
       if (response.ok) {
         setMessage(editingRoom ? "Room updated successfully!" : "Room created successfully!");
+        notify(editingRoom ? "Room updated successfully" : "Room created successfully", "success");
         setShowAddForm(false);
         setEditingRoom(null);
         resetForm();
         fetchRooms();
       } else {
         setMessage(result.message || "Error saving room");
+        notify(result.message || "Error saving room", "error");
       }
     } catch (error) {
       console.error("Error saving room:", error);
       setMessage("Error saving room");
+      notify("Error saving room", "error");
     }
   };
 
@@ -132,13 +142,16 @@ function RoomManagement() {
 
       if (response.ok) {
         setMessage("Room deleted successfully!");
+        notify("Room deleted successfully", "success");
         fetchRooms();
       } else {
         setMessage(result.message || "Error deleting room");
+        notify(result.message || "Error deleting room", "error");
       }
     } catch (error) {
       console.error("Error deleting room:", error);
       setMessage("Error deleting room");
+      notify("Error deleting room", "error");
     }
   };
 
@@ -205,14 +218,17 @@ function RoomManagement() {
 
       if (response.ok) {
         setMessage(`Room ${!room.isAvailable ? 'activated' : 'deactivated'} successfully!`);
+        notify(`Room ${!room.isAvailable ? 'activated' : 'deactivated'} successfully`, "success");
         fetchRooms();
       } else {
         const result = await response.json();
         setMessage(result.message || "Error updating room");
+        notify(result.message || "Error updating room", "error");
       }
     } catch (error) {
       console.error("Error updating room:", error);
       setMessage("Error updating room");
+      notify("Error updating room", "error");
     }
   };
 
@@ -427,11 +443,23 @@ function RoomManagement() {
                       <span className={`room-status ${room.isAvailable ? 'available' : 'unavailable'}`}>
                         {room.isAvailable ? 'Available' : 'Unavailable'}
                       </span>
+                      <span 
+                        className={`room-status ${room.housekeepingStatus || 'clean'}`}
+                        title={`Housekeeping: ${(room.housekeepingStatus || 'clean').replace('-', ' ')}`}
+                        style={{ marginLeft: '8px' }}
+                      >
+                        {(room.housekeepingStatus || 'clean').replace('-', ' ')}
+                      </span>
                     </div>
                     <div className="room-details">
                       <p><strong>Type:</strong> {room.roomType}</p>
                       <p><strong>Price:</strong> ${room.price}/night</p>
                       <p><strong>Capacity:</strong> {room.capacity} guests</p>
+                      <p>
+                        <strong>Housekeeping:</strong> {(room.housekeepingStatus || 'clean').replace('-', ' ')}
+                        {room.assignedHousekeeper ? ` (Assigned: ${room.assignedHousekeeper})` : ''}
+                        {room.lastCleanedAt ? ` • Last cleaned: ${new Date(room.lastCleanedAt).toLocaleString()}` : ''}
+                      </p>
                       {room.description && <p><strong>Description:</strong> {room.description}</p>}
                       {room.amenities.length > 0 && (
                         <div className="room-amenities">

@@ -12,6 +12,8 @@ export interface IBooking extends Document {
   paymentStatus: 'pending' | 'paid' | 'refunded';
   adminNotes?: string;
   googleCalendarEventId?: string;
+  cancellationRequested?: boolean;
+  cancellationReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -36,6 +38,8 @@ const BookingSchema = new Schema<IBooking>({
   },
   adminNotes: { type: String },
   googleCalendarEventId: { type: String, required: false },
+  cancellationRequested: { type: Boolean, default: false },
+  cancellationReason: { type: String },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

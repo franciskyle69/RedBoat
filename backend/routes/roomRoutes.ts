@@ -16,5 +16,7 @@ router.put('/:id', requireAuth, requireAdmin, asyncHandler(RoomController.update
 router.delete('/:id', requireAuth, requireAdmin, asyncHandler(RoomController.deleteRoom));
 router.get('/admin', requireAuth, requireAdmin, asyncHandler(RoomController.getAllRoomsAdmin));
 router.post('/sample', requireAuth, requireAdmin, asyncHandler(RoomController.createSampleRooms));
+router.get('/housekeeping', requireAuth, requireAdmin, asyncHandler(RoomController.getHousekeepingOverview));
+router.put('/housekeeping/:id', requireAuth, requireAdmin, asyncHandler(RoomController.updateHousekeepingStatus));
 
 export default router;

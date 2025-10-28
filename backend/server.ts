@@ -11,6 +11,7 @@ import roomRoutes from "./routes/roomRoutes";
 import bookingRoutes from "./routes/bookingRoutes";
 import reportRoutes from "./routes/reportRoutes";
 import googleCalendarRoutes from "./routes/googleCalendarRoutes";
+import notificationRoutes from "./routes/notificationRoutes";
 
 // Import middleware
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
@@ -51,6 +52,7 @@ app.use("/rooms", roomRoutes);
 app.use("/bookings", bookingRoutes);
 app.use("/reports", reportRoutes);
 app.use("/google-calendar", googleCalendarRoutes);
+app.use("/notifications", notificationRoutes);
 
 // Test email endpoint (keeping for backward compatibility)
 app.post("/test-email", async (req, res) => {

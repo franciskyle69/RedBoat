@@ -2,7 +2,7 @@ export class DataPreprocessor {
   private static formatCurrency(amount: number): string {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'PHP'
     }).format(amount);
   }
 
@@ -80,7 +80,7 @@ export class DataPreprocessor {
       startDate: dateRange.startDate,
       endDate: dateRange.endDate,
       generatedAt: new Date(),
-      generatedBy: "WebProj System",
+      generatedBy: "RedBoat System",
       dateRange: this.calculateDateRange(dateRange.startDate, dateRange.endDate),
       summary: {
         ...summary,

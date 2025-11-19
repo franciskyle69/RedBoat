@@ -1,16 +1,21 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import "../../styles/main.css";
 import { useNotifications } from "../../contexts/NotificationContext";
+import AdminLayout from "../../components/AdminLayout";
+import * as BookingsApi from "../../api/bookings";
+import BookingDetailsModal from "../../components/admin/BookingDetailsModal";
+import CheckInModal from "../../components/admin/CheckInModal";
+import CheckOutModal from "../../components/admin/CheckOutModal";
+import AdminTableContainer from "../../components/admin/AdminTableContainer";
+import Swal from "sweetalert2";
+import { confirmDialog, successAlert, errorAlert } from "../../utils/adminSwal";
 
 interface Booking {
   _id: string;
   user: {
     _id: string;
     username: string;
-    email: string;
-    firstName: string;
-    lastName: string;
   };
   room: {
     _id: string;
@@ -23,21 +28,39 @@ interface Booking {
   numberOfGuests: number;
   totalAmount: number;
   status: "pending" | "confirmed" | "checked-in" | "checked-out" | "cancelled";
+  guestName?: string;
+  contactNumber?: string;
   specialRequests?: string;
   paymentStatus: "pending" | "paid" | "refunded";
   adminNotes?: string;
+  actualCheckInTime?: string;
+  actualCheckOutTime?: string;
+  lateCheckInFee?: number;
+  lateCheckOutFee?: number;
+  additionalCharges?: number;
+  checkoutNotes?: string;
+  cancellationRequested?: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 function Bookings() {
   const { notify } = useNotifications();
+  const location = useLocation();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [adminNotes, setAdminNotes] = useState("");
+  const [showCheckInModal, setShowCheckInModal] = useState(false);
+  const [showCheckOutModal, setShowCheckOutModal] = useState(false);
+  const [checkInNotes, setCheckInNotes] = useState("");
+  const [checkInAdditionalCharges, setCheckInAdditionalCharges] = useState("");
+  const [checkOutNotes, setCheckOutNotes] = useState("");
+  const [checkOutAdditionalCharges, setCheckOutAdditionalCharges] = useState("");
+  const [roomCondition, setRoomCondition] = useState<"excellent" | "good" | "fair" | "poor" | "damaged">("good");
+  const [userFilter, setUserFilter] = useState<string | null>(null);
 
   useEffect(() => {
     fetchBookings();
@@ -45,21 +68,21 @@ function Bookings() {
     return () => clearInterval(id);
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const user = params.get("user");
+    setUserFilter(user && user.trim() ? user : null);
+  }, [location.search]);
+
   const fetchBookings = async (silent = false) => {
     try {
-      const response = await fetch("http://localhost:5000/bookings", {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const next: Booking[] = data.data || [];
+      const next: Booking[] = await BookingsApi.getAll();
         if (silent && bookings.length > 0) {
           const prevPending = new Set(bookings.filter(b => b.status === 'pending').map(b => b._id));
           const newPending = next.filter(b => b.status === 'pending' && !prevPending.has(b._id));
           newPending.forEach(b => notify(`New booking request for Room ${b.room.roomNumber}`, 'info', 6000, '/admin/bookings'));
         }
         setBookings(next);
-      }
     } catch (error) {
       console.error("Error fetching bookings:", error);
     } finally {
@@ -69,25 +92,12 @@ function Bookings() {
 
   const updateBookingStatus = async (bookingId: string, status: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/bookings/${bookingId}/status`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ status, adminNotes: adminNotes || undefined }),
-      });
-
-      if (response.ok) {
+      await BookingsApi.updateStatus(bookingId, status, adminNotes || undefined);
         await fetchBookings();
         setShowModal(false);
         setAdminNotes("");
         setSelectedBooking(null);
         notify("Booking status updated", 'success');
-      } else {
-        const error = await response.json();
-        notify(error.message || "Failed to update booking status", 'error');
-      }
     } catch (error) {
       console.error("Error updating booking status:", error);
       notify("Error updating booking status", 'error');
@@ -96,38 +106,93 @@ function Bookings() {
 
   const checkInBooking = async (bookingId: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/bookings/${bookingId}/checkin`, {
-        method: "PUT",
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        await fetchBookings();
-        notify("Guest checked in", 'success');
-      } else {
-        const error = await response.json();
-        notify(error.message || "Failed to check in guest", 'error');
+      const body: any = {};
+      if (checkInNotes) body.checkinNotes = checkInNotes;
+      if (checkInAdditionalCharges && parseFloat(checkInAdditionalCharges) > 0) {
+        body.additionalCharges = parseFloat(checkInAdditionalCharges);
       }
+      const data = await BookingsApi.requestCheckIn(bookingId, body);
+        await fetchBookings();
+        setShowCheckInModal(false);
+        setCheckInNotes("");
+        setCheckInAdditionalCharges("");
+        setSelectedBooking(null);
+        
+        // Show detailed success message
+        const summary = data.data?.booking?.checkInSummary;
+        let message = "Guest checked in successfully";
+        if (summary) {
+          const details = [];
+          if (summary.isEarly) details.push("Early check-in");
+          if (summary.isLate && summary.lateCheckInFee > 0) {
+            details.push(`Late fee: ₱${summary.lateCheckInFee.toFixed(2)}`);
+          }
+          if (details.length > 0) {
+            message += ` (${details.join(", ")})`;
+          }
+        }
+        notify(message, 'success', 6000);
+        
+        // Log detailed info to console
+        if (data.data?.booking) {
+          console.log("Check-in details:", data.data.booking);
+        }
     } catch (error) {
       console.error("Error checking in guest:", error);
-      notify("Error checking in guest", 'error');
+      const message = error instanceof Error ? error.message : "Error checking in guest";
+      notify(message, 'error');
     }
   };
 
   const checkOutBooking = async (bookingId: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/bookings/${bookingId}/checkout`, {
-        method: "PUT",
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        await fetchBookings();
-        notify("Guest checked out", 'success');
-      } else {
-        const error = await response.json();
-        notify(error.message || "Failed to check out guest", 'error');
+      const body: any = {};
+      if (checkOutNotes) body.checkoutNotes = checkOutNotes;
+      if (checkOutAdditionalCharges && parseFloat(checkOutAdditionalCharges) > 0) {
+        body.additionalCharges = parseFloat(checkOutAdditionalCharges);
       }
+      if (roomCondition) body.roomCondition = roomCondition;
+      const data = await BookingsApi.requestCheckOut(bookingId, body);
+        await fetchBookings();
+        setShowCheckOutModal(false);
+        setCheckOutNotes("");
+        setCheckOutAdditionalCharges("");
+        setRoomCondition("good");
+        setSelectedBooking(null);
+        
+        // Show detailed success message
+        const summary = data.data?.booking?.checkOutSummary;
+        const financial = data.data?.booking?.financialSummary;
+        let message = "Guest checked out successfully";
+        const details = [];
+        
+        if (summary) {
+          if (summary.isEarlyCheckOut) details.push("Early check-out");
+          if (summary.isLateCheckOut && summary.lateCheckOutFee > 0) {
+            details.push(`Late fee: ₱${summary.lateCheckOutFee.toFixed(2)}`);
+          }
+          if (summary.lengthOfStay?.extendedStay > 0) {
+            details.push(`Extended stay: ${summary.lengthOfStay.extendedStay} night(s)`);
+          }
+        }
+        
+        if (financial && financial.balanceDue > 0) {
+          details.push(`Balance due: ₱${financial.balanceDue.toFixed(2)}`);
+        }
+        
+        if (details.length > 0) {
+          message += ` (${details.join(", ")})`;
+        }
+        
+        notify(message, financial?.balanceDue > 0 ? 'warning' : 'success', 8000);
+        
+        // Log detailed info to console
+        if (data.data?.booking) {
+          console.log("Check-out details:", data.data.booking);
+          if (financial?.balanceDue > 0) {
+            console.warn(`⚠️ Balance due: ₱${financial.balanceDue.toFixed(2)}`);
+          }
+        }
     } catch (error) {
       console.error("Error checking out guest:", error);
       notify("Error checking out guest", 'error');
@@ -142,20 +207,33 @@ function Bookings() {
       });
 
       if (response.ok) {
-        alert("Sample rooms created successfully!");
+        successAlert({
+          title: "Sample rooms created",
+          text: "Sample rooms created successfully!",
+        });
       } else {
         const error = await response.json();
-        alert(error.message || "Failed to create sample rooms");
+        errorAlert({
+          title: "Failed to create rooms",
+          text: error.message || "Failed to create sample rooms",
+        });
       }
     } catch (error) {
       console.error("Error creating sample rooms:", error);
-      alert("Error creating sample rooms");
+      errorAlert({
+        title: "Error",
+        text: "Error creating sample rooms",
+      });
     }
   };
 
   const filteredBookings = bookings.filter(booking => {
-    if (filter === "all") return true;
-    return booking.status === filter;
+    if (filter !== "all" && booking.status !== filter) return false;
+    if (userFilter) {
+      const name = (booking.guestName || booking.user.username || "").toLowerCase();
+      if (!name.includes(userFilter.toLowerCase())) return false;
+    }
+    return true;
   });
 
   const getStatusColor = (status: string) => {
@@ -169,40 +247,67 @@ function Bookings() {
     }
   };
 
-  const approveCancel = async (bookingId: string) => {
+  const updatePaymentStatus = async (bookingId: string, paymentStatus: "pending" | "paid" | "refunded") => {
     try {
-      const res = await fetch(`http://localhost:5000/bookings/${bookingId}/approve-cancel`, {
-        method: 'POST',
-        credentials: 'include'
-      });
-      if (res.ok) {
+      await BookingsApi.updatePayment(bookingId, paymentStatus as BookingsApi.PaymentStatus);
+        await fetchBookings();
+        notify(`Payment status updated to ${paymentStatus}`, "success");
+        if (selectedBooking && selectedBooking._id === bookingId) {
+          setSelectedBooking({ ...selectedBooking, paymentStatus });
+        }
+    } catch (error) {
+      console.error("Error updating payment status:", error);
+      notify("Error updating payment status", "error");
+    }
+  };
+
+  const approveCancel = async (bookingId: string) => {
+    const isConfirmed = await confirmDialog({
+      title: "Approve cancellation?",
+      text: "This will cancel the booking and notify the user.",
+      confirmText: "Yes, approve",
+      cancelText: "No, keep booking",
+      icon: "warning",
+    });
+
+    if (!isConfirmed) {
+      return;
+    }
+
+    try {
+      await BookingsApi.approveCancel(bookingId);
         notify('Cancellation approved', 'success');
         fetchBookings();
-      } else {
-        const err = await res.json();
-        notify(err.message || 'Failed to approve cancellation', 'error');
-      }
     } catch (e) {
       notify('Error approving cancellation', 'error');
     }
   };
 
   const declineCancel = async (bookingId: string) => {
-    const note = window.prompt('Optional note to user:', '');
+    const result = await Swal.fire({
+      icon: "warning",
+      title: "Decline cancellation?",
+      text: "The booking will remain active. You can optionally add a note for the user.",
+      input: "textarea",
+      inputLabel: "Note to user (optional)",
+      inputPlaceholder: "Explain why the cancellation was declined...",
+      showCancelButton: true,
+      confirmButtonText: "Yes, decline",
+      cancelButtonText: "Back",
+      focusCancel: true,
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    const noteValue = typeof result.value === "string" ? result.value.trim() : "";
+    const note = noteValue.length > 0 ? noteValue : undefined;
+
     try {
-      const res = await fetch(`http://localhost:5000/bookings/${bookingId}/decline-cancel`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ adminNotes: note || undefined })
-      });
-      if (res.ok) {
+      await BookingsApi.declineCancel(bookingId, note);
         notify('Cancellation declined', 'success');
         fetchBookings();
-      } else {
-        const err = await res.json();
-        notify(err.message || 'Failed to decline cancellation', 'error');
-      }
     } catch (e) {
       notify('Error declining cancellation', 'error');
     }
@@ -214,40 +319,14 @@ function Bookings() {
 
   if (loading) {
     return (
-      <div className="admin-container">
+      <AdminLayout pageTitle="Bookings">
         <div className="loading">Loading bookings...</div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="admin-container">
-      <header className="admin-header">
-        <h2 className="admin-title">Booking Management</h2>
-        <nav className="admin-nav">
-          <Link to="/admin" className="admin-nav-link">Dashboard</Link>
-          <Link to="/admin/user-management" className="admin-nav-link">Users</Link>
-          <Link to="/admin/room-management" className="admin-nav-link">Rooms</Link>
-          <Link to="/admin/bookings" className="admin-nav-link active">Bookings</Link>
-          <Link to="/admin/calendar" className="admin-nav-link">Calendar</Link>
-          <Link to="/admin/housekeeping" className="admin-nav-link">Housekeeping</Link>
-          <Link to="/admin/reports" className="admin-nav-link">Reports</Link>
-          <Link to="/admin/settings" className="admin-nav-link">Settings</Link>
-          <button 
-            className="admin-nav-link" 
-            onClick={createSampleRooms}
-            style={{ background: "none", border: "none", color: "#e53e3e", cursor: "pointer" }}
-          >
-            Create Sample Rooms
-          </button>
-          <Link to="/" className="admin-logout" onClick={async (e) => {
-            e.preventDefault();
-            try { await fetch("http://localhost:5000/logout", { method: "POST", credentials: "include" }); } catch {}
-            window.location.href = "/";
-          }}>Logout</Link>
-        </nav>
-      </header>
-
+    <AdminLayout pageTitle="Bookings">
       <div className="bookings-content">
         <div className="bookings-header">
           <h3>All Bookings ({filteredBookings.length})</h3>
@@ -291,7 +370,7 @@ function Bookings() {
           </div>
         </div>
 
-        <div className="bookings-table-container">
+        <AdminTableContainer>
           <table className="bookings-table">
             <thead>
               <tr>
@@ -311,9 +390,13 @@ function Bookings() {
                   <td>
                     <div className="guest-info">
                       <div className="guest-name">
-                        {booking.user.firstName} {booking.user.lastName}
+                        {booking.guestName || booking.user.username}
                       </div>
-                      <div className="guest-email">{booking.user.email}</div>
+                      {booking.contactNumber && (
+                        <div className="guest-contact">
+                          {booking.contactNumber}
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td>
@@ -325,7 +408,7 @@ function Bookings() {
                   <td>{formatDate(booking.checkInDate)}</td>
                   <td>{formatDate(booking.checkOutDate)}</td>
                   <td>{booking.numberOfGuests}</td>
-                  <td>${booking.totalAmount}</td>
+                  <td>₱{booking.totalAmount}</td>
                   <td>
                     <span 
                       className="status-badge"
@@ -373,7 +456,10 @@ function Bookings() {
                       {booking.status === "confirmed" && (
                         <button 
                           className="btn-checkin"
-                          onClick={() => checkInBooking(booking._id)}
+                          onClick={() => {
+                            setSelectedBooking(booking);
+                            setShowCheckInModal(true);
+                          }}
                         >
                           Check-in
                         </button>
@@ -381,7 +467,10 @@ function Bookings() {
                       {booking.status === "checked-in" && (
                         <button 
                           className="btn-checkout"
-                          onClick={() => checkOutBooking(booking._id)}
+                          onClick={() => {
+                            setSelectedBooking(booking);
+                            setShowCheckOutModal(true);
+                          }}
                         >
                           Check-out
                         </button>
@@ -401,7 +490,7 @@ function Bookings() {
               ))}
             </tbody>
           </table>
-        </div>
+        </AdminTableContainer>
 
         {filteredBookings.length === 0 && (
           <div className="no-bookings">
@@ -412,94 +501,64 @@ function Bookings() {
 
       {/* Modal for booking details and status updates */}
       {showModal && selectedBooking && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>Booking Details</h3>
-              <button 
-                className="modal-close"
-                onClick={() => {
-                  setShowModal(false);
-                  setSelectedBooking(null);
-                  setAdminNotes("");
-                }}
-              >
-                ×
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="booking-details">
-                <div className="detail-row">
-                  <strong>Guest:</strong> {selectedBooking.user.firstName} {selectedBooking.user.lastName}
-                </div>
-                <div className="detail-row">
-                  <strong>Email:</strong> {selectedBooking.user.email}
-                </div>
-                <div className="detail-row">
-                  <strong>Room:</strong> {selectedBooking.room.roomNumber} ({selectedBooking.room.roomType})
-                </div>
-                <div className="detail-row">
-                  <strong>Check-in:</strong> {formatDate(selectedBooking.checkInDate)}
-                </div>
-                <div className="detail-row">
-                  <strong>Check-out:</strong> {formatDate(selectedBooking.checkOutDate)}
-                </div>
-                <div className="detail-row">
-                  <strong>Guests:</strong> {selectedBooking.numberOfGuests}
-                </div>
-                <div className="detail-row">
-                  <strong>Total Amount:</strong> ${selectedBooking.totalAmount}
-                </div>
-                <div className="detail-row">
-                  <strong>Status:</strong> 
-                  <span 
-                    className="status-badge"
-                    style={{ backgroundColor: getStatusColor(selectedBooking.status) }}
-                  >
-                    {selectedBooking.status.replace("-", " ").toUpperCase()}
-                  </span>
-                </div>
-                {selectedBooking.specialRequests && (
-                  <div className="detail-row">
-                    <strong>Special Requests:</strong> {selectedBooking.specialRequests}
-                  </div>
-                )}
-                {selectedBooking.adminNotes && (
-                  <div className="detail-row">
-                    <strong>Admin Notes:</strong> {selectedBooking.adminNotes}
-                  </div>
-                )}
-              </div>
-              
-              {selectedBooking.status === "pending" && (
-                <div className="modal-actions">
-                  <textarea
-                    placeholder="Add admin notes (optional)"
-                    value={adminNotes}
-                    onChange={(e) => setAdminNotes(e.target.value)}
-                    className="admin-notes-input"
-                  />
-                  <div className="modal-buttons">
-                    <button 
-                      className="btn-accept"
-                      onClick={() => updateBookingStatus(selectedBooking._id, "confirmed")}
-                    >
-                      Accept Booking
-                    </button>
-                    <button 
-                      className="btn-decline"
-                      onClick={() => updateBookingStatus(selectedBooking._id, "cancelled")}
-                    >
-                      Decline Booking
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <BookingDetailsModal
+          booking={selectedBooking}
+          formatDate={formatDate}
+          adminNotes={adminNotes}
+          setAdminNotes={setAdminNotes}
+          updatePaymentStatus={updatePaymentStatus}
+          updateBookingStatus={updateBookingStatus}
+          onClose={() => {
+            setShowModal(false);
+            setSelectedBooking(null);
+            setAdminNotes("");
+          }}
+        />
       )}
-    </div>
+
+      {/* Check-in Modal */}
+      {showCheckInModal && selectedBooking && (
+        <CheckInModal
+          booking={selectedBooking}
+          formatDate={formatDate}
+          paymentStatus={selectedBooking.paymentStatus}
+          updatePaymentStatus={updatePaymentStatus}
+          checkInNotes={checkInNotes}
+          setCheckInNotes={setCheckInNotes}
+          checkInAdditionalCharges={checkInAdditionalCharges}
+          setCheckInAdditionalCharges={setCheckInAdditionalCharges}
+          onConfirm={() => checkInBooking(selectedBooking._id)}
+          onClose={() => {
+            setShowCheckInModal(false);
+            setSelectedBooking(null);
+            setCheckInNotes("");
+            setCheckInAdditionalCharges("");
+          }}
+        />
+      )}
+
+      {/* Check-out Modal */}
+      {showCheckOutModal && selectedBooking && (
+        <CheckOutModal
+          booking={selectedBooking}
+          formatDate={formatDate}
+          roomCondition={roomCondition}
+          setRoomCondition={setRoomCondition}
+          checkOutNotes={checkOutNotes}
+          setCheckOutNotes={setCheckOutNotes}
+          checkOutAdditionalCharges={checkOutAdditionalCharges}
+          setCheckOutAdditionalCharges={setCheckOutAdditionalCharges}
+          onConfirm={() => checkOutBooking(selectedBooking._id)}
+          onClose={() => {
+            setShowCheckOutModal(false);
+            setSelectedBooking(null);
+            setCheckOutNotes("");
+            setCheckOutAdditionalCharges("");
+            setRoomCondition("good");
+          }}
+        />
+      )}
+    </AdminLayout>
   );
 }
 

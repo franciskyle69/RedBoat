@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { RoomController } from '../controllers/roomController';
 import { requireAuth, requireAdmin } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
+import { uploadRoomImages } from '../utils/roomImageUpload';
 
 const router = Router();
 
@@ -13,6 +14,7 @@ router.get('/calendar', asyncHandler(RoomController.getRoomCalendar));
 // Admin room management routes
 router.post('/', requireAuth, requireAdmin, asyncHandler(RoomController.createRoom));
 router.put('/:id', requireAuth, requireAdmin, asyncHandler(RoomController.updateRoom));
+router.post('/:id/images', requireAuth, requireAdmin, uploadRoomImages.array('images', 5), asyncHandler(RoomController.updateRoomImages));
 router.delete('/:id', requireAuth, requireAdmin, asyncHandler(RoomController.deleteRoom));
 router.get('/admin', requireAuth, requireAdmin, asyncHandler(RoomController.getAllRoomsAdmin));
 router.post('/sample', requireAuth, requireAdmin, asyncHandler(RoomController.createSampleRooms));

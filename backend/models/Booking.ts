@@ -8,12 +8,23 @@ export interface IBooking extends Document {
   numberOfGuests: number;
   totalAmount: number;
   status: 'pending' | 'confirmed' | 'checked-in' | 'checked-out' | 'cancelled';
+  guestName?: string;
+  contactNumber?: string;
   specialRequests?: string;
   paymentStatus: 'pending' | 'paid' | 'refunded';
   adminNotes?: string;
   googleCalendarEventId?: string;
   cancellationRequested?: boolean;
   cancellationReason?: string;
+  // Check-in/Check-out tracking fields
+  actualCheckInTime?: Date;
+  actualCheckOutTime?: Date;
+  checkedInBy?: mongoose.Types.ObjectId;
+  checkedOutBy?: mongoose.Types.ObjectId;
+  lateCheckInFee?: number;
+  lateCheckOutFee?: number;
+  additionalCharges?: number;
+  checkoutNotes?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,6 +41,8 @@ const BookingSchema = new Schema<IBooking>({
     enum: ["pending", "confirmed", "checked-in", "checked-out", "cancelled"], 
     default: "pending" 
   },
+  guestName: { type: String },
+  contactNumber: { type: String },
   specialRequests: { type: String },
   paymentStatus: { 
     type: String, 
@@ -40,6 +53,15 @@ const BookingSchema = new Schema<IBooking>({
   googleCalendarEventId: { type: String, required: false },
   cancellationRequested: { type: Boolean, default: false },
   cancellationReason: { type: String },
+  // Check-in/Check-out tracking fields
+  actualCheckInTime: { type: Date },
+  actualCheckOutTime: { type: Date },
+  checkedInBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  checkedOutBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  lateCheckInFee: { type: Number, default: 0 },
+  lateCheckOutFee: { type: Number, default: 0 },
+  additionalCharges: { type: Number, default: 0 },
+  checkoutNotes: { type: String },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

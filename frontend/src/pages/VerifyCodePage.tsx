@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import BackButton from "../components/BackButton";
-import FormInput from "../components/FormInput";
+import "../styles/auth.css";
+import Swal from "sweetalert2";
 
 function VerifyCodePage() {
   const [code, setCode] = useState("");
@@ -54,7 +54,11 @@ function VerifyCodePage() {
       const data = await res.json();
 
       if (res.ok) {
-        alert(successMessage);
+        await Swal.fire({
+          icon: "success",
+          title: "Verified",
+          text: successMessage,
+        });
         navigate(redirectPath, { replace: true });
       } else {
         throw new Error(data.message || "Verification failed");
@@ -67,54 +71,44 @@ function VerifyCodePage() {
   };
 
   return (
-    <div style={{ maxWidth: "400px", margin: "50px auto" }}>
-      <BackButton />
-      <div style={{
-        background: "#eff6ff",
-        border: "1px solid #bfdbfe",
-        color: "#1e3a8a",
-        padding: "10px 12px",
-        borderRadius: 8,
-        marginBottom: 12
-      }}>
-        {email ? (
-          <strong>
+    <div className="auth-container">
+      <div className="auth-card">
+        <div className="logo-wrapper">
+          <h2 className="brand-name">Verify Reset Code</h2>
+        </div>
+
+        {email && (
+          <div className="success-message">
             {isPasswordReset 
               ? `We sent a password reset code to ${email}. Enter it below.`
               : `We sent a verification code to ${email}. Enter it below.`
             }
-          </strong>
-        ) : (
-          <strong>Enter the code sent to your email.</strong>
+          </div>
         )}
+
+        {error && <div className="error-message">{error}</div>}
+
+        <form onSubmit={handleVerify} className="auth-form">
+          <div className="form-group">
+            <label>Verification Code</label>
+            <input
+              type="text"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="Enter the code"
+              required
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            className="btn-primary"
+            disabled={loading}
+          >
+            {loading ? "Verifying..." : "Verify Code"}
+          </button>
+        </form>
       </div>
-      <h2>{isPasswordReset ? "Verify Reset Code" : "Verify Code"}</h2>
-      {error && (
-        <div style={{
-          background: "#fef2f2",
-          border: "1px solid #fecaca",
-          color: "#dc2626",
-          padding: "10px 12px",
-          borderRadius: 8,
-          marginBottom: 12
-        }}>
-          {error}
-        </div>
-      )}
-      <form onSubmit={handleVerify}>
-        <FormInput
-          label="Verification Code"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-        />
-        <button 
-          type="submit" 
-          style={{ width: "100%", padding: "10px" }}
-          disabled={loading}
-        >
-          {loading ? "Verifying..." : "Verify Code"}
-        </button>
-      </form>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { Link, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "../../styles/main.css";
-import NotificationBell from "../../components/NotificationBell";
+import UserLayout from "../../components/UserLayout";
 
 function UserDashboard() {
   const [loading, setLoading] = useState(true);
@@ -29,49 +29,44 @@ function UserDashboard() {
     };
   }, []);
 
-  if (loading) return <div className="user-loading">Loading...</div>;
+  if (loading) return <div className="admin-loading">Loading...</div>;
   if (userRole === "admin") return <Navigate to="/admin" replace />;
+  
   return (
-    <div className="user-container">
-      <header className="user-header">
-        <h2 className="user-title">Hotel Guest Dashboard</h2>
-        <nav className="user-nav">
-          <NotificationBell />
-          <Link to="/dashboard" className="user-nav-link active">Dashboard</Link>
-          <Link to="/user/profile" className="user-nav-link">Profile</Link>
-          <Link to="/user/bookings" className="user-nav-link">Bookings</Link>
-          <Link to="/user/rooms" className="user-nav-link">Rooms</Link>
-          <Link to="/user/calendar" className="user-nav-link">Calendar</Link>
-          <Link to="/user/feedback" className="user-nav-link">Feedback</Link>
-          <Link to="/user/settings" className="user-nav-link">Settings</Link>
-          <Link to="/" className="user-logout" onClick={async (e) => {
-            e.preventDefault();
-            try { await fetch("http://localhost:5000/logout", { method: "POST", credentials: "include" }); } catch {}
-            window.location.href = "/";
-          }}>Logout</Link>
-        </nav>
-      </header>
-      <div className="user-grid">
-        <div className="user-card">
-          <h3 className="user-card-title">Quick Actions</h3>
-          <p className="user-card-description">Access hotel services quickly.</p>
-          <div className="user-quick-actions">
-            <Link to="/user/bookings" className="user-quick-link">Book Room</Link>
-            <Link to="/user/rooms" className="user-quick-link success">View Rooms</Link>
-            <Link to="/user/calendar" className="user-quick-link">Calendar</Link>
+    <UserLayout pageTitle="Dashboard">
+      <section className="cards">
+        <div className="card">
+          <h2>Quick Actions</h2>
+          <p>Access hotel services quickly.</p>
+          <div className="actions">
+            <Link to="/user/bookings" className="btn blue">Book Room</Link>
+            <Link to="/user/rooms" className="btn success">View Rooms</Link>
+            <Link to="/user/calendar" className="btn blue">Calendar</Link>
           </div>
         </div>
-        <div className="user-card">
-          <h3 className="user-card-title">Guest Status</h3>
-          <ul className="user-status-list">
-            <li>✅ Account Active</li>
-            <li>🏨 No Active Bookings</li>
-            <li>📧 Booking Notifications On</li>
-            <li>⭐ 0 Reviews Given</li>
+        <div className="card">
+          <h2>Guest Status</h2>
+          <ul className="status-list">
+            <li>
+              <span className="material-icons-outlined">check_circle</span>
+              Account Active
+            </li>
+            <li>
+              <span className="material-icons-outlined">hotel</span>
+              No Active Bookings
+            </li>
+            <li>
+              <span className="material-icons-outlined">notifications</span>
+              Booking Notifications On
+            </li>
+            <li>
+              <span className="material-icons-outlined">star</span>
+              0 Reviews Given
+            </li>
           </ul>
         </div>
-      </div>
-    </div>
+      </section>
+    </UserLayout>
   );
 }
 

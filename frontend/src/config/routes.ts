@@ -1,13 +1,18 @@
 import { lazy } from 'react';
 
 // Lazy load components for better performance
-const LandingPage = lazy(() => import('../pages/LandingPage'));
+const RedboatLandingIndex = lazy(() => import('../pages/RedboatLandingIndex'));
+const RedboatAboutPage = lazy(() => import('../pages/RedboatAboutPage'));
+const RedboatRoomsPage = lazy(() => import('../pages/RedboatRoomsPage'));
+const RedboatContactPage = lazy(() => import('../pages/RedboatContactPage'));
 const LoginPage = lazy(() => import('../pages/LoginPage'));
 const SignupPage = lazy(() => import('../pages/SignupPage'));
 const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'));
 const VerifyCodePage = lazy(() => import('../pages/VerifyCodePage'));
 const ResetPassword = lazy(() => import('../pages/ResetPassword'));
 const ChooseUsername = lazy(() => import('../pages/ChooseUsername'));
+const CheckoutSuccess = lazy(() => import('../pages/CheckoutSuccess'));
+const CheckoutCancel = lazy(() => import('../pages/CheckoutCancel'));
 
 // User pages
 const UserDashboard = lazy(() => import('../pages/User/Dashboard'));
@@ -35,9 +40,30 @@ import { RouteConfig } from '../types/routing';
 export const publicRoutes: RouteConfig[] = [
   {
     path: '/',
-    component: LandingPage,
+    component: RedboatLandingIndex,
     title: 'Welcome',
     description: 'Hotel Management System',
+    isPublic: true,
+  },
+  {
+    path: '/about',
+    component: RedboatAboutPage,
+    title: 'About RedBoat',
+    description: 'Learn more about RedBoat Hotel and our story',
+    isPublic: true,
+  },
+  {
+    path: '/rooms',
+    component: RedboatRoomsPage,
+    title: 'Rooms',
+    description: 'Browse RedBoat rooms and rates',
+    isPublic: true,
+  },
+  {
+    path: '/contact',
+    component: RedboatContactPage,
+    title: 'Contact Us',
+    description: 'Get in touch with RedBoat Hotel',
     isPublic: true,
   },
   {
@@ -74,6 +100,18 @@ export const publicRoutes: RouteConfig[] = [
     path: '/choose-username',
     component: ChooseUsername,
     title: 'Choose Username',
+    isPublic: true,
+  },
+  {
+    path: '/checkout/success',
+    component: CheckoutSuccess,
+    title: 'Payment Success',
+    isPublic: true,
+  },
+  {
+    path: '/checkout/cancel',
+    component: CheckoutCancel,
+    title: 'Payment Canceled',
     isPublic: true,
   },
 ];

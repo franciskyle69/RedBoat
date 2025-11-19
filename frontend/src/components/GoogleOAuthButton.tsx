@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 interface GoogleOAuthButtonProps {
   onSuccess?: (user: any) => void;
@@ -66,7 +67,11 @@ export default function GoogleOAuthButton({ onSuccess, onError }: GoogleOAuthBut
                 onError(errorMessage);
               } else {
                 console.error("Google OAuth error:", errorMessage);
-                alert(`Google login failed: ${errorMessage}`);
+                Swal.fire({
+                  icon: "error",
+                  title: "Google login failed",
+                  text: errorMessage,
+                });
               }
             }
           },
@@ -107,5 +112,5 @@ export default function GoogleOAuthButton({ onSuccess, onError }: GoogleOAuthBut
     }
   }, [navigate, onSuccess, onError]);
 
-  return <div ref={googleDivRef}></div>;
+  return <div ref={googleDivRef} className="google-btn-container"></div>;
 }

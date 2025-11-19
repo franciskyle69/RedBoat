@@ -75,11 +75,11 @@ function ChooseUsername() {
         {/* Header */}
         <div className="login-header">
           <div className="login-welcome-text">
-            WELCOME TO
+           
           </div>
           <div className="login-brand">
             <div className="login-logo">
-              ⛵
+              
             </div>
             <div className="login-title">
               REDBOAT

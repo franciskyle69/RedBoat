@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import "../../styles/main.css";
 import { useNotifications } from "../../contexts/NotificationContext";
+import AdminLayout from "../../components/AdminLayout";
+import { confirmDialog } from "../../utils/adminSwal";
 
 interface Room {
   _id: string;
@@ -20,6 +21,38 @@ interface Room {
   assignedHousekeeper?: string;
 }
 
+function RoomImageStrip({ roomNumber, images }: { roomNumber: string; images: string[] }) {
+  const resolveSrc = (src: string) => {
+    if (src.startsWith('http://') || src.startsWith('https://')) return src;
+    if (src.startsWith('/images') || src.startsWith('images/')) return src;
+
+    if (src.startsWith('/uploads') || src.startsWith('uploads/')) {
+      const normalized = src.startsWith('/') ? src : `/${src}`;
+      return `http://localhost:5000${normalized}`;
+    }
+
+    return src;
+  };
+
+  const src = resolveSrc((images && images[0]) || '/room-placeholder.jpg');
+
+  return (
+    <div className="room-images-strip" style={{ width: '100%', marginBottom: '8px' }}>
+      <img
+        src={src}
+        alt={`Room ${roomNumber} thumbnail`}
+        style={{
+          width: '100%',
+          height: 180,
+          borderRadius: '10px 10px 0 0',
+          objectFit: 'cover',
+          display: 'block',
+        }}
+      />
+    </div>
+  );
+}
+
 function RoomManagement() {
   const { notify } = useNotifications();
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -36,7 +69,7 @@ function RoomManagement() {
     images: [] as string[]
   });
   const [newAmenity, setNewAmenity] = useState("");
-  const [newImage, setNewImage] = useState("");
+  const [imageFiles, setImageFiles] = useState<FileList | null>(null);
   const [message, setMessage] = useState("");
 
   const roomTypes = ["Standard", "Deluxe", "Suite", "Presidential"];
@@ -128,7 +161,14 @@ function RoomManagement() {
   };
 
   const handleDelete = async (roomId: string) => {
-    if (!window.confirm("Are you sure you want to delete this room?")) {
+    const isConfirmed = await confirmDialog({
+      title: "Delete this room?",
+      text: "This will permanently remove the room from your inventory.",
+      confirmText: "Yes, delete",
+      icon: "warning",
+    });
+
+    if (!isConfirmed) {
       return;
     }
 
@@ -166,7 +206,7 @@ function RoomManagement() {
       images: []
     });
     setNewAmenity("");
-    setNewImage("");
+    setImageFiles(null);
   };
 
   const addAmenity = () => {
@@ -186,16 +226,6 @@ function RoomManagement() {
     });
   };
 
-  const addImage = () => {
-    if (newImage.trim() && !formData.images.includes(newImage.trim())) {
-      setFormData({
-        ...formData,
-        images: [...formData.images, newImage.trim()]
-      });
-      setNewImage("");
-    }
-  };
-
   const removeImage = (image: string) => {
     setFormData({
       ...formData,
@@ -203,7 +233,70 @@ function RoomManagement() {
     });
   };
 
+  const handleUploadImages = async () => {
+    if (!editingRoom) {
+      notify("You can only upload images when editing an existing room", "error");
+      return;
+    }
+    if (!imageFiles || imageFiles.length === 0) {
+      notify("Please select images to upload", "error");
+      return;
+    }
+
+    if (imageFiles.length < 3 || imageFiles.length > 5) {
+      notify("Please select between 3 and 5 images", "error");
+      return;
+    }
+
+    const formDataUpload = new FormData();
+    Array.from(imageFiles).forEach((file) => {
+      formDataUpload.append("images", file);
+    });
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/rooms/${editingRoom._id}/images`,
+        {
+          method: "POST",
+          credentials: "include",
+          body: formDataUpload,
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok) {
+        notify("Room images updated", "success");
+        setFormData((prev) => ({
+          ...prev,
+          images: result.data?.images || [],
+        }));
+        setImageFiles(null);
+        fetchRooms();
+      } else {
+        notify(result.message || "Failed to upload images", "error");
+      }
+    } catch (error) {
+      console.error("Error uploading images:", error);
+      notify("Error uploading images", "error");
+    }
+  };
+
   const toggleRoomAvailability = async (room: Room) => {
+    const isDeactivating = room.isAvailable;
+    const actionLabel = isDeactivating ? "Deactivate" : "Activate";
+
+    const isConfirmed = await confirmDialog({
+      title: `${actionLabel} this room?`,
+      text: isDeactivating
+        ? `This will make Room ${room.roomNumber} unavailable for new bookings.`
+        : `This will make Room ${room.roomNumber} available for bookings again.`,
+      confirmText: `Yes, ${actionLabel.toLowerCase()}`,
+      icon: "question",
+    });
+
+    if (!isConfirmed) return;
+
     try {
       const response = await fetch(`http://localhost:5000/rooms/${room._id}`, {
         method: "PUT",
@@ -234,33 +327,14 @@ function RoomManagement() {
 
   if (loading) {
     return (
-      <div className="admin-container">
+      <AdminLayout pageTitle="Room Management">
         <div className="loading">Loading rooms...</div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="admin-container">
-      <header className="admin-header">
-        <h2 className="admin-title">Room Management</h2>
-        <nav className="admin-nav">
-          <Link to="/admin" className="admin-nav-link">Dashboard</Link>
-          <Link to="/admin/user-management" className="admin-nav-link">Users</Link>
-          <Link to="/admin/room-management" className="admin-nav-link active">Rooms</Link>
-          <Link to="/admin/bookings" className="admin-nav-link">Bookings</Link>
-          <Link to="/admin/calendar" className="admin-nav-link">Calendar</Link>
-          <Link to="/admin/housekeeping" className="admin-nav-link">Housekeeping</Link>
-          <Link to="/admin/reports" className="admin-nav-link">Reports</Link>
-          <Link to="/admin/settings" className="admin-nav-link">Settings</Link>
-          <Link to="/" className="admin-logout" onClick={async (e) => {
-            e.preventDefault();
-            try { await fetch("http://localhost:5000/logout", { method: "POST", credentials: "include" }); } catch {}
-            window.location.href = "/";
-          }}>Logout</Link>
-        </nav>
-      </header>
-
+    <AdminLayout pageTitle="Room Management">
       {message && (
         <div className={`message ${message.includes('successfully') ? 'success' : 'error'}`}>
           {message}
@@ -284,148 +358,172 @@ function RoomManagement() {
           </div>
 
           {showAddForm && (
-            <div className="admin-form-container">
-              <h4>{editingRoom ? 'Edit Room' : 'Add New Room'}</h4>
-              <form onSubmit={handleSubmit} className="admin-form">
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="roomNumber">Room Number *</label>
-                    <input
-                      type="text"
-                      id="roomNumber"
-                      value={formData.roomNumber}
-                      onChange={(e) => setFormData({...formData, roomNumber: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="roomType">Room Type *</label>
-                    <select
-                      id="roomType"
-                      value={formData.roomType}
-                      onChange={(e) => setFormData({...formData, roomType: e.target.value})}
-                      required
-                    >
-                      {roomTypes.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="price">Price per Night ($) *</label>
-                    <input
-                      type="number"
-                      id="price"
-                      value={formData.price}
-                      onChange={(e) => setFormData({...formData, price: e.target.value})}
-                      min="0"
-                      step="0.01"
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="capacity">Capacity *</label>
-                    <input
-                      type="number"
-                      id="capacity"
-                      value={formData.capacity}
-                      onChange={(e) => setFormData({...formData, capacity: e.target.value})}
-                      min="1"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="description">Description</label>
-                  <textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    rows={3}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Amenities</label>
-                  <div className="amenities-container">
-                    <div className="amenities-list">
-                      {formData.amenities.map((amenity, index) => (
-                        <span key={index} className="amenity-tag">
-                          {amenity}
-                          <button
-                            type="button"
-                            onClick={() => removeAmenity(amenity)}
-                            className="remove-amenity"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                    <div className="add-amenity">
-                      <input
-                        type="text"
-                        value={newAmenity}
-                        onChange={(e) => setNewAmenity(e.target.value)}
-                        placeholder="Add amenity"
-                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addAmenity())}
-                      />
-                      <button type="button" onClick={addAmenity}>Add</button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label>Images (URLs)</label>
-                  <div className="images-container">
-                    <div className="images-list">
-                      {formData.images.map((image, index) => (
-                        <span key={index} className="image-tag">
-                          {image}
-                          <button
-                            type="button"
-                            onClick={() => removeImage(image)}
-                            className="remove-image"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                    <div className="add-image">
-                      <input
-                        type="url"
-                        value={newImage}
-                        onChange={(e) => setNewImage(e.target.value)}
-                        placeholder="Add image URL"
-                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addImage())}
-                      />
-                      <button type="button" onClick={addImage}>Add</button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="form-actions">
-                  <button type="submit" className="admin-button primary">
-                    {editingRoom ? 'Update Room' : 'Create Room'}
-                  </button>
-                  <button 
-                    type="button" 
-                    className="admin-button secondary"
+            <div className="modal-overlay">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h3>{editingRoom ? 'Edit Room' : 'Add New Room'}</h3>
+                  <button
+                    className="modal-close"
+                    type="button"
                     onClick={() => {
                       setShowAddForm(false);
                       setEditingRoom(null);
                       resetForm();
                     }}
                   >
-                    Cancel
+                    ×
                   </button>
                 </div>
-              </form>
+                <div className="modal-body">
+                  <div className="admin-form-container">
+                    <form onSubmit={handleSubmit} className="admin-form">
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label htmlFor="roomNumber">Room Number *</label>
+                          <input
+                            type="text"
+                            id="roomNumber"
+                            value={formData.roomNumber}
+                            onChange={(e) => setFormData({...formData, roomNumber: e.target.value})}
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label htmlFor="roomType">Room Type *</label>
+                          <select
+                            id="roomType"
+                            value={formData.roomType}
+                            onChange={(e) => setFormData({...formData, roomType: e.target.value})}
+                            required
+                          >
+                            {roomTypes.map(type => (
+                              <option key={type} value={type}>{type}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label htmlFor="price">Price per Night (₱) *</label>
+                          <input
+                            type="number"
+                            id="price"
+                            value={formData.price}
+                            onChange={(e) => setFormData({...formData, price: e.target.value})}
+                            min="0"
+                            step="0.01"
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label htmlFor="capacity">Capacity *</label>
+                          <input
+                            type="number"
+                            id="capacity"
+                            value={formData.capacity}
+                            onChange={(e) => setFormData({...formData, capacity: e.target.value})}
+                            min="1"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="description">Description</label>
+                        <textarea
+                          id="description"
+                          value={formData.description}
+                          onChange={(e) => setFormData({...formData, description: e.target.value})}
+                          rows={3}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Amenities</label>
+                        <div className="amenities-container">
+                          <div className="amenities-list">
+                            {formData.amenities.map((amenity, index) => (
+                              <span key={index} className="amenity-tag">
+                                {amenity}
+                                <button
+                                  type="button"
+                                  onClick={() => removeAmenity(amenity)}
+                                  className="remove-amenity"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                          <div className="add-amenity">
+                            <input
+                              type="text"
+                              value={newAmenity}
+                              onChange={(e) => setNewAmenity(e.target.value)}
+                              placeholder="Add amenity"
+                              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addAmenity())}
+                            />
+                            <button type="button" onClick={addAmenity}>Add</button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="form-group">
+                        <label>Images</label>
+                        <div className="images-container">
+                          <div className="images-list">
+                            {formData.images.map((image, index) => (
+                              <span key={index} className="image-tag">
+                                {image}
+                                <button
+                                  type="button"
+                                  onClick={() => removeImage(image)}
+                                  className="remove-image"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <label style={{ marginTop: "8px" }}>Upload new images (3-5)</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={(e) => setImageFiles(e.target.files)}
+                        />
+                        <button
+                          type="button"
+                          className="admin-button small"
+                          onClick={handleUploadImages}
+                          disabled={!editingRoom || !imageFiles || imageFiles.length === 0}
+                        >
+                          Upload Images
+                        </button>
+                      </div>
+
+                      <div className="form-actions">
+                        <button type="submit" className="admin-button primary">
+                          {editingRoom ? 'Update Room' : 'Create Room'}
+                        </button>
+                        <button 
+                          type="button" 
+                          className="admin-button secondary"
+                          onClick={() => {
+                            setShowAddForm(false);
+                            setEditingRoom(null);
+                            resetForm();
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -452,8 +550,10 @@ function RoomManagement() {
                       </span>
                     </div>
                     <div className="room-details">
+                      <RoomImageStrip roomNumber={room.roomNumber} images={room.images || []} />
+                      <p><strong>Room:</strong> {room.roomNumber}</p>
                       <p><strong>Type:</strong> {room.roomType}</p>
-                      <p><strong>Price:</strong> ${room.price}/night</p>
+                      <p><strong>Price:</strong> ₱{room.price}/night</p>
                       <p><strong>Capacity:</strong> {room.capacity} guests</p>
                       <p>
                         <strong>Housekeeping:</strong> {(room.housekeepingStatus || 'clean').replace('-', ' ')}
@@ -499,7 +599,7 @@ function RoomManagement() {
           </div>
         </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
 

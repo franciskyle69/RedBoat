@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import "../styles/main.css";
+import "../styles/auth.css";
 
-import FormInput from "../components/FormInput";
+import Swal from "sweetalert2";
+
 import GoogleOAuthButton from "../components/GoogleOAuthButton";
 import ReCaptcha, { useReCaptcha } from "../components/ReCaptcha";
 import { getSiteKey } from "../config/recaptcha";
@@ -21,7 +22,11 @@ function LoginPage() {
     
     // Check reCAPTCHA verification
     if (!isVerified) {
-      alert("Please complete the reCAPTCHA verification");
+      Swal.fire({
+        icon: "warning",
+        title: "reCAPTCHA required",
+        text: "Please complete the reCAPTCHA verification before signing in.",
+      });
       return;
     }
     
@@ -51,12 +56,20 @@ function LoginPage() {
         const role = data?.data?.role;
         navigate(role === "admin" ? "/admin" : "/dashboard", { replace: true, state: { user: data.data } });
       } else {
-        alert(data.message || "Login failed");
+        Swal.fire({
+          icon: "error",
+          title: "Login failed",
+          text: data.message || "Login failed",
+        });
         reset(); // Reset reCAPTCHA on failure
       }
     } catch (err) {
       console.error(err);
-      alert("Server error. Please try again.");
+      Swal.fire({
+        icon: "error",
+        title: "Server error",
+        text: "Something went wrong. Please try again.",
+      });
       reset(); // Reset reCAPTCHA on error
     } finally {
       setLoading(false);
@@ -64,50 +77,40 @@ function LoginPage() {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <div className="login-header">
-        
-          <div className="login-brand">
-            <div className="login-logo">
-              <img src="/redBoat.png" alt="Red Boat Logo" style={{ width: '300px', height: '300px' }} />
-            </div>
-           
-          </div>
+    <div className="auth-container">
+      <div className="auth-card">
+        <div className="logo-wrapper">
+          <h2 className="brand-name">REDBOAT</h2>
         </div>
 
         {/* Login Form */}
         <form onSubmit={handleLogin} className="auth-form">
           {/* Username/Email Field */}
           <div className="form-group">
-            <label className="form-label">
-              Username/ email
-            </label>
+            <label>Username/Email</label>
             <input
-              type="email"
+              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your username or email"
-              className="form-input"
+              required
             />
           </div>
 
           {/* Password Field */}
           <div className="form-group">
-            <label className="form-label">
-              Password
-            </label>
+            <label>Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
-              className="form-input"
+              required
             />
           </div>
 
           {/* reCAPTCHA */}
-          <div className="form-group">
+          <div className="recaptcha-container">
             <ReCaptcha
               siteKey={getSiteKey()}
               onVerify={handleVerify}
@@ -124,13 +127,13 @@ function LoginPage() {
             disabled={loading || !isVerified}
             className="btn-primary"
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
 
         {/* Separator */}
-        <div className="auth-separator">
-          Or
+        <div className="divider">
+          <span>or</span>
         </div>
 
         {/* Google Button */}
@@ -138,12 +141,7 @@ function LoginPage() {
 
         {/* Links */}
         <div className="auth-links">
-          <Link to="/signup" className="auth-link">
-            Create an account
-          </Link>
-          <Link to="/forgot-password" className="auth-link">
-            Forgot password?
-          </Link>
+          <Link to="/signup">Create an account</Link> • <Link to="/forgot-password">Forgot password?</Link>
         </div>
       </div>
     </div>

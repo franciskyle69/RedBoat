@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import "../../styles/main.css";
+import AdminLayout from "../../components/AdminLayout";
 
 interface ReportData {
   occupancy?: any;
@@ -78,7 +78,14 @@ function Reports() {
         document.body.removeChild(a);
         setMessage(`PDF downloaded successfully!`);
       } else {
-        setMessage(`Failed to download PDF`);
+        try {
+          const err = await response.json();
+          setMessage(err?.message ? `Failed to download PDF: ${err.message}` : `Failed to download PDF`);
+          if (err?.details) console.error('PDF error details:', err.details);
+        } catch {
+          const text = await response.text();
+          setMessage(text ? `Failed to download PDF: ${text}` : `Failed to download PDF`);
+        }
       }
     } catch (error) {
       console.error(`Error downloading PDF:`, error);
@@ -89,7 +96,7 @@ function Reports() {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'PHP'
     }).format(amount);
   };
 
@@ -288,26 +295,7 @@ function Reports() {
   };
 
   return (
-    <div className="admin-container">
-      <header className="admin-header">
-        <h2 className="admin-title">Reports</h2>
-        <nav className="admin-nav">
-          <Link to="/admin" className="admin-nav-link">Dashboard</Link>
-          <Link to="/admin/user-management" className="admin-nav-link">Users</Link>
-          <Link to="/admin/room-management" className="admin-nav-link">Rooms</Link>
-          <Link to="/admin/bookings" className="admin-nav-link">Bookings</Link>
-          <Link to="/admin/calendar" className="admin-nav-link">Calendar</Link>
-          <Link to="/admin/housekeeping" className="admin-nav-link">Housekeeping</Link>
-          <Link to="/admin/reports" className="admin-nav-link active">Reports</Link>
-          <Link to="/admin/settings" className="admin-nav-link">Settings</Link>
-          <Link to="/" className="admin-logout" onClick={async (e) => {
-            e.preventDefault();
-            try { await fetch("http://localhost:5000/logout", { method: "POST", credentials: "include" }); } catch {}
-            window.location.href = "/";
-          }}>Logout</Link>
-        </nav>
-      </header>
-
+    <AdminLayout pageTitle="Reports">
       {message && (
         <div className={`message ${message.includes('successfully') ? 'success' : 'error'}`}>
           {message}
@@ -366,9 +354,8 @@ function Reports() {
             <div className="report-display">
               <div className="report-actions">
                 <button 
-                  className="admin-button admin-button-secondary"
+                  className="admin-button secondary"
                   onClick={() => downloadPDF(activeReport)}
-                  style={{ marginBottom: '20px' }}
                 >
                   📄 Download PDF
                 </button>
@@ -380,7 +367,7 @@ function Reports() {
           )}
         </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
 

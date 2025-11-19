@@ -17,6 +17,8 @@ export interface IUser extends Document {
   };
   role: 'user' | 'admin';
   isEmailVerified: boolean;
+  emailNotifications?: boolean;
+  profilePicture?: string;
   googleCalendarTokens?: {
     accessToken?: string;
     refreshToken?: string;
@@ -43,6 +45,8 @@ const UserSchema = new Schema<IUser>({
   },
   role: { type: String, enum: ["user", "admin"], default: "user" },
   isEmailVerified: { type: Boolean, default: false },
+  emailNotifications: { type: Boolean, default: true },
+  profilePicture: { type: String, required: false },
   googleCalendarTokens: {
     accessToken: { type: String, required: false },
     refreshToken: { type: String, required: false },

@@ -1,4 +1,5 @@
 import puppeteer from "puppeteer";
+import path from "path";
 import { TemplateService } from "./templateService";
 import { DataPreprocessor } from "./dataPreprocessor";
 
@@ -31,13 +32,66 @@ export class PDFService {
   }
 
   private async getBrowser() {
-    if (!this.browser) {
-      this.browser = await puppeteer.launch({
+    if (this.browser) return this.browser;
+    const commonArgs = [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--no-first-run",
+      "--no-zygote",
+      // Note: '--single-process' can cause crashes on Windows; omit it
+    ];
+    const tryLaunch = async (opts: any) => {
+      return await puppeteer.launch({
+        // Explicit headless mode for compatibility across versions
         headless: true,
-        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+        args: commonArgs,
+        ...opts,
       });
+    };
+    try {
+      const ep = (puppeteer as any).executablePath ? (puppeteer as any).executablePath() : undefined;
+      if (ep) {
+        this.browser = await tryLaunch({ executablePath: ep });
+        return this.browser;
+      }
+    } catch (e0) { /* continue to next strategy */ }
+
+    // Try channel-based launch (supported in newer Puppeteer versions)
+    try {
+      this.browser = await tryLaunch({ channel: 'chrome' });
+      return this.browser;
+    } catch (eCh) { /* try next */ }
+
+    try {
+      this.browser = await tryLaunch({ channel: 'msedge' });
+      return this.browser;
+    } catch (eEd) { /* try next */ }
+
+    try {
+      this.browser = await tryLaunch({});
+      return this.browser;
+    } catch (e1) {
+      const envPath = process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROME_PATH || process.env.CHROMIUM_PATH;
+      const localAppData = process.env.LOCALAPPDATA || '';
+      const winCandidates = [
+        envPath,
+        'C:/Program Files/Google/Chrome/Application/chrome.exe',
+        'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
+        'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
+        'C:/Program Files/BraveSoftware/Brave-Browser/Application/brave.exe',
+        'C:/Program Files (x86)/BraveSoftware/Brave-Browser/Application/brave.exe',
+        localAppData ? path.join(localAppData, 'BraveSoftware', 'Brave-Browser', 'Application', 'brave.exe') : undefined,
+      ].filter(Boolean) as string[];
+      for (const p of winCandidates) {
+        try {
+          this.browser = await tryLaunch({ executablePath: p });
+          return this.browser;
+        } catch (e2) { /* try next */ }
+      }
+      throw new Error(`Failed to launch headless browser for PDF generation. You may set PUPPETEER_EXECUTABLE_PATH to a Chrome/Chromium/Brave path. Original error: ${e1 instanceof Error ? e1.message : 'unknown'}`);
     }
-    return this.browser;
   }
 
   // ===================================================
@@ -80,11 +134,34 @@ export class PDFService {
       // Generate HTML using template system
       const html = await this.generateReportHTML(reportType, data, dateRange);
 
-      // Set content and wait for all resources to load
-      await page.setContent(html, { 
-        waitUntil: "networkidle0",
-        timeout: 30000 
-      });
+      const documentId = `RPT-${reportType.toUpperCase()}-${Date.now().toString(36).toUpperCase()}-${Math.random()
+        .toString(36)
+        .substring(2, 8)
+        .toUpperCase()}`;
+
+      await page.emulateMediaType('screen');
+
+      // Try the most strict wait first, then relax on retry
+      const loadAttempts: Array<{ waitUntil: any; timeout: number }> = [
+        { waitUntil: 'networkidle0', timeout: 45000 },
+        { waitUntil: 'load', timeout: 45000 },
+        { waitUntil: 'domcontentloaded', timeout: 45000 }
+      ];
+
+      let lastSetContentError: any = null;
+      for (const attempt of loadAttempts) {
+        try {
+          await page.setContent(html, attempt as any);
+          lastSetContentError = null;
+          break;
+        } catch (e) {
+          lastSetContentError = e;
+        }
+      }
+
+      if (lastSetContentError) {
+        throw lastSetContentError;
+      }
 
       // Generate PDF with professional settings
       const pdf = await page.pdf({
@@ -97,8 +174,14 @@ export class PDFService {
           left: "15mm" 
         },
         displayHeaderFooter: true,
-        headerTemplate: '<div style="font-size: 10px; text-align: center; width: 100%; color: #666;">WebProj Hotel Management</div>',
-        footerTemplate: '<div style="font-size: 10px; text-align: center; width: 100%; color: #666;">Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>',
+        headerTemplate: `<div style="font-size: 9px; width: 100%; color: #666; display: flex; justify-content: space-between; padding: 0 10mm;">
+          <span>RedBoat Hotel Management</span>
+          <span>Document ID: ${documentId}</span>
+        </div>`,
+        footerTemplate: `<div style="font-size: 9px; width: 100%; color: #666; display: flex; justify-content: space-between; padding: 0 10mm;">
+          <span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
+          <span>Document ID: ${documentId}</span>
+        </div>`,
         preferCSSPageSize: true
       });
 

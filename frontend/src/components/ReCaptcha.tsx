@@ -32,7 +32,13 @@ declare global {
   }
 }
 
-export function ReCaptcha({
+export interface ReCaptchaHandle {
+  reset: () => void;
+  getResponse: () => string;
+  execute: () => void;
+}
+
+const ReCaptcha = React.forwardRef<ReCaptchaHandle, ReCaptchaProps>(function ReCaptchaInner({
   siteKey,
   onVerify,
   onExpire,
@@ -42,7 +48,7 @@ export function ReCaptcha({
   tabindex = 0,
   className = '',
   id = 'recaptcha'
-}: ReCaptchaProps) {
+}: ReCaptchaProps, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<number | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -117,12 +123,11 @@ export function ReCaptcha({
     }
   };
 
-  // Expose methods via ref
-  React.useImperativeHandle(React.forwardRef(() => null), () => ({
+  React.useImperativeHandle(ref, () => ({
     reset,
     getResponse,
     execute
-  }));
+  }), []);
 
   return (
     <div 
@@ -136,7 +141,7 @@ export function ReCaptcha({
       }}
     />
   );
-}
+});
 
 // Hook for using reCAPTCHA
 export function useReCaptcha() {

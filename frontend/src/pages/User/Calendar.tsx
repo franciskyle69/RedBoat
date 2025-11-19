@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import RoomCalendar from "../../components/RoomCalendar";
 import ErrorBoundary from "../../components/ErrorBoundary";
 import "../../styles/main.css";
+import UserLayout from "../../components/UserLayout";
+import Swal from "sweetalert2";
 
 interface Room {
   _id: string;
@@ -105,7 +107,11 @@ function Calendar() {
       });
 
       if (response.ok) {
-        alert("Booking created successfully!");
+        Swal.fire({
+          icon: "success",
+          title: "Booking created",
+          text: "Your booking was created successfully!",
+        });
         setShowBookingModal(false);
         setSelectedRoom(null);
         setSelectedDate(null);
@@ -120,11 +126,19 @@ function Calendar() {
         window.location.reload();
       } else {
         const errorData = await response.json();
-        alert(`Error: ${errorData.message}`);
+        Swal.fire({
+          icon: "error",
+          title: "Booking failed",
+          text: errorData.message || "Error creating booking",
+        });
       }
     } catch (error) {
       console.error("Error creating booking:", error);
-      alert("Error creating booking");
+      Swal.fire({
+        icon: "error",
+        title: "Booking failed",
+        text: "Error creating booking",
+      });
     }
   };
 
@@ -140,31 +154,14 @@ function Calendar() {
 
   if (loading) {
     return (
-      <div className="user-container">
+      <UserLayout pageTitle="Room Calendar">
         <div className="loading">Loading calendar...</div>
-      </div>
+      </UserLayout>
     );
   }
 
   return (
-    <div className="user-container">
-      <header className="user-header">
-        <h2 className="user-title">Room Calendar</h2>
-        <nav className="user-nav">
-          <Link to="/dashboard" className="user-nav-link">Dashboard</Link>
-          <Link to="/user/profile" className="user-nav-link">Profile</Link>
-          <Link to="/user/bookings" className="user-nav-link">Bookings</Link>
-          <Link to="/user/rooms" className="user-nav-link">Rooms</Link>
-          <Link to="/user/calendar" className="user-nav-link active">Calendar</Link>
-          <Link to="/user/feedback" className="user-nav-link">Feedback</Link>
-          <Link to="/user/settings" className="user-nav-link">Settings</Link>
-          <Link to="/" className="user-logout" onClick={async (e) => {
-            e.preventDefault();
-            try { await fetch("http://localhost:5000/logout", { method: "POST", credentials: "include" }); } catch {}
-            window.location.href = "/";
-          }}>Logout</Link>
-        </nav>
-      </header>
+    <UserLayout pageTitle="Room Calendar">
 
       <div className="calendar-page-content">
         <div className="calendar-page-header">
@@ -234,7 +231,7 @@ function Calendar() {
                   <div className="room-type-badge" style={{ backgroundColor: getRoomTypeColor(selectedRoom.roomType) }}>
                     {selectedRoom.roomType}
                   </div>
-                  <div className="room-price">${selectedRoom.price}/night</div>
+                  <div className="room-price">₱{selectedRoom.price}/night</div>
                   <div className="room-capacity">Up to {selectedRoom.capacity} guests</div>
                 </div>
               </div>
@@ -299,7 +296,7 @@ function Calendar() {
           </div>
         </div>
       )}
-    </div>
+    </UserLayout>
   );
 }
 

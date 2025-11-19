@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import BackButton from "../components/BackButton";
-import FormInput from "../components/FormInput";
+import "../styles/auth.css";
+import Swal from "sweetalert2";
 import GoogleOAuthButton from "../components/GoogleOAuthButton";
 import ReCaptcha, { useReCaptcha } from "../components/ReCaptcha";
 import { getSiteKey } from "../config/recaptcha";
@@ -32,7 +32,11 @@ function SignupPage() {
     
     // Check reCAPTCHA verification
     if (!isVerified) {
-      alert("Please complete the reCAPTCHA verification");
+      Swal.fire({
+        icon: "warning",
+        title: "reCAPTCHA required",
+        text: "Please complete the reCAPTCHA verification before signing up.",
+      });
       return;
     }
     
@@ -72,12 +76,20 @@ function SignupPage() {
         reset(); // Reset reCAPTCHA
         navigate("/verify-code", { replace: true, state: { email } });
       } else {
-        alert(data.message || "Signup failed");
+        Swal.fire({
+          icon: "error",
+          title: "Signup failed",
+          text: data.message || "Signup failed",
+        });
         reset(); // Reset reCAPTCHA on failure
       }
     } catch (err) {
       console.error(err);
-      alert("Server error. Please try again.");
+      Swal.fire({
+        icon: "error",
+        title: "Server error",
+        text: "Something went wrong. Please try again.",
+      });
       reset(); // Reset reCAPTCHA on error
     } finally {
       setLoading(false);
@@ -85,131 +97,166 @@ function SignupPage() {
   };
 
   return (
-    <div style={{ maxWidth: "500px", margin: "50px auto", padding: "0 20px" }}>
-      <BackButton />
-      <h2>Sign Up</h2>
-      <form onSubmit={handleSignup}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
-          <FormInput
-            label="First Name *"
-            type="text"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-          />
-          <FormInput
-            label="Last Name *"
-            type="text"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-          />
+    <div className="auth-container">
+      <div className="auth-card" style={{ maxWidth: "450px" }}>
+        <div className="logo-wrapper">
+          <h2 className="brand-name">REDBOAT</h2>
         </div>
-        
-        <FormInput
-          label="Username"
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        
-        <FormInput
-          label="Email *"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        
-        <FormInput
-          label="Password *"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        
-        <FormInput
-          label="Phone Number"
-          type="tel"
-          value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
-        />
-        
-        <FormInput
-          label="Date of Birth"
-          type="date"
-          value={dateOfBirth}
-          onChange={(e) => setDateOfBirth(e.target.value)}
-        />
-        
-        <div style={{ marginTop: "20px", marginBottom: "10px" }}>
-          <h3 style={{ margin: "0 0 10px 0", fontSize: "16px", color: "#374151" }}>Address (Optional)</h3>
-          <FormInput
-            label="Street Address"
-            type="text"
-            value={address.street}
-            onChange={(e) => setAddress({...address, street: e.target.value})}
-          />
-          
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "10px", marginTop: "10px" }}>
-            <FormInput
-              label="City"
+
+        <form onSubmit={handleSignup} className="auth-form">
+          <div className="name-fields">
+            <div className="form-group">
+              <label>First Name</label>
+              <input
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Enter your first name"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Last Name</label>
+              <input
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Enter your last name"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Username</label>
+            <input
               type="text"
-              value={address.city}
-              onChange={(e) => setAddress({...address, city: e.target.value})}
-            />
-            <FormInput
-              label="State"
-              type="text"
-              value={address.state}
-              onChange={(e) => setAddress({...address, state: e.target.value})}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
+              required
             />
           </div>
-          
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "10px" }}>
-            <FormInput
-              label="ZIP Code"
-              type="text"
-              value={address.zipCode}
-              onChange={(e) => setAddress({...address, zipCode: e.target.value})}
-            />
-            <FormInput
-              label="Country"
-              type="text"
-              value={address.country}
-              onChange={(e) => setAddress({...address, country: e.target.value})}
+
+          <div className="form-group">
+            <label>Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
             />
           </div>
-        </div>
-        
-        {/* reCAPTCHA */}
-        <div style={{ margin: "20px 0", display: "flex", justifyContent: "center" }}>
-          <ReCaptcha
-            siteKey={getSiteKey()}
-            onVerify={handleVerify}
-            onExpire={handleExpire}
-            onError={handleError}
-            theme="light"
-            size="normal"
-          />
-        </div>
-        
-        <button
-          type="submit"
-          style={{ width: "100%", padding: "12px", marginTop: "20px", fontSize: "16px" }}
-          disabled={loading || !isVerified}
-        >
-          {loading ? "Signing up..." : "Sign Up"}
-        </button>
-      </form>
 
-      {/* Separator */}
-      <div style={{ textAlign: "center", margin: "20px 0", color: "#666" }}>
-        Or
-      </div>
+          <div className="form-group">
+            <label>Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Create a password"
+              required
+            />
+          </div>
 
-      {/* Google Button */}
-      <GoogleOAuthButton />
+          <div className="form-group">
+            <label>Phone Number</label>
+            <input
+              type="tel"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              placeholder="Enter your phone number"
+            />
+          </div>
 
-      <div style={{ marginTop: "15px", textAlign: "center" }}>
-        <Link to="/">Already have an account?</Link>
+          <div className="form-group">
+            <label>Date of Birth</label>
+            <input
+              type="date"
+              value={dateOfBirth}
+              onChange={(e) => setDateOfBirth(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Address</label>
+            <input
+              type="text"
+              value={address.street}
+              onChange={(e) => setAddress({...address, street: e.target.value})}
+              placeholder="Street Address"
+            />
+          </div>
+
+          <div className="address-fields">
+            <div className="form-group">
+              <input
+                type="text"
+                value={address.city}
+                onChange={(e) => setAddress({...address, city: e.target.value})}
+                placeholder="City"
+              />
+            </div>
+            <div className="form-group">
+              <input
+                type="text"
+                value={address.state}
+                onChange={(e) => setAddress({...address, state: e.target.value})}
+                placeholder="State"
+              />
+            </div>
+          </div>
+
+          <div className="address-fields">
+            <div className="form-group">
+              <input
+                type="text"
+                value={address.zipCode}
+                onChange={(e) => setAddress({...address, zipCode: e.target.value})}
+                placeholder="ZIP Code"
+              />
+            </div>
+            <div className="form-group">
+              <input
+                type="text"
+                value={address.country}
+                onChange={(e) => setAddress({...address, country: e.target.value})}
+                placeholder="Country"
+              />
+            </div>
+          </div>
+
+          {/* reCAPTCHA */}
+          <div className="recaptcha-container">
+            <ReCaptcha
+              siteKey={getSiteKey()}
+              onVerify={handleVerify}
+              onExpire={handleExpire}
+              onError={handleError}
+              theme="light"
+              size="normal"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="btn-primary"
+            disabled={loading || !isVerified}
+          >
+            {loading ? "Signing up..." : "Sign Up"}
+          </button>
+
+          <div className="divider">
+            <span>or</span>
+          </div>
+
+          <GoogleOAuthButton />
+
+          <p className="auth-links">
+            Already have an account? <Link to="/login">Sign in</Link>
+          </p>
+        </form>
       </div>
     </div>
   );

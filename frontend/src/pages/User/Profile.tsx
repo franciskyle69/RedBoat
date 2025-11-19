@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import "../../styles/main.css";
+import UserLayout from "../../components/UserLayout";
 
 interface UserProfile {
   _id: string;
@@ -21,6 +21,7 @@ interface UserProfile {
   isEmailVerified: boolean;
   createdAt: string;
   updatedAt: string;
+  profilePicture?: string;
 }
 
 function Profile() {
@@ -47,6 +48,7 @@ function Profile() {
     newPassword: "",
     confirmPassword: ""
   });
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -154,6 +156,39 @@ function Profile() {
     }
   };
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setMessage("");
+    setAvatarUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      const response = await fetch("http://localhost:5000/profile/avatar", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (response.ok) {
+        setMessage("Profile picture updated successfully!");
+        await fetchProfile();
+      } else {
+        setMessage(result.message || "Error updating profile picture");
+      }
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      setMessage("Error updating profile picture");
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     if (!dateString) return "Not provided";
     return new Date(dateString).toLocaleDateString();
@@ -167,40 +202,22 @@ function Profile() {
 
   if (loading) {
     return (
-      <div className="user-container">
+      <UserLayout pageTitle="Profile">
         <div className="loading">Loading profile...</div>
-      </div>
+      </UserLayout>
     );
   }
 
   if (!profile) {
     return (
-      <div className="user-container">
+      <UserLayout pageTitle="Profile">
         <div className="error">Failed to load profile</div>
-      </div>
+      </UserLayout>
     );
   }
 
   return (
-    <div className="user-container">
-      <header className="user-header">
-        <h2 className="user-title">My Profile</h2>
-        <nav className="user-nav">
-          <Link to="/dashboard" className="user-nav-link">Dashboard</Link>
-          <Link to="/user/profile" className="user-nav-link active">Profile</Link>
-          <Link to="/user/bookings" className="user-nav-link">Bookings</Link>
-          <Link to="/user/rooms" className="user-nav-link">Rooms</Link>
-          <Link to="/user/calendar" className="user-nav-link">Calendar</Link>
-          <Link to="/user/feedback" className="user-nav-link">Feedback</Link>
-          <Link to="/user/settings" className="user-nav-link">Settings</Link>
-          <Link to="/" className="user-logout" onClick={async (e) => {
-            e.preventDefault();
-            try { await fetch("http://localhost:5000/logout", { method: "POST", credentials: "include" }); } catch {}
-            window.location.href = "/";
-          }}>Logout</Link>
-        </nav>
-      </header>
-
+    <UserLayout pageTitle="Profile">
       {message && (
         <div className={`message ${message.includes('successfully') ? 'success' : 'error'}`}>
           {message}
@@ -208,6 +225,37 @@ function Profile() {
       )}
 
       <div className="profile-content">
+        <div className="profile-section">
+          <div className="profile-header">
+            <h3>Profile Picture</h3>
+          </div>
+          <div className="profile-avatar-section">
+            <div className="avatar-preview">
+              <img
+                src={profile.profilePicture && (profile.profilePicture.startsWith("http://") || profile.profilePicture.startsWith("https://"))
+                  ? profile.profilePicture
+                  : profile.profilePicture && (profile.profilePicture.startsWith("/uploads") || profile.profilePicture.startsWith("uploads/"))
+                    ? `http://localhost:5000${profile.profilePicture.startsWith("/") ? profile.profilePicture : `/${profile.profilePicture}`}`
+                    : "/default-avatar.png"}
+                alt="Profile avatar"
+                style={{ width: 120, height: 120, borderRadius: "50%", objectFit: "cover" }}
+              />
+            </div>
+            <div className="avatar-actions">
+              <label className="user-button secondary" style={{ display: "inline-block", cursor: "pointer" }}>
+                {avatarUploading ? "Uploading..." : "Change Picture"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  style={{ display: "none" }}
+                  disabled={avatarUploading}
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+
         <div className="profile-section">
           <div className="profile-header">
             <h3>Personal Information</h3>
@@ -470,7 +518,7 @@ function Profile() {
           )}
         </div>
       </div>
-    </div>
+    </UserLayout>
   );
 }
 

@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import path from "path";
 
 // Import routes
 import authRoutes from "./routes/authRoutes";
@@ -10,8 +11,11 @@ import userRoutes from "./routes/userRoutes";
 import roomRoutes from "./routes/roomRoutes";
 import bookingRoutes from "./routes/bookingRoutes";
 import reportRoutes from "./routes/reportRoutes";
+import paymentRoutes from "./routes/paymentRoutes";
+import { PaymentController } from "./controllers/paymentController";
 import googleCalendarRoutes from "./routes/googleCalendarRoutes";
 import notificationRoutes from "./routes/notificationRoutes";
+import feedbackRoutes from "./routes/feedbackRoutes";
 
 // Import middleware
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
@@ -22,9 +26,15 @@ const app = express();
 const port = process.env.PORT || 5000;
 const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 
+// Stripe webhook must be registered BEFORE express.json to keep the raw body
+app.post("/payments/webhook", express.raw({ type: "application/json" }), PaymentController.webhook);
+
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
+
+// Serve uploaded files from backend/uploads
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use(cors({ 
   origin: [clientOrigin, "http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:3000"], 
@@ -52,7 +62,9 @@ app.use("/rooms", roomRoutes);
 app.use("/bookings", bookingRoutes);
 app.use("/reports", reportRoutes);
 app.use("/google-calendar", googleCalendarRoutes);
+app.use("/payments", paymentRoutes);
 app.use("/notifications", notificationRoutes);
+app.use("/feedback", feedbackRoutes);
 
 // Test email endpoint (keeping for backward compatibility)
 app.post("/test-email", async (req, res) => {

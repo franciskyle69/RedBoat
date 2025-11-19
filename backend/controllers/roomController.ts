@@ -15,6 +15,39 @@ export class RoomController {
     }
   }
 
+  // Update room images (admin only)
+  static async updateRoomImages(req: AuthenticatedRequest, res: Response) {
+    try {
+      const payload = req.user!;
+      if (!payload || payload.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const roomId = req.params.id;
+      const files = req.files as any[] | undefined;
+
+      if (!files || files.length === 0) {
+        return res.status(400).json({ message: "No images uploaded" });
+      }
+
+      const room = await Room.findById(roomId);
+      if (!room) {
+        return res.status(404).json({ message: "Room not found" });
+      }
+
+      const newImagePaths = files.map((file) => `/uploads/rooms/${file.filename}`);
+      (room as any).images = newImagePaths.slice(0, 5);
+      room.updatedAt = new Date();
+
+      const updatedRoom = await room.save();
+
+      return res.json({ message: "Room images updated", data: updatedRoom });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Server error" });
+    }
+  }
+
   // Get room availability for a specific date range or single date
   static async getRoomAvailability(req: any, res: Response) {
     try {

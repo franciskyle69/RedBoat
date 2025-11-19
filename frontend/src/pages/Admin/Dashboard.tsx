@@ -1,11 +1,12 @@
 import { Link, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "../../styles/main.css";
-import NotificationBell from "../../components/NotificationBell";
+import AdminLayout from "../../components/AdminLayout";
 
 function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | undefined>(undefined);
+  const [dashboard, setDashboard] = useState<any | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,48 +30,70 @@ function AdminDashboard() {
     };
   }, []);
 
+  useEffect(() => {
+    if (userRole !== "admin") return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("http://localhost:5000/reports/dashboard", {
+          credentials: "include",
+        });
+        if (!cancelled && res.ok) {
+          const data = await res.json();
+          setDashboard(data?.data || null);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userRole]);
+
   if (loading) return <div className="admin-loading">Loading...</div>;
   if (userRole !== "admin") return <Navigate to="/dashboard" replace />;
+  const occupied = dashboard?.overview?.occupiedToday ?? 0;
+  const totalRooms = dashboard?.overview?.totalRooms ?? 0;
+  const checkInsToday = dashboard?.today?.checkIns ?? 0;
+  const roomsNeedCleaning = dashboard?.overview?.roomsNeedingCleaning ?? 0;
+  const revenueToday = dashboard?.overview?.revenueToday ?? 0;
+  
   return (
-    <div className="admin-container">
-      <header className="admin-header">
-        <h2 className="admin-title">Hotel Management Dashboard</h2>
-        <nav className="admin-nav">
-          <NotificationBell />
-          <Link to="/admin/user-management" className="admin-nav-link">Users</Link>
-          <Link to="/admin/room-management" className="admin-nav-link">Rooms</Link>
-          <Link to="/admin/bookings" className="admin-nav-link">Bookings</Link>
-          <Link to="/admin/calendar" className="admin-nav-link">Calendar</Link>
-          <Link to="/admin/housekeeping" className="admin-nav-link">Housekeeping</Link>
-          <Link to="/admin/reports" className="admin-nav-link">Reports</Link>
-          <Link to="/admin/settings" className="admin-nav-link">Settings</Link>
-          <Link to="/" className="admin-logout" onClick={async (e) => {
-            e.preventDefault();
-            try { await fetch("http://localhost:5000/logout", { method: "POST", credentials: "include" }); } catch {}
-            window.location.href = "/";
-          }}>Logout</Link>
-        </nav>
-      </header>
-      <div className="admin-grid">
-        <div className="admin-card">
-          <h3 className="admin-card-title">Today's Overview</h3>
-          <p className="admin-card-description">Quick access to daily hotel operations.</p>
-          <div className="admin-quick-actions">
-            <Link to="/admin/bookings" className="admin-quick-link">Check-ins</Link>
-            <Link to="/admin/housekeeping" className="admin-quick-link success">Housekeeping</Link>
+    <AdminLayout pageTitle="Dashboard">
+      <section className="cards">
+        <div className="card">
+          <h2>Today's Overview</h2>
+          <p>Quick access to daily hotel operations.</p>
+          <div className="actions">
+            <Link to="/admin/bookings" className="btn blue">Check-ins</Link>
+            <Link to="/admin/housekeeping" className="btn success">Housekeeping</Link>
           </div>
         </div>
-        <div className="admin-card">
-          <h3 className="admin-card-title">Hotel Status</h3>
-          <ul className="admin-status-list">
-            <li>🏨 45/50 Rooms Occupied</li>
-            <li>📅 12 Check-ins Today</li>
-            <li>🧹 8 Rooms Need Cleaning</li>
-            <li>💰 $2,450 Revenue Today</li>
+
+        <div className="card">
+          <h2>Hotel Status</h2>
+          <ul className="status-list">
+            <li>
+              <span className="material-icons-outlined">event_available</span>
+              {occupied}/{totalRooms} Rooms Occupied
+            </li>
+            <li>
+              <span className="material-icons-outlined">meeting_room</span>
+              {checkInsToday} Check-ins Today
+            </li>
+            <li>
+              <span className="material-icons-outlined">cleaning_services</span>
+              {roomsNeedCleaning} Rooms Need Cleaning
+            </li>
+            <li>
+              <span className="material-icons-outlined">attach_money</span>
+              ₱{revenueToday}
+            </li>
           </ul>
         </div>
-      </div>
-    </div>
+      </section>
+    </AdminLayout>
   );
 }
 

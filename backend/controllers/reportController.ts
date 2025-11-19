@@ -119,8 +119,11 @@ export class ReportController {
         }
       });
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Server error" });
+      console.error('[PDF][occupancy] generation failed:', err);
+      res.status(500).json({ 
+        message: "Failed to generate occupancy PDF",
+        details: err instanceof Error ? err.message : String(err)
+      });
     }
   }
 
@@ -247,8 +250,11 @@ export class ReportController {
         }
       });
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Server error" });
+      console.error('[PDF][occupancy] generation failed:', err);
+      res.status(500).json({ 
+        message: 'Failed to generate occupancy PDF',
+        details: err instanceof Error ? err.message : String(err)
+      });
     }
   }
 
@@ -392,14 +398,9 @@ export class ReportController {
       }
 
       // Get current stats
-      const totalRooms = await Room.countDocuments({ isAvailable: true });
+      const totalRooms = await Room.countDocuments({});
       const totalUsers = await User.countDocuments();
       const totalBookings = await Booking.countDocuments();
-      
-      // Active bookings (confirmed or checked-in)
-      const activeBookings = await Booking.countDocuments({
-        status: { $in: ["confirmed", "checked-in"] }
-      });
 
       // Today's check-ins and check-outs
       const today = new Date();
@@ -410,13 +411,23 @@ export class ReportController {
 
       const todaysCheckIns = await Booking.countDocuments({
         checkInDate: { $gte: todayStart, $lte: todayEnd },
-        status: "confirmed"
+        status: { $in: ["confirmed", "checked-in"] }
       });
 
       const todaysCheckOuts = await Booking.countDocuments({
         checkOutDate: { $gte: todayStart, $lte: todayEnd },
         status: "checked-in"
       });
+
+      // Compute currently occupied rooms (bookings overlapping today)
+      const occupiedToday = await Booking.countDocuments({
+        status: { $in: ["confirmed", "checked-in"] },
+        checkInDate: { $lte: todayEnd },
+        checkOutDate: { $gte: todayStart }
+      });
+
+      // Rooms needing cleaning (dirty)
+      const roomsNeedingCleaning = await Room.countDocuments({ housekeepingStatus: 'dirty' });
 
       // Recent bookings (last 7 days)
       const sevenDaysAgo = new Date();
@@ -438,14 +449,23 @@ export class ReportController {
 
       const monthlyRevenue = monthlyBookings.reduce((sum, booking) => sum + booking.totalAmount, 0);
 
+      // Revenue today (sum of bookings marked paid today)
+      const paidToday = await Booking.find({
+        paymentStatus: 'paid',
+        updatedAt: { $gte: todayStart, $lte: todayEnd }
+      }).select('totalAmount');
+      const revenueToday = paidToday.reduce((sum, b) => sum + b.totalAmount, 0);
+
       res.json({
         data: {
           overview: {
             totalRooms,
             totalUsers,
             totalBookings,
-            activeBookings,
-            monthlyRevenue
+            occupiedToday,
+            roomsNeedingCleaning,
+            monthlyRevenue,
+            revenueToday
           },
           today: {
             checkIns: todaysCheckIns,
@@ -568,8 +588,11 @@ export class ReportController {
       res.send(pdfBuffer);
 
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Server error" });
+      console.error('[PDF][occupancy] generation failed:', err);
+      res.status(500).json({ 
+        message: 'Failed to generate occupancy PDF',
+        details: err instanceof Error ? err.message : String(err)
+      });
     }
   }
 
@@ -660,8 +683,11 @@ export class ReportController {
       res.send(pdfBuffer);
 
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Server error" });
+      console.error('[PDF][revenue] generation failed:', err);
+      res.status(500).json({ 
+        message: 'Failed to generate revenue PDF',
+        details: err instanceof Error ? err.message : String(err)
+      });
     }
   }
 
@@ -736,8 +762,11 @@ export class ReportController {
       res.send(pdfBuffer);
 
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Server error" });
+      console.error('[PDF][bookings] generation failed:', err);
+      res.status(500).json({ 
+        message: 'Failed to generate bookings PDF',
+        details: err instanceof Error ? err.message : String(err)
+      });
     }
   }
 }

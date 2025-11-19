@@ -82,13 +82,13 @@ export class AuthController {
       });
 
       // Send verification email
-      const subject = "Your WebProj verification code";
+      const subject = "Your RedBoat verification code";
       const html = `
         <div style="background:#f6f8fb;padding:24px 0;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">
             <tr>
               <td style="padding:20px 24px;background:#0ea5e9;color:#ffffff;">
-                <h1 style="margin:0;font-size:18px;">WebProj</h1>
+                <h1 style="margin:0;font-size:18px;">RedBoat</h1>
               </td>
             </tr>
             <tr>
@@ -103,7 +103,7 @@ export class AuthController {
             </tr>
             <tr>
               <td style="padding:16px 24px;background:#f8fafc;color:#64748b;font-size:12px;text-align:center;">
-                © ${new Date().getFullYear()} WebProj
+                © ${new Date().getFullYear()} RedBoat
               </td>
             </tr>
           </table>
@@ -207,8 +207,9 @@ export class AuthController {
       res
         .cookie("auth", token, {
           httpOnly: true,
-          secure: false,
-          sameSite: "lax",
+          secure: true,
+          sameSite: "none",
+          path: '/',
           maxAge: 7 * 24 * 60 * 60 * 1000,
         })
         .json({
@@ -429,8 +430,9 @@ export class AuthController {
       return res
         .cookie("auth", token, {
           httpOnly: true,
-          secure: false,
-          sameSite: "lax",
+          secure: true,
+          sameSite: "none",
+          path: '/',
           maxAge: 7 * 24 * 60 * 60 * 1000,
         })
         .json({
@@ -458,7 +460,7 @@ export class AuthController {
 
   // LOGOUT
   static async logout(req: Request, res: Response) {
-    res.clearCookie("auth", { httpOnly: true, secure: false, sameSite: "lax" }).json({ message: "Logged out" });
+    res.clearCookie("auth", { httpOnly: true, secure: true, sameSite: "none", path: '/' }).json({ message: "Logged out" });
   }
 
   // PROMOTE TO ADMIN

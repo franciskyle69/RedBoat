@@ -1,0 +1,633 @@
+/* Theme variables */
+:root[data-theme="light"] {
+  --bg: #f5f7fb;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --shadow: 0 6px 20px rgba(16, 24, 40, 0.06);
+  --accent: #c62828; /* brand red */
+  --accent-600: #a71f1f;
+  --primary: #2563eb;
+  --primary-600: #1d4ed8;
+  --chip: #eef2ff;
+}
+
+:root[data-theme="dark"] {
+  /* Navy-based dark palette + teal + pale yellow */
+  --bg: #070e2e;         /* deep navy */
+  --surface: #0c1a3a;    /* card surface navy */
+  --surface-2: #0a1530;  /* topbar/sidebar */
+  --text: #f3f4f6;       /* near-white for high contrast */
+  --muted: #dde6f7;      /* brighter secondary text for readability */
+  --border: #24406c;     /* slightly lighter for clearer edges */
+  --shadow: none;
+  --accent: #ef4444;     /* keep brand red */
+  --accent-600: #dc2626;
+  --primary: #0f766e;    /* teal */
+  --primary-600: #115e59;/* darker teal */
+  --chip: #fff4bf;       /* pale yellow chips */
+}
+
+/* Global surfaces */
+html[data-theme] body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Base */
+html[data-theme="dark"] body {
+  background-color: #0b1220;
+  color: #e5e7eb;
+}
+
+/* Layout backgrounds and surfaces */
+html[data-theme="dark"] .admin-layout {
+  background: var(--bg);
+}
+
+/* Light layout tweaks */
+html[data-theme="light"] .admin-layout {
+  background: var(--bg);
+}
+
+html[data-theme="dark"] .sidebar {
+  background: var(--surface-2);
+  border-right-color: var(--border);
+}
+
+html[data-theme="light"] .sidebar {
+  background: var(--surface);
+  border-right-color: var(--border);
+}
+
+html[data-theme="dark"] .topbar {
+  background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface) 100%);
+  border-bottom-color: var(--border);
+}
+
+html[data-theme="light"] .topbar {
+  background: linear-gradient(180deg, #ffffff 0%, #fafcff 100%);
+  border-bottom-color: var(--border);
+}
+
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .bookings-table-container,
+html[data-theme="dark"] .bookings-list-view,
+html[data-theme="dark"] .booking-card,
+html[data-theme="dark"] .user-card,
+html[data-theme="dark"] .admin-card,
+html[data-theme="dark"] .admin-section,
+html[data-theme="dark"] .report-types,
+html[data-theme="dark"] .report-display,
+html[data-theme="dark"] .report-section {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+/* Housekeeping cards - ensure good contrast in dark mode */
+html[data-theme="dark"] .housekeeping-room-card {
+  background: var(--surface);
+  border-color: var(--border);
+}
+html[data-theme="dark"] .room-details p {
+  color: var(--muted);
+}
+html[data-theme="dark"] .room-details strong,
+html[data-theme="dark"] .housekeeping-assign-label {
+  color: var(--text);
+}
+html[data-theme="dark"] .housekeeping-assign-display span {
+  color: var(--text);
+}
+html[data-theme="dark"] .housekeeping-status-button {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+html[data-theme="light"] .card,
+html[data-theme="light"] .bookings-table-container,
+html[data-theme="light"] .bookings-list-view,
+html[data-theme="light"] .booking-card,
+html[data-theme="light"] .user-card,
+html[data-theme="light"] .admin-card,
+html[data-theme="light"] .admin-section,
+html[data-theme="light"] .report-types,
+html[data-theme="light"] .report-display,
+html[data-theme="light"] .report-section {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: var(--shadow);
+}
+
+/* Text colors */
+html[data-theme="dark"] .topbar h2,
+html[data-theme="dark"] .card h2,
+html[data-theme="dark"] .card h3,
+html[data-theme="dark"] .admin-card-title,
+html[data-theme="dark"] .user-card-title,
+html[data-theme="dark"] .guest-name,
+html[data-theme="dark"] .room-number,
+html[data-theme="dark"] .rooms-header h3,
+html[data-theme="dark"] .profile-header h3 {
+  color: var(--text);
+}
+
+/* Sidebar user name needs hard override due to admin-layout.css default (#333) */
+html[data-theme="dark"] .sidebar .user-info .name {
+  color: var(--text) !important;
+}
+
+/* Ensure all headings are readable in dark mode */
+html[data-theme="dark"] h1,
+html[data-theme="dark"] h2,
+html[data-theme="dark"] h3,
+html[data-theme="dark"] h4,
+html[data-theme="dark"] h5,
+html[data-theme="dark"] h6 {
+  color: var(--text);
+}
+
+html[data-theme="light"] .topbar h2,
+html[data-theme="light"] .card h2,
+html[data-theme="light"] .admin-card-title,
+html[data-theme="light"] .user-card-title {
+  color: var(--text);
+}
+
+html[data-theme="dark"] .menu-item,
+html[data-theme="dark"] .card p,
+html[data-theme="dark"] .user-card-description,
+html[data-theme="dark"] .date,
+html[data-theme="dark"] .user-info .role,
+html[data-theme="dark"] .user-info .name,
+html[data-theme="dark"] .admin-card-description,
+html[data-theme="dark"] .guest-email,
+html[data-theme="dark"] .room-type,
+html[data-theme="dark"] .status-name,
+html[data-theme="dark"] .summary-label,
+html[data-theme="dark"] .detail-item,
+html[data-theme="dark"] .room-capacity,
+html[data-theme="dark"] .room-description {
+  color: var(--muted);
+}
+
+/* Ensure label/value pairs are readable */
+html[data-theme="dark"] .detail-item strong,
+html[data-theme="dark"] .form-group label,
+html[data-theme="dark"] .info-item label,
+html[data-theme="dark"] .booking-summary h4,
+html[data-theme="dark"] .report-section h4 {
+  color: var(--muted);
+}
+html[data-theme="dark"] .info-item span,
+html[data-theme="dark"] .summary-row,
+html[data-theme="dark"] .detail-item span,
+html[data-theme="dark"] .room-price,
+html[data-theme="dark"] .user-card-button,
+html[data-theme="dark"] .admin-card-button {
+  color: var(--text);
+}
+
+/* Room and booking titles */
+html[data-theme="dark"] .room-info h4,
+html[data-theme="dark"] .booking-header h4 {
+  color: var(--text);
+}
+
+html[data-theme="light"] .menu-item,
+html[data-theme="light"] .card p,
+html[data-theme="light"] .user-card-description,
+html[data-theme="light"] .date,
+html[data-theme="light"] .user-info .role,
+html[data-theme="light"] .admin-card-description {
+  color: var(--muted);
+}
+
+/* User content cards and sections */
+html[data-theme="dark"] .profile-section,
+html[data-theme="dark"] .booking-summary,
+html[data-theme="dark"] .detail-section,
+html[data-theme="dark"] .selected-info,
+html[data-theme="dark"] .info-item,
+html[data-theme="dark"] .security-info,
+html[data-theme="dark"] .room-type,
+html[data-theme="dark"] .room-card,
+html[data-theme="dark"] .room-calendar {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+html[data-theme="light"] .profile-section,
+html[data-theme="light"] .booking-summary,
+html[data-theme="light"] .detail-section,
+html[data-theme="light"] .selected-info,
+html[data-theme="light"] .info-item,
+html[data-theme="light"] .security-info,
+html[data-theme="light"] .room-type,
+html[data-theme="light"] .room-card,
+html[data-theme="light"] .room-calendar {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: var(--shadow);
+}
+
+html[data-theme="dark"] .profile-header,
+html[data-theme="dark"] .admin-section-header,
+html[data-theme="dark"] .calendar-days-header {
+  background: var(--surface-2);
+  border-bottom-color: var(--border);
+}
+
+html[data-theme="light"] .profile-header,
+html[data-theme="light"] .admin-section-header,
+html[data-theme="light"] .calendar-days-header {
+  background: var(--surface-2);
+  border-bottom-color: var(--border);
+}
+
+/* User/admin buttons */
+html[data-theme="dark"] .user-card-button,
+html[data-theme="dark"] .admin-card-button,
+html[data-theme="dark"] .btn-view-details,
+html[data-theme="dark"] .btn-browse-rooms,
+html[data-theme="dark"] .calendar-nav-btn,
+html[data-theme="dark"] .user-button.primary {
+  background: var(--accent-600);
+  color: #fff;
+}
+html[data-theme="light"] .user-card-button,
+html[data-theme="light"] .admin-card-button,
+html[data-theme="light"] .btn-view-details,
+html[data-theme="light"] .btn-browse-rooms,
+html[data-theme="light"] .calendar-nav-btn,
+html[data-theme="light"] .user-button.primary {
+  background: var(--accent);
+  color: #fff;
+}
+html[data-theme="dark"] .user-card-button.secondary,
+html[data-theme="dark"] .user-button.secondary,
+html[data-theme="dark"] .btn-cancel {
+  background: #374151;
+  color: #e5e7eb;
+}
+html[data-theme="light"] .user-card-button.secondary,
+html[data-theme="light"] .user-button.secondary,
+html[data-theme="light"] .btn-cancel {
+  background: #6b7280;
+  color: #fff;
+}
+html[data-theme="dark"] .btn-confirm {
+  background: var(--primary);
+  color: #fff;
+}
+html[data-theme="dark"] .btn-cancel-booking {
+  background: #ef4444;
+  color: #fff;
+}
+html[data-theme="light"] .btn-confirm {
+  background: #10b981;
+  color: #fff;
+}
+html[data-theme="light"] .btn-cancel-booking {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* Tags and subtle chips */
+html[data-theme="dark"] .amenity-tag,
+html[data-theme="dark"] .room-type-badge {
+  background: var(--chip);
+  color: #1f2937;
+}
+html[data-theme="light"] .amenity-tag,
+html[data-theme="light"] .room-type-badge {
+  background: var(--chip);
+  color: #1f2937;
+}
+
+/* Calendar grid cells */
+html[data-theme="dark"] .calendar-grid,
+html[data-theme="dark"] .calendar-day-row,
+html[data-theme="dark"] .day-cell,
+html[data-theme="dark"] .room-cell {
+  border-color: var(--border);
+}
+html[data-theme="dark"] .day-cell:hover {
+  background: #0f1c3b;
+}
+
+/* Calendar text colors in dark mode for better contrast */
+html[data-theme="dark"] .room-calendar .calendar-title {
+  color: var(--text);
+}
+html[data-theme="dark"] .room-calendar .day-number {
+  color: var(--text);
+}
+html[data-theme="dark"] .room-calendar .day-of-week {
+  color: #aeb7cb;
+}
+html[data-theme="dark"] .room-calendar .calendar-legend span {
+  color: var(--muted);
+}
+html[data-theme="dark"] .room-calendar .day-cell.past-date {
+  color: #6b7280;
+}
+
+/* Filters and segmented controls (User/Admin) */
+html[data-theme="dark"] .toggle-btn,
+html[data-theme="dark"] .filter-btn {
+  background: transparent;
+  color: var(--muted);
+  border-color: var(--border);
+}
+html[data-theme="dark"] .toggle-btn:hover,
+html[data-theme="dark"] .filter-btn:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+html[data-theme="dark"] .toggle-btn.active,
+html[data-theme="dark"] .filter-btn.active {
+  background: var(--primary);
+  color: #0b1220;
+  border-color: var(--primary);
+}
+html[data-theme="light"] .calendar-grid,
+html[data-theme="light"] .calendar-day-row,
+html[data-theme="light"] .day-cell,
+html[data-theme="light"] .room-cell {
+  border-color: var(--border);
+}
+html[data-theme="light"] .day-cell:hover {
+  background: #f8fafc;
+}
+
+html[data-theme="dark"] .menu-label {
+  color: #6b7280;
+}
+
+/* Menu and hover states */
+html[data-theme="dark"] .menu-item:hover {
+  background: #0b1220;
+}
+
+html[data-theme="dark"] .menu-item.active {
+  background: #1f2937;
+  color: #fca5a5;
+}
+html[data-theme="light"] .menu-item:hover {
+  background: #f1f4ff;
+}
+html[data-theme="light"] .menu-item.active {
+  background: #e8edff;
+  color: var(--accent);
+}
+
+/* Improve button interaction and focus */
+html[data-theme] .btn,
+html[data-theme] .admin-button,
+html[data-theme] .user-button {
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+html[data-theme] .btn:active,
+html[data-theme] .admin-button:active,
+html[data-theme] .user-button:active {
+  transform: translateY(1px);
+}
+html[data-theme] .btn:focus-visible,
+html[data-theme] .admin-button:focus-visible,
+html[data-theme] .user-button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Tables */
+html[data-theme="dark"] .bookings-table th {
+  background: #0b1220;
+  color: #e5e7eb;
+  border-bottom-color: #1f2937;
+}
+
+html[data-theme="dark"] .bookings-table tr:hover {
+  background: #111827;
+}
+
+html[data-theme="dark"] .bookings-table td {
+  border-bottom-color: #162033;
+}
+
+/* Generic buttons used in App.css */
+html[data-theme="dark"] .btn-outline {
+  border-color: #60a5fa;
+  color: #60a5fa;
+}
+
+html[data-theme="dark"] .btn-outline:hover {
+  background-color: #60a5fa;
+  color: #0b1220;
+}
+
+/* Admin layout button variants */
+html[data-theme="dark"] .btn.primary { /* red */
+  background: #b91c1c;
+  color: #fff;
+}
+html[data-theme="dark"] .btn.primary:hover {
+  background: #991b1b;
+}
+
+html[data-theme="dark"] .btn.grey {
+  background: #374151;
+  color: #e5e7eb;
+}
+html[data-theme="dark"] .btn.grey:hover {
+  background: #1f2937;
+}
+
+html[data-theme="dark"] .btn.blue {
+  background: #2563eb;
+  color: #fff;
+}
+html[data-theme="dark"] .btn.blue:hover {
+  background: #1d4ed8;
+}
+
+/* Messages */
+html[data-theme="dark"] .error-message,
+html[data-theme="dark"] .message.error {
+  background-color: #2b0b0b;
+  border-color: #7f1d1d;
+  color: #fca5a5;
+}
+
+html[data-theme="dark"] .success-message,
+html[data-theme="dark"] .message.success {
+  background-color: #0b2b18;
+  border-color: #064e3b;
+  color: #bbf7d0;
+}
+
+/* Borders and subtle surfaces */
+html[data-theme="dark"] .admin-section-header,
+html[data-theme="dark"] .modal-content,
+html[data-theme="dark"] .report-actions,
+html[data-theme="dark"] .report-summary,
+html[data-theme="dark"] .booking-card {
+  background: #0f172a;
+  border-color: #1f2a44;
+}
+
+/* Inputs */
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+  color: #aeb7cb;
+}
+html[data-theme="dark"] input:disabled,
+html[data-theme="dark"] select:disabled,
+html[data-theme="dark"] textarea:disabled {
+  background: #0b1633;
+  color: #93a1bf;
+  border-color: var(--border);
+}
+html[data-theme="dark"] .form-group label {
+  color: #b9c3d8;
+}
+
+/* Status badges and chips */
+html[data-theme="dark"] .status-badge {
+  background: var(--primary);
+  color: #071225;
+}
+html[data-theme="dark"] .status-badge.checked-out,
+html[data-theme="dark"] .status-badge.cancelled {
+  background: #334155;
+  color: #e5e7eb;
+}
+
+/* Reports page - better contrast in dark mode */
+html[data-theme="dark"] .reports-content {
+  background: transparent;
+}
+html[data-theme="dark"] .reports-controls,
+html[data-theme="dark"] .report-types,
+html[data-theme="dark"] .report-display {
+  background: var(--surface);
+  border-color: var(--border);
+}
+html[data-theme="dark"] .report-summary {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+html[data-theme="dark"] .report-summary h3,
+html[data-theme="dark"] .summary-value {
+  color: var(--text);
+}
+html[data-theme="dark"] .summary-label {
+  color: var(--muted);
+}
+html[data-theme="dark"] .report-section {
+  background: var(--surface);
+  border-color: var(--border);
+}
+html[data-theme="dark"] .report-section h4 {
+  color: var(--text);
+  border-bottom-color: var(--border);
+}
+html[data-theme="dark"] .room-type-item,
+html[data-theme="dark"] .daily-item {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+html[data-theme="dark"] .room-type-name,
+html[data-theme="dark"] .daily-date {
+  color: var(--text);
+}
+html[data-theme="dark"] .room-type-bookings {
+  color: var(--muted);
+}
+
+/* Reports inner cards - dark mode adjustments */
+html[data-theme="dark"] .revenue-item,
+html[data-theme="dark"] .payment-item,
+html[data-theme="dark"] .customer-item,
+html[data-theme="dark"] .status-item,
+html[data-theme="dark"] .popularity-item,
+html[data-theme="dark"] .source-item {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+html[data-theme="dark"] .revenue-type,
+html[data-theme="dark"] .payment-label,
+html[data-theme="dark"] .customer-name,
+html[data-theme="dark"] .status-name,
+html[data-theme="dark"] .popularity-type,
+html[data-theme="dark"] .source-name {
+  color: var(--muted);
+}
+html[data-theme="dark"] .payment-count,
+html[data-theme="dark"] .status-count,
+html[data-theme="dark"] .source-count {
+  color: var(--text);
+}
+html[data-theme="dark"] .customer-email {
+  color: var(--muted);
+}
+html[data-theme="dark"] .daily-occupied {
+  color: var(--muted);
+}
+
+/* Report type buttons (Occupancy / Revenue / Booking Analytics) - dark mode */
+html[data-theme="dark"] .report-buttons .admin-button {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+html[data-theme="dark"] .report-buttons .admin-button:hover {
+  background: var(--surface-2);
+}
+html[data-theme="dark"] .report-buttons .admin-button.active {
+  background: var(--accent-600);
+  border-color: var(--accent-600);
+  color: #fff;
+}
+
+
+/* Landing / marketing pages - ensure dark mode text is readable */
+html[data-theme="dark"] .landing-page {
+  background: var(--bg);
+  color: var(--text);
+}
+html[data-theme="dark"] .landing-page .section-heading h2,
+html[data-theme="dark"] .landing-page .feature-card h3,
+html[data-theme="dark"] .landing-page .rooms-section .room .text h3,
+html[data-theme="dark"] .landing-page footer .location-widget h4,
+html[data-theme="dark"] .landing-page footer .contact-widget h4,
+html[data-theme="dark"] .landing-page footer .follow-us h4 {
+  color: var(--text);
+}
+html[data-theme="dark"] .landing-page .section-heading p,
+html[data-theme="dark"] .landing-page .feature-card p,
+html[data-theme="dark"] .landing-page .rooms-section .room .text ul.list li,
+html[data-theme="dark"] .landing-page .about p,
+html[data-theme="dark"] .landing-page footer .sub-footer p,
+html[data-theme="dark"] .landing-page footer .about-widget p,
+html[data-theme="dark"] .landing-page footer .location-widget p,
+html[data-theme="dark"] .landing-page footer .contact-widget p,
+html[data-theme="dark"] .landing-page footer .follow-us p,
+html[data-theme="dark"] .landing-page footer .follow-us .social-links li a {
+  color: var(--muted);
+}
+html[data-theme="dark"] .landing-page .rooms-section .room .text span.price {
+  color: #fbbf24; /* highlight price with a warm accent in dark mode */
+}

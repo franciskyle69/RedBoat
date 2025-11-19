@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import RoomCalendar from "../../components/RoomCalendar";
 import ErrorBoundary from "../../components/ErrorBoundary";
 import "../../styles/main.css";
+import AdminLayout from "../../components/AdminLayout";
+import { successAlert, errorAlert } from "../../utils/adminSwal";
 
 interface Room {
   _id: string;
@@ -18,9 +20,7 @@ interface Room {
 interface Booking {
   _id: string;
   user: {
-    firstName: string;
-    lastName: string;
-    email: string;
+    username: string;
   };
   room: {
     roomNumber: string;
@@ -127,16 +127,25 @@ function AdminCalendar() {
       });
 
       if (response.ok) {
-        alert('Booking status updated successfully!');
+        successAlert({
+          title: 'Status updated',
+          text: 'Booking status updated successfully!',
+        });
         fetchBookings(); // Refresh bookings
         setShowBookingDetails(false);
         setSelectedBooking(null);
       } else {
-        alert('Error updating booking status');
+        errorAlert({
+          title: 'Update failed',
+          text: 'Error updating booking status',
+        });
       }
     } catch (error) {
       console.error('Error updating booking status:', error);
-      alert('Error updating booking status');
+      errorAlert({
+        title: 'Update failed',
+        text: 'Error updating booking status',
+      });
     }
   };
 
@@ -162,32 +171,14 @@ function AdminCalendar() {
 
   if (loading) {
     return (
-      <div className="admin-container">
+      <AdminLayout pageTitle="Calendar">
         <div className="loading">Loading calendar...</div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="admin-container">
-      <header className="admin-header">
-        <h2 className="admin-title">Admin Calendar</h2>
-        <nav className="admin-nav">
-          <Link to="/admin" className="admin-nav-link">Dashboard</Link>
-          <Link to="/admin/user-management" className="admin-nav-link">Users</Link>
-          <Link to="/admin/room-management" className="admin-nav-link">Rooms</Link>
-          <Link to="/admin/bookings" className="admin-nav-link">Bookings</Link>
-          <Link to="/admin/calendar" className="admin-nav-link active">Calendar</Link>
-          <Link to="/admin/housekeeping" className="admin-nav-link">Housekeeping</Link>
-          <Link to="/admin/reports" className="admin-nav-link">Reports</Link>
-          <Link to="/admin/settings" className="admin-nav-link">Settings</Link>
-          <Link to="/" className="admin-logout" onClick={async (e) => {
-            e.preventDefault();
-            try { await fetch("http://localhost:5000/logout", { method: "POST", credentials: "include" }); } catch {}
-            window.location.href = "/";
-          }}>Logout</Link>
-        </nav>
-      </header>
+    <AdminLayout pageTitle="Calendar">
 
       <div className="admin-calendar-content">
         <div className="admin-calendar-header">
@@ -239,8 +230,7 @@ function AdminCalendar() {
                   
                   <div className="booking-details">
                     <div className="guest-info">
-                      <strong>{booking.user.firstName} {booking.user.lastName}</strong>
-                      <span>{booking.user.email}</span>
+                      <strong>{booking.user.username}</strong>
                     </div>
                     
                     <div className="date-info">
@@ -256,7 +246,7 @@ function AdminCalendar() {
                     
                     <div className="booking-meta">
                       <span>{booking.numberOfGuests} guests</span>
-                      <span>${booking.totalAmount}</span>
+                      <span>₱{booking.totalAmount}</span>
                       <span className={`payment-status ${booking.paymentStatus}`}>
                         {booking.paymentStatus}
                       </span>
@@ -290,7 +280,7 @@ function AdminCalendar() {
                   {getBookingsForDate(selectedDate).map((booking) => (
                     <div key={booking._id} className="booking-item">
                       <span className="room-number">Room {booking.room.roomNumber}</span>
-                      <span className="guest-name">{booking.user.firstName} {booking.user.lastName}</span>
+                      <span className="guest-name">{booking.user.username}</span>
                       <span 
                         className="status-badge"
                         style={{ backgroundColor: getStatusColor(booking.status) }}
@@ -355,8 +345,7 @@ function AdminCalendar() {
                 <div className="form-group">
                   <label>Guest Information</label>
                   <div className="guest-details">
-                    <p><strong>Name:</strong> {selectedBooking.user.firstName} {selectedBooking.user.lastName}</p>
-                    <p><strong>Email:</strong> {selectedBooking.user.email}</p>
+                    <p><strong>Username:</strong> {selectedBooking.user.username}</p>
                   </div>
                 </div>
 
@@ -373,7 +362,7 @@ function AdminCalendar() {
                   <div className="booking-meta-details">
                     <p><strong>Room:</strong> {selectedBooking.room.roomNumber} ({selectedBooking.room.roomType})</p>
                     <p><strong>Guests:</strong> {selectedBooking.numberOfGuests}</p>
-                    <p><strong>Total Amount:</strong> ${selectedBooking.totalAmount}</p>
+                    <p><strong>Total Amount:</strong> ₱{selectedBooking.totalAmount}</p>
                     <p><strong>Payment Status:</strong> {selectedBooking.paymentStatus}</p>
                   </div>
                 </div>
@@ -430,7 +419,7 @@ function AdminCalendar() {
           </div>
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 }
 

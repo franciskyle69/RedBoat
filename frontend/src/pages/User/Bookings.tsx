@@ -1,27 +1,11 @@
 import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { useNotifications } from "../../contexts/NotificationContext";
 import "../../styles/main.css";
-
-interface UserBooking {
-  _id: string;
-  room: {
-    _id: string;
-    roomNumber: string;
-    roomType: string;
-    price: number;
-  };
-  checkInDate: string;
-  checkOutDate: string;
-  numberOfGuests: number;
-  totalAmount: number;
-  status: "pending" | "confirmed" | "checked-in" | "checked-out" | "cancelled";
-  specialRequests?: string;
-  paymentStatus: "pending" | "paid" | "refunded";
-  adminNotes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import UserLayout from "../../components/UserLayout";
+import { getUserBookings, requestUserCancellation, UserBooking } from "../../api/bookings";
+import { createCheckoutSession } from "../../api/payments";
+import Swal from "sweetalert2";
 
 function Bookings() {
   const [searchParams] = useSearchParams();
@@ -45,46 +29,72 @@ function Bookings() {
 
   const fetchBookings = async () => {
     try {
-      const response = await fetch("http://localhost:5000/bookings/user-bookings", {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setBookings(data.data);
-      }
-    } catch (error) {
+      const data = await getUserBookings();
+      setBookings(data);
+    } catch (error: any) {
       console.error("Error fetching bookings:", error);
+      notify(error?.message || "Error fetching bookings", "error");
     } finally {
       setLoading(false);
     }
   };
 
   const cancelBooking = async (bookingId: string) => {
-    const reason = window.prompt("Please confirm cancellation (optional reason):", "");
-    if (reason === null) {
+    const result = await Swal.fire({
+      icon: "warning",
+      title: "Request cancellation?",
+      text: "This will send a cancellation request to the admin for review.",
+      input: "textarea",
+      inputLabel: "Reason (optional)",
+      inputPlaceholder: "Add an optional reason for your cancellation...",
+      showCancelButton: true,
+      confirmButtonText: "Yes, request cancel",
+      cancelButtonText: "No, keep booking",
+      focusConfirm: false,
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    const reasonValue = typeof result.value === "string" ? result.value.trim() : "";
+    const reason = reasonValue.length > 0 ? reasonValue : undefined;
+
+    try {
+      await requestUserCancellation(bookingId, reason);
+      await fetchBookings();
+      notify("Cancellation request sent. Awaiting admin response.", "success");
+    } catch (error: any) {
+      console.error("Error cancelling booking:", error);
+      notify(error?.message || "Failed to request cancellation", "error");
+    }
+  };
+
+  const handlePayment = async (bookingId: string) => {
+    const result = await Swal.fire({
+      icon: "question",
+      title: "Proceed to payment?",
+      text: "You will be redirected to Stripe Checkout to complete your payment.",
+      showCancelButton: true,
+      confirmButtonText: "Yes, pay now",
+      cancelButtonText: "Not now",
+      focusConfirm: false,
+    });
+
+    if (!result.isConfirmed) {
       return;
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/bookings/${bookingId}/request-cancel`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ reason: reason || undefined }),
-      });
-
-      if (response.ok) {
-        await fetchBookings();
-        notify("Cancellation request sent. Awaiting admin response.", "success");
-      } else {
-        const error = await response.json();
-        notify(error.message || "Failed to request cancellation", "error");
+      const { url } = await createCheckoutSession(bookingId);
+      if (!url) {
+        notify("Checkout URL missing", "error");
+        return;
       }
-    } catch (error) {
-      console.error("Error cancelling booking:", error);
-      notify("Error requesting cancellation", "error");
+      window.location.assign(url);
+    } catch (error: any) {
+      console.error("Error starting checkout:", error);
+      notify(error?.message || "Error starting checkout", "error");
     }
   };
 
@@ -134,32 +144,14 @@ function Bookings() {
 
   if (loading) {
     return (
-      <div className="user-container">
+      <UserLayout pageTitle="My Bookings">
         <div className="loading">Loading your bookings...</div>
-      </div>
+      </UserLayout>
     );
   }
 
   return (
-    <div className="user-container">
-      <header className="user-header">
-        <h2 className="user-title">My Bookings</h2>
-        <nav className="user-nav">
-          <Link to="/dashboard" className="user-nav-link">Dashboard</Link>
-          <Link to="/user/profile" className="user-nav-link">Profile</Link>
-          <Link to="/user/bookings" className="user-nav-link active">Bookings</Link>
-          <Link to="/user/rooms" className="user-nav-link">Rooms</Link>
-          <Link to="/user/calendar" className="user-nav-link">Calendar</Link>
-          <Link to="/user/feedback" className="user-nav-link">Feedback</Link>
-          <Link to="/user/settings" className="user-nav-link">Settings</Link>
-          <Link to="/" className="user-logout" onClick={async (e) => {
-            e.preventDefault();
-            try { await fetch("http://localhost:5000/logout", { method: "POST", credentials: "include" }); } catch {}
-            window.location.href = "/";
-          }}>Logout</Link>
-        </nav>
-      </header>
-
+    <UserLayout pageTitle="My Bookings">
       <div className="user-bookings-content">
         <div className="bookings-header">
           <h3>Your Reservations ({filteredBookings.length})</h3>
@@ -214,89 +206,110 @@ function Bookings() {
             </button>
           </div>
         </div>
+        <div className="bookings-table-container">
+          {filteredBookings.length > 0 && (
+            <table className="bookings-table user-bookings-table">
+              <thead>
+                <tr>
+                  <th>Room</th>
+                  <th>Check-in</th>
+                  <th>Check-out</th>
+                  <th>Guests</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Payment</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredBookings.map((booking) => (
+                  <tr key={booking._id}>
+                    <td>
+                      <div className="room-info">
+                        <div className="room-number">Room {booking.room.roomNumber}</div>
+                        <div className="room-type">{booking.room.roomType}</div>
+                      </div>
+                    </td>
+                    <td>{formatDate(booking.checkInDate)}</td>
+                    <td>{formatDate(booking.checkOutDate)}</td>
+                    <td>{booking.numberOfGuests}</td>
+                    <td>₱{booking.totalAmount}</td>
+                    <td>
+                      <span
+                        className="status-badge"
+                        style={{ backgroundColor: getStatusColor(booking.status) }}
+                      >
+                        {getStatusText(booking.status)}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        className="status-badge"
+                        style={{
+                          backgroundColor:
+                            booking.paymentStatus === "paid"
+                              ? "#10b981"
+                              : booking.paymentStatus === "pending"
+                              ? "#f59e0b"
+                              : "#ef4444",
+                        }}
+                      >
+                        {booking.paymentStatus.charAt(0).toUpperCase() + booking.paymentStatus.slice(1)}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="action-buttons">
+                        <button
+                          className="btn-view"
+                          onClick={() => {
+                            setSelectedBooking(booking);
+                            setShowModal(true);
+                          }}
+                        >
+                          View
+                        </button>
+                        {booking.paymentStatus === "pending" && booking.status === "confirmed" && (
+                          <button
+                            className="btn-pay-booking"
+                            onClick={() => handlePayment(booking._id)}
+                          >
+                            Pay Now
+                          </button>
+                        )}
+                        {canCancelBooking(booking) && (
+                          <button
+                            className="btn-cancel-booking"
+                            onClick={() => cancelBooking(booking._id)}
+                          >
+                            Request Cancel
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
 
-        <div className="bookings-grid">
-          {filteredBookings.map((booking) => (
-            <div key={booking._id} className="booking-card">
-              <div className="booking-header">
-                <div className="room-info">
-                  <h4>Room {booking.room.roomNumber}</h4>
-                  <span className="room-type">{booking.room.roomType}</span>
-                </div>
-                <span 
-                  className="status-badge"
-                  style={{ backgroundColor: getStatusColor(booking.status) }}
-                >
-                  {getStatusText(booking.status)}
-                </span>
-              </div>
-
-              <div className="booking-details">
-                <div className="detail-item">
-                  <strong>Check-in:</strong> {formatDate(booking.checkInDate)}
-                </div>
-                <div className="detail-item">
-                  <strong>Check-out:</strong> {formatDate(booking.checkOutDate)}
-                </div>
-                <div className="detail-item">
-                  <strong>Guests:</strong> {booking.numberOfGuests}
-                </div>
-                <div className="detail-item">
-                  <strong>Total Amount:</strong> ${booking.totalAmount}
-                </div>
-                {booking.specialRequests && (
-                  <div className="detail-item">
-                    <strong>Special Requests:</strong> {booking.specialRequests}
-                  </div>
-                )}
-                {booking.adminNotes && (
-                  <div className="detail-item">
-                    <strong>Admin Notes:</strong> {booking.adminNotes}
-                  </div>
-                )}
-              </div>
-
-              <div className="booking-actions">
-                <button 
-                  className="btn-view-details"
-                  onClick={() => {
-                    setSelectedBooking(booking);
-                    setShowModal(true);
-                  }}
-                >
-                  View Details
-                </button>
-                {canCancelBooking(booking) && (
-                  <button 
-                    className="btn-cancel-booking"
-                    onClick={() => cancelBooking(booking._id)}
-                  >
-                    Request Cancel
-                  </button>
+          {filteredBookings.length === 0 && (
+            <div className="no-bookings">
+              <div className="no-bookings-content">
+                <h3>No bookings found</h3>
+                <p>
+                  {filter === "all"
+                    ? "You haven't made any bookings yet. Start by browsing our available rooms!"
+                    : `No ${filter} bookings found.`}
+                </p>
+                {filter === "all" && (
+                  <Link to="/user/rooms" className="btn-browse-rooms">
+                    Browse Available Rooms
+                  </Link>
                 )}
               </div>
             </div>
-          ))}
+          )}
         </div>
-
-        {filteredBookings.length === 0 && (
-          <div className="no-bookings">
-            <div className="no-bookings-content">
-              <h3>No bookings found</h3>
-              <p>
-                {filter === "all" 
-                  ? "You haven't made any bookings yet. Start by browsing our available rooms!"
-                  : `No ${filter} bookings found.`
-                }
-              </p>
-              {filter === "all" && (
-                <Link to="/user/rooms" className="btn-browse-rooms">
-                  Browse Available Rooms
-                </Link>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Booking Details Modal */}
@@ -326,7 +339,7 @@ function Bookings() {
                     <strong>Room Type:</strong> {selectedBooking.room.roomType}
                   </div>
                   <div className="detail-row">
-                    <strong>Price per Night:</strong> ${selectedBooking.room.price}
+                    <strong>Price per Night:</strong> ₱{selectedBooking.room.price}
                   </div>
                 </div>
 
@@ -342,7 +355,7 @@ function Bookings() {
                     <strong>Number of Guests:</strong> {selectedBooking.numberOfGuests}
                   </div>
                   <div className="detail-row">
-                    <strong>Total Amount:</strong> ${selectedBooking.totalAmount}
+                    <strong>Total Amount:</strong> ₱{selectedBooking.totalAmount}
                   </div>
                   <div className="detail-row">
                     <strong>Status:</strong> 
@@ -354,9 +367,42 @@ function Bookings() {
                     </span>
                   </div>
                   <div className="detail-row">
-                    <strong>Payment Status:</strong> {selectedBooking.paymentStatus}
+                    <strong>Payment Status:</strong> 
+                    <span 
+                      className="status-badge"
+                      style={{ 
+                        backgroundColor: selectedBooking.paymentStatus === "paid" ? "#10b981" : selectedBooking.paymentStatus === "pending" ? "#f59e0b" : "#ef4444",
+                        marginLeft: "8px"
+                      }}
+                    >
+                      {selectedBooking.paymentStatus.charAt(0).toUpperCase() + selectedBooking.paymentStatus.slice(1)}
+                    </span>
                   </div>
                 </div>
+
+                {selectedBooking.paymentStatus === "pending" && selectedBooking.status === "confirmed" && (
+                  <div className="modal-footer" style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid #e5e7eb" }}>
+                    <button 
+                      className="btn-pay-booking"
+                      onClick={() => {
+                        handlePayment(selectedBooking._id);
+                      }}
+                      style={{
+                        backgroundColor: "#10b981",
+                        color: "white",
+                        border: "none",
+                        padding: "12px 24px",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontWeight: "600",
+                        fontSize: "16px",
+                        width: "100%"
+                      }}
+                    >
+                      Pay ₱{selectedBooking.totalAmount}
+                    </button>
+                  </div>
+                )}
 
                 {selectedBooking.specialRequests && (
                   <div className="detail-section">
@@ -409,7 +455,7 @@ function Bookings() {
           </div>
         </div>
       )}
-    </div>
+    </UserLayout>
   );
 }
 

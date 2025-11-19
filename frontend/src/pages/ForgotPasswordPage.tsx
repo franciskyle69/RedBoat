@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import BackButton from "../components/BackButton";
+import "../styles/auth.css";
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState("");
@@ -37,29 +37,32 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <div style={{ maxWidth: 420, margin: "40px auto" }}>
-      <BackButton />
-      <h2>Forgot Password</h2>
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 12 }}>
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ width: "100%", padding: 8, boxSizing: "border-box" }}
-          />
+    <div className="auth-container">
+      <div className="auth-card">
+        <div className="logo-wrapper">
+          <h2 className="brand-name">Forgot Password</h2>
         </div>
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Sending..." : "Send Code"}
-        </button>
-      </form>
-      {message && (
-        <p style={{ color: "green", marginTop: 12 }}>{message}</p>
-      )}
-      {error && <p style={{ color: "crimson", marginTop: 12 }}>{error}</p>}
+
+        {error && <div className="error-message">{error}</div>}
+        {message && <div className="success-message">{message}</div>}
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <label>Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter Your email"
+              required
+            />
+          </div>
+
+          <button type="submit" className="btn-primary" disabled={isSubmitting}>
+            {isSubmitting ? "Sending..." : "Send Code"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

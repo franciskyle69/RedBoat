@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import RoomCalendar from "../../components/RoomCalendar";
 import { useNotifications } from "../../contexts/NotificationContext";
 import "../../styles/main.css";
+import UserLayout from "../../components/UserLayout";
 
 interface Room {
   _id: string;
@@ -13,7 +14,22 @@ interface Room {
   amenities: string[];
   description: string;
   isAvailable: boolean;
+  images?: string[];
 }
+
+const resolveRoomImageSrc = (src: string) => {
+  // Keep absolute URLs and placeholder paths as-is
+  if (src.startsWith("http://") || src.startsWith("https://")) return src;
+  if (src.startsWith("/images") || src.startsWith("images/")) return src;
+
+  // Map upload paths to backend
+  if (src.startsWith("/uploads") || src.startsWith("uploads/")) {
+    const normalized = src.startsWith("/") ? src : `/${src}`;
+    return `http://localhost:5000${normalized}`;
+  }
+
+  return src;
+};
 
 function Rooms() {
   const navigate = useNavigate();
@@ -22,15 +38,39 @@ function Rooms() {
   const [loading, setLoading] = useState(true);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingImageIndex, setBookingImageIndex] = useState(0);
   const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedRoomNumber, setSelectedRoomNumber] = useState<string | null>(null);
   const [bookingForm, setBookingForm] = useState({
+    guestName: "",
+    contactNumber: "",
     checkInDate: "",
     checkOutDate: "",
     numberOfGuests: 1,
-    specialRequests: ""
+    specialRequests: "",
   });
+
+  // Images for the booking modal carousel (selected room or placeholder)
+  const bookingImages = selectedRoom && selectedRoom.images && selectedRoom.images.length > 0
+    ? selectedRoom.images.slice(0, 5)
+    : ["/room-placeholder.jpg"];
+
+  // Auto-advance carousel while modal is open
+  useEffect(() => {
+    // Reset index whenever modal opens or selected room changes
+    setBookingImageIndex(0);
+
+    if (!showBookingModal || bookingImages.length <= 1) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setBookingImageIndex(prev => (prev + 1) % bookingImages.length);
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [showBookingModal, selectedRoom, bookingImages.length]);
 
   useEffect(() => {
     fetchRooms();
@@ -105,10 +145,12 @@ function Rooms() {
         setShowBookingModal(false);
         setSelectedRoom(null);
         setBookingForm({
+          guestName: "",
+          contactNumber: "",
           checkInDate: "",
           checkOutDate: "",
           numberOfGuests: 1,
-          specialRequests: ""
+          specialRequests: "",
         });
       } else {
         const error = await response.json();
@@ -130,34 +172,29 @@ function Rooms() {
     }
   };
 
+  const calculateTotalPrice = (room: Room, checkInDate: string, checkOutDate: string, numberOfGuests: number) => {
+    if (!checkInDate || !checkOutDate) return 0;
+    
+    const nights = Math.ceil((new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) / (1000 * 60 * 60 * 24));
+    const basePrice = room.price * nights;
+    
+    // Add 300 pesos per night for each additional person beyond room capacity
+    const extraPersons = Math.max(0, numberOfGuests - room.capacity);
+    const extraPersonCharge = extraPersons * 300 * nights;
+    
+    return basePrice + extraPersonCharge;
+  };
+
   if (loading) {
     return (
-      <div className="user-container">
+      <UserLayout pageTitle="Available Rooms">
         <div className="loading">Loading rooms...</div>
-      </div>
+      </UserLayout>
     );
   }
 
   return (
-    <div className="user-container">
-      <header className="user-header">
-        <h2 className="user-title">Available Rooms</h2>
-        <nav className="user-nav">
-          <Link to="/dashboard" className="user-nav-link">Dashboard</Link>
-          <Link to="/user/profile" className="user-nav-link">Profile</Link>
-          <Link to="/user/bookings" className="user-nav-link">Bookings</Link>
-          <Link to="/user/rooms" className="user-nav-link active">Rooms</Link>
-          <Link to="/user/calendar" className="user-nav-link">Calendar</Link>
-          <Link to="/user/feedback" className="user-nav-link">Feedback</Link>
-          <Link to="/user/settings" className="user-nav-link">Settings</Link>
-          <Link to="/" className="user-logout" onClick={async (e) => {
-            e.preventDefault();
-            try { await fetch("http://localhost:5000/logout", { method: "POST", credentials: "include" }); } catch {}
-            window.location.href = "/";
-          }}>Logout</Link>
-        </nav>
-      </header>
-
+    <UserLayout pageTitle="Available Rooms">
       <div className="rooms-content">
         <div className="rooms-header">
           <h3>Choose Your Perfect Room</h3>
@@ -192,9 +229,23 @@ function Rooms() {
                     {room.roomType}
                   </div>
                 </div>
+                {/* Single thumbnail preview filling the card top */}
+                <div className="room-images-strip" style={{ width: "100%", marginBottom: "12px" }}>
+                  <img
+                    src={resolveRoomImageSrc((room.images && room.images[0]) || "/room-placeholder.jpg")}
+                    alt={`Room ${room.roomNumber} thumbnail`}
+                    style={{
+                      width: "100%",
+                      height: 220,
+                      borderRadius: "10px 10px 0 0",
+                      objectFit: "cover",
+                      display: "block",
+                    }}
+                  />
+                </div>
                 
                 <div className="room-details">
-                  <div className="room-price">${room.price}/night</div>
+                  <div className="room-price">₱{room.price}/night</div>
                   <div className="room-capacity">Up to {room.capacity} guests</div>
                   <div className="room-description">{room.description}</div>
                   
@@ -276,7 +327,94 @@ function Rooms() {
               </button>
             </div>
             <div className="modal-body">
+              {/* Full image carousel with controls */}
+              <div
+                className="room-images-strip"
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  marginBottom: '24px',
+                  position: 'relative',
+                }}
+              >
+                <img
+                  src={resolveRoomImageSrc(bookingImages[bookingImageIndex])}
+                  alt={`Room ${selectedRoom.roomNumber} image ${bookingImageIndex + 1}`}
+                  style={{
+                    width: '100%',
+                    maxWidth: 720,
+                    height: 360,
+                    borderRadius: 16,
+                    objectFit: 'cover',
+                    boxShadow: '0 12px 30px rgba(0,0,0,0.25)',
+                  }}
+                />
+                {bookingImages.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setBookingImageIndex((bookingImageIndex - 1 + bookingImages.length) % bookingImages.length)}
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: 8,
+                        transform: 'translateY(-50%)',
+                        borderRadius: '999px',
+                        border: 'none',
+                        padding: '4px 8px',
+                        cursor: 'pointer',
+                        backgroundColor: 'rgba(0,0,0,0.4)',
+                        color: 'white',
+                      }}
+                    >
+                      &lt;
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBookingImageIndex((bookingImageIndex + 1) % bookingImages.length)}
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        right: 8,
+                        transform: 'translateY(-50%)',
+                        borderRadius: '999px',
+                        border: 'none',
+                        padding: '4px 8px',
+                        cursor: 'pointer',
+                        backgroundColor: 'rgba(0,0,0,0.4)',
+                        color: 'white',
+                      }}
+                    >
+                      &gt;
+                    </button>
+                  </>
+                )}
+              </div>
+
               <form onSubmit={handleBookingSubmit} className="booking-form">
+                <div className="form-group">
+                  <label>Full Name</label>
+                  <input
+                    type="text"
+                    value={bookingForm.guestName}
+                    onChange={(e) => setBookingForm({ ...bookingForm, guestName: e.target.value })}
+                    placeholder="Your full name"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Contact Number</label>
+                  <input
+                    type="tel"
+                    value={bookingForm.contactNumber}
+                    onChange={(e) => setBookingForm({ ...bookingForm, contactNumber: e.target.value })}
+                    placeholder="09xx xxx xxxx"
+                    required
+                  />
+                </div>
+
                 <div className="form-group">
                   <label>Check-in Date</label>
                   <input
@@ -306,12 +444,22 @@ function Rooms() {
                     onChange={(e) => setBookingForm({...bookingForm, numberOfGuests: parseInt(e.target.value)})}
                     required
                   >
-                    {Array.from({ length: selectedRoom.capacity }, (_, i) => (
-                      <option key={i + 1} value={i + 1}>
-                        {i + 1} {i === 0 ? 'Guest' : 'Guests'}
-                      </option>
-                    ))}
+                    {Array.from({ length: Math.max(8, selectedRoom.capacity + 4) }, (_, i) => {
+                      const guestCount = i + 1;
+                      const isOverCapacity = guestCount > selectedRoom.capacity;
+                      return (
+                        <option key={guestCount} value={guestCount}>
+                          {guestCount} {guestCount === 1 ? 'Guest' : 'Guests'}
+                          {isOverCapacity && ` (+₱300/night per extra person)`}
+                        </option>
+                      );
+                    })}
                   </select>
+                  {bookingForm.numberOfGuests > selectedRoom.capacity && (
+                    <small style={{ color: '#f59e0b', marginTop: '4px', display: 'block' }}>
+                      ⚠️ {bookingForm.numberOfGuests - selectedRoom.capacity} extra guest(s) will incur additional charges of ₱300 per person per night.
+                    </small>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -332,7 +480,7 @@ function Rooms() {
                   </div>
                   <div className="summary-row">
                     <span>Price per night:</span>
-                    <span>${selectedRoom.price}</span>
+                    <span>₱{selectedRoom.price}</span>
                   </div>
                   {bookingForm.checkInDate && bookingForm.checkOutDate && (
                     <>
@@ -342,10 +490,28 @@ function Rooms() {
                           {Math.ceil((new Date(bookingForm.checkOutDate).getTime() - new Date(bookingForm.checkInDate).getTime()) / (1000 * 60 * 60 * 24))}
                         </span>
                       </div>
+                      <div className="summary-row">
+                        <span>Guests:</span>
+                        <span>{bookingForm.numberOfGuests}</span>
+                      </div>
+                      <div className="summary-row">
+                        <span>Base Amount:</span>
+                        <span>
+                          ₱{selectedRoom.price * Math.ceil((new Date(bookingForm.checkOutDate).getTime() - new Date(bookingForm.checkInDate).getTime()) / (1000 * 60 * 60 * 24))}
+                        </span>
+                      </div>
+                      {bookingForm.numberOfGuests > selectedRoom.capacity && (
+                        <div className="summary-row">
+                          <span>Extra Person Charge ({bookingForm.numberOfGuests - selectedRoom.capacity} × ₱300/night):</span>
+                          <span>
+                            ₱{(bookingForm.numberOfGuests - selectedRoom.capacity) * 300 * Math.ceil((new Date(bookingForm.checkOutDate).getTime() - new Date(bookingForm.checkInDate).getTime()) / (1000 * 60 * 60 * 24))}
+                          </span>
+                        </div>
+                      )}
                       <div className="summary-row total">
                         <span>Total Amount:</span>
                         <span>
-                          ${selectedRoom.price * Math.ceil((new Date(bookingForm.checkOutDate).getTime() - new Date(bookingForm.checkInDate).getTime()) / (1000 * 60 * 60 * 24))}
+                          ₱{calculateTotalPrice(selectedRoom, bookingForm.checkInDate, bookingForm.checkOutDate, bookingForm.numberOfGuests)}
                         </span>
                       </div>
                     </>
@@ -375,7 +541,7 @@ function Rooms() {
           </div>
         </div>
       )}
-    </div>
+    </UserLayout>
   );
 }
 

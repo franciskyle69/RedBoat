@@ -1,7 +1,7 @@
 {
   "name": "webproj-import-scripts",
   "version": "1.0.0",
-  "description": "MongoDB import scripts for WebProj Hotel Management System",
+  "description": "MongoDB import scripts for RedBoat Hotel Management System",
   "scripts": {
     "import": "node import-data.js",
     "clear": "node clear-data.js"

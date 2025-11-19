@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import BackButton from "../components/BackButton";
-import FormInput from "../components/FormInput";
+import "../styles/auth.css";
 
 function ResetPassword() {
   const [password, setPassword] = useState("");
@@ -63,42 +62,49 @@ function ResetPassword() {
   };
 
   return (
-    <div style={{ maxWidth: 420, margin: "40px auto" }}>
-      <BackButton />
-      <div style={{
-        background: "#eff6ff",
-        border: "1px solid #bfdbfe",
-        color: "#1e3a8a",
-        padding: "10px 12px",
-        borderRadius: 8,
-        marginBottom: 12
-      }}>
-        {email ? (
-          <strong>Resetting password for {email}</strong>
-        ) : (
-          <strong>Set your new password</strong>
+    <div className="auth-container">
+      <div className="auth-card">
+        <div className="logo-wrapper">
+          <h2 className="brand-name">Set New Password</h2>
+        </div>
+
+        {email && (
+          <div className="success-message">
+            Resetting password for {email}
+          </div>
         )}
+
+        {error && <div className="error-message">{error}</div>}
+        {message && <div className="success-message">{message}</div>}
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <label>New Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your new password"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Confirm New Password</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm your new password"
+              required
+            />
+          </div>
+
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading ? "Updating..." : "Update Password"}
+          </button>
+        </form>
       </div>
-      <h2>Set New Password</h2>
-      <form onSubmit={handleSubmit}>
-        <FormInput
-          label="New Password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <FormInput
-          label="Confirm New Password"
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-        />
-        <button type="submit" disabled={loading} style={{ width: "100%", padding: 10 }}>
-          {loading ? "Updating..." : "Update Password"}
-        </button>
-      </form>
-      {message && <p style={{ color: "green", marginTop: 12 }}>{message}</p>}
-      {error && <p style={{ color: "crimson", marginTop: 12 }}>{error}</p>}
     </div>
   );
 }

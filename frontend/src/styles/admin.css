@@ -854,7 +854,7 @@
   background: var(--surface);
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .admin-section-header {
@@ -1087,57 +1087,90 @@
   background: #059669;
 }
 
-/* Room Cards */
-.rooms-list {
-  padding: 20px;
+/* Room Management Page Header */
+.rooms-management {
+  padding: 0;
+  overflow: visible;
+  height: auto;
 }
 
-.no-rooms {
+.rooms-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  margin-bottom: 0;
+}
+
+.rooms-page-header h3 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Room Cards - Admin specific (scoped to .rooms-list for specificity) */
+.rooms-list {
+  padding: 20px;
+  padding-top: 0;
+  overflow: visible;
+  height: auto;
+}
+
+.rooms-list .no-rooms {
   text-align: center;
   padding: 40px;
   color: var(--muted);
   font-size: 16px;
 }
 
-.rooms-grid {
+.rooms-list .rooms-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 20px;
 }
 
-.room-card {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 20px;
-  background: var(--surface);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.2s;
+.rooms-list .room-card {
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  padding: 20px !important;
+  background: var(--surface) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  transition: box-shadow 0.2s !important;
+  display: block !important;
+  height: auto !important;
+  flex-direction: unset !important;
+  overflow: visible !important;
 }
 
-.room-card:hover {
+.rooms-list .room-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: none;
 }
 
-.room-card.unavailable {
+.rooms-list .room-card.unavailable {
   opacity: 0.7;
   background: var(--surface-2);
 }
 
-.room-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
+.rooms-list .room-header {
+  display: flex !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin-bottom: 12px !important;
+  padding: 0 !important;
+  border-bottom: none !important;
+  background: transparent !important;
 }
 
-.room-header h4 {
-  margin: 0;
-  color: var(--text);
+.rooms-list .room-number {
   font-size: 18px;
   font-weight: 600;
+  color: var(--text);
 }
 
-.room-status {
+.rooms-list .room-status {
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 11px;
@@ -1150,63 +1183,265 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
-.room-status.available {
+.rooms-list .room-status.available {
   background: #d4edda;
   color: #155724;
 }
 
-.room-status.unavailable {
+.rooms-list .room-status.unavailable {
   background: #f8d7da;
   color: #721c24;
 }
 
 /* Housekeeping status badges */
-.room-status.clean {
+.rooms-list .room-status.clean {
   background: #d1fae5; /* green-100 */
   color: #065f46;      /* green-900 */
 }
 
-.room-status.dirty {
+.rooms-list .room-status.dirty {
   background: #fee2e2; /* red-100 */
   color: #991b1b;      /* red-900 */
 }
 
-.room-status.in-progress {
+.rooms-list .room-status.in-progress {
   background: #fef3c7; /* amber-100 */
   color: #92400e;      /* amber-900 */
 }
 
-.room-details {
+.rooms-list .room-details {
   margin-bottom: 16px;
 }
 
-.room-details p {
-  margin: 8px 0;
-  color: var(--text);
-  font-size: 14px;
+.rooms-list .room-price {
+  display: inline-block;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #e53e3e 0%, #f87171 100%);
+  padding: 10px 20px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 15px rgba(229, 62, 62, 0.3);
+  min-width: 140px;
+  text-align: center;
 }
 
-.room-amenities {
+.rooms-list .room-type {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.rooms-list .room-capacity {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.rooms-list .room-description {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 15px;
+}
+
+.rooms-list .room-amenities {
   margin-top: 12px;
 }
 
-.room-amenities strong {
-  display: block;
-  margin-bottom: 8px;
+.rooms-list .room-amenities h4 {
   color: var(--text);
   font-size: 14px;
+  margin-bottom: 8px;
 }
 
-.amenities-tags {
+.rooms-list .amenities-list {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.room-actions {
+.rooms-list .amenity-tag {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.rooms-list .room-actions {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+/* New admin room card styles - matching user rooms */
+.rooms-management .rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 25px;
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.rooms-management .no-rooms {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+}
+
+.rooms-management .room-card {
+  background: var(--surface);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border);
+  transition: transform 0.2s, box-shadow 0.2s;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 24px;
+}
+
+.rooms-management .room-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.rooms-management .room-card.unavailable {
+  opacity: 0.7;
+}
+
+.rooms-management .room-card-body {
+  padding: 20px;
+}
+
+.rooms-management .room-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.rooms-management .room-number {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rooms-management .room-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.rooms-management .room-status {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rooms-management .room-status.available {
+  background: #d4edda;
+  color: #155724;
+}
+
+.rooms-management .room-status.unavailable {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.rooms-management .room-status.clean {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.rooms-management .room-status.dirty {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.rooms-management .room-status.in-progress {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.rooms-management .room-price {
+  display: inline-block;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #e53e3e 0%, #f87171 100%);
+  padding: 10px 20px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 15px rgba(229, 62, 62, 0.3);
+}
+
+.rooms-management .room-type {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.rooms-management .room-capacity {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.rooms-management .room-description {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 15px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.rooms-management .room-amenities {
+  margin-top: 12px;
+}
+
+.rooms-management .room-amenities h4 {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.rooms-management .amenities-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rooms-management .amenity-tag {
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.rooms-management .room-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 16px;
 }
 
 /* Housekeeping specific styles */
@@ -1385,6 +1620,130 @@
   .add-image {
     flex-direction: column;
     align-items: stretch;
+  }
+  
+  /* Room Management Mobile Styles */
+  .rooms-management .rooms-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 12px;
+  }
+  
+  .rooms-page-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 16px;
+  }
+  
+  .rooms-page-header h3 {
+    font-size: 20px;
+  }
+  
+  .rooms-page-header .admin-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .rooms-management .room-card {
+    border-radius: 10px;
+  }
+  
+  .rooms-management .room-card-body {
+    padding: 16px;
+  }
+  
+  .rooms-management .room-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .rooms-management .room-number {
+    font-size: 18px;
+  }
+  
+  .rooms-management .room-badges {
+    width: 100%;
+  }
+  
+  .rooms-management .room-price {
+    font-size: 16px;
+    padding: 8px 16px;
+  }
+  
+  .rooms-management .room-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .rooms-management .room-actions .admin-button {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 16px;
+  }
+  
+  .rooms-management .amenities-list {
+    gap: 4px;
+  }
+  
+  .rooms-management .amenity-tag {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+}
+
+/* Extra small screens (phones in portrait) */
+@media (max-width: 480px) {
+  .rooms-management .rooms-grid {
+    padding: 8px;
+    gap: 12px;
+  }
+  
+  .rooms-page-header {
+    padding: 12px;
+  }
+  
+  .rooms-page-header h3 {
+    font-size: 18px;
+  }
+  
+  .rooms-management .room-card-body {
+    padding: 12px;
+  }
+  
+  .rooms-management .room-number {
+    font-size: 16px;
+  }
+  
+  .rooms-management .room-status {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+  
+  .rooms-management .room-price {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
+  
+  .rooms-management .room-type,
+  .rooms-management .room-capacity,
+  .rooms-management .room-description {
+    font-size: 13px;
+  }
+  
+  .rooms-management .room-amenities h4 {
+    font-size: 13px;
+  }
+  
+  .rooms-management .amenity-tag {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+  
+  .rooms-management .room-actions .admin-button {
+    font-size: 13px;
+    padding: 8px 12px;
   }
 }
 

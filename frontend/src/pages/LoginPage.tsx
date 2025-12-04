@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import "../styles/auth.css";
 
 import Swal from "sweetalert2";
@@ -7,10 +8,13 @@ import Swal from "sweetalert2";
 import GoogleOAuthButton from "../components/GoogleOAuthButton";
 import ReCaptcha, { useReCaptcha } from "../components/ReCaptcha";
 import { getSiteKey } from "../config/recaptcha";
+import { API_BASE_URL } from "../config/api";
+import { dispatchLogin } from "../utils/authEvents";
 
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   
@@ -33,7 +37,7 @@ function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/login", {
+      const res = await fetch(`${API_BASE_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -49,12 +53,14 @@ function LoginPage() {
       const data = await res.json();
 
       if (res.ok) {
-        // TODO: Save user info or token if using JWT
+        // Dispatch auth event to notify other components
+        dispatchLogin();
         setEmail("");
         setPassword("");
         reset(); // Reset reCAPTCHA
         const role = data?.data?.role;
-        navigate(role === "admin" ? "/admin" : "/dashboard", { replace: true, state: { user: data.data } });
+        const isAdminLike = role === "admin" || role === "superadmin";
+        navigate(isAdminLike ? "/admin" : "/dashboard", { replace: true, state: { user: data.data } });
       } else {
         Swal.fire({
           icon: "error",
@@ -100,13 +106,23 @@ function LoginPage() {
           {/* Password Field */}
           <div className="form-group">
             <label>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-            />
+            <div className="password-input-wrapper">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           {/* reCAPTCHA */}

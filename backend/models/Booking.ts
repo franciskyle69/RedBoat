@@ -12,6 +12,9 @@ export interface IBooking extends Document {
   contactNumber?: string;
   specialRequests?: string;
   paymentStatus: 'pending' | 'paid' | 'refunded';
+  paymentMethod?: 'stripe' | 'cash' | 'bank_transfer' | 'other';
+  paymentDate?: Date;
+  stripePaymentIntentId?: string;
   adminNotes?: string;
   googleCalendarEventId?: string;
   cancellationRequested?: boolean;
@@ -49,6 +52,12 @@ const BookingSchema = new Schema<IBooking>({
     enum: ["pending", "paid", "refunded"], 
     default: "pending" 
   },
+  paymentMethod: {
+    type: String,
+    enum: ["stripe", "cash", "bank_transfer", "other"],
+  },
+  paymentDate: { type: Date },
+  stripePaymentIntentId: { type: String },
   adminNotes: { type: String },
   googleCalendarEventId: { type: String, required: false },
   cancellationRequested: { type: Boolean, default: false },
@@ -65,5 +74,14 @@ const BookingSchema = new Schema<IBooking>({
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
+
+// Database indexes for frequently queried fields
+BookingSchema.index({ user: 1 }); // User's bookings lookup
+BookingSchema.index({ room: 1 }); // Room's bookings lookup
+BookingSchema.index({ status: 1 }); // Filter by status
+BookingSchema.index({ checkInDate: 1, checkOutDate: 1 }); // Date range queries
+BookingSchema.index({ room: 1, status: 1, checkInDate: 1, checkOutDate: 1 }); // Availability check
+BookingSchema.index({ createdAt: -1 }); // Recent bookings sort
+BookingSchema.index({ cancellationRequested: 1, status: 1 }); // Pending cancellations
 
 export const Booking = mongoose.model<IBooking>("Booking", BookingSchema);

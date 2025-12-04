@@ -1,10 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, createElement } from "react";
 import "../../styles/main.css";
 import { useNotifications } from "../../contexts/NotificationContext";
 import AdminLayout from "../../components/AdminLayout";
 import AdminTableContainer from "../../components/admin/AdminTableContainer";
 import { confirmDialog } from "../../utils/adminSwal";
 import { FiRefreshCw, FiEdit2, FiCheck, FiX, FiAlertCircle, FiClock, FiCheckCircle, FiFilter, FiUser } from "react-icons/fi";
+import type { IconType } from "react-icons";
+import { API_BASE_URL } from "../../config/api";
+
+// Wrapper to fix react-icons v5 TypeScript compatibility with older TypeScript
+const Icon = ({ icon, className }: { icon: IconType; className?: string }): JSX.Element => {
+  return createElement(icon as React.ComponentType<{ className?: string }>, { className });
+};
 
 type HKStatus = 'clean' | 'dirty' | 'in-progress';
 
@@ -41,7 +48,7 @@ function Housekeeping() {
     setLoading(true);
     setMessage("");
     try {
-      const res = await fetch("http://localhost:5000/rooms/housekeeping", {
+      const res = await fetch(`${API_BASE_URL}/rooms/housekeeping`, {
         credentials: "include",
       });
       const data = await res.json();
@@ -107,7 +114,7 @@ function Housekeeping() {
 
     setMessage("");
     try {
-      const res = await fetch(`http://localhost:5000/rooms/housekeeping/${roomId}`, {
+      const res = await fetch(`${API_BASE_URL}/rooms/housekeeping/${roomId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -133,7 +140,7 @@ function Housekeeping() {
   const assignHousekeeper = async (roomId: string, assignedHousekeeper: string) => {
     setMessage("");
     try {
-      const res = await fetch(`http://localhost:5000/rooms/housekeeping/${roomId}`, {
+      const res = await fetch(`${API_BASE_URL}/rooms/housekeeping/${roomId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -181,14 +188,14 @@ function Housekeeping() {
 
   const startIndex = (currentPage - 1) * pageSize;
 
-  const getStatusIcon = (status: HKStatus) => {
+  const getStatusIcon = (status: HKStatus): JSX.Element | null => {
     switch (status) {
       case 'dirty':
-        return <FiAlertCircle className="status-icon" />;
+        return <Icon icon={FiAlertCircle} className="status-icon" />;
       case 'in-progress':
-        return <FiClock className="status-icon" />;
+        return <Icon icon={FiClock} className="status-icon" />;
       case 'clean':
-        return <FiCheckCircle className="status-icon" />;
+        return <Icon icon={FiCheckCircle} className="status-icon" />;
       default:
         return null;
     }
@@ -216,14 +223,14 @@ function Housekeeping() {
 
   return (
     <AdminLayout pageTitle="Housekeeping">
-      <div className="p-6">
+      <div className="bookings-content">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-800">Housekeeping Dashboard</h2>
           <button
             onClick={fetchHK}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            <FiRefreshCw className={`${loading ? 'animate-spin' : ''}`} />
+            <Icon icon={FiRefreshCw} className={`${loading ? 'animate-spin' : ''}`} />
             Refresh
           </button>
         </div>
@@ -313,9 +320,9 @@ function Housekeeping() {
             </button>
           </div>
         ) : (
-          <AdminTableContainer className="housekeeping-table-container">
+          <AdminTableContainer>
             <table className="bookings-table">
-              <thead className="bg-gray-50">
+              <thead>
                   <tr>
                     <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Room
@@ -334,7 +341,7 @@ function Housekeeping() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-100">
+                <tbody>
                   {paginatedRooms.map((room) => {
                     const status = room.housekeepingStatus || 'clean';
                     return (
@@ -374,7 +381,7 @@ function Housekeeping() {
                                 className="housekeeping-assign-icon save"
                                 title="Save"
                               >
-                                <FiCheck size={18} />
+                                <Icon icon={FiCheck} />
                               </button>
                               <button
                                 onClick={() => {
@@ -387,7 +394,7 @@ function Housekeeping() {
                                 className="housekeeping-assign-icon cancel"
                                 title="Cancel"
                               >
-                                <FiX size={18} />
+                                <Icon icon={FiX} />
                               </button>
                             </div>
                           ) : (
@@ -400,7 +407,7 @@ function Housekeeping() {
                                 className="housekeeping-assign-icon edit"
                                 title="Edit assignment"
                               >
-                                <FiEdit2 size={16} />
+                                <Icon icon={FiEdit2} />
                               </button>
                             </div>
                           )}

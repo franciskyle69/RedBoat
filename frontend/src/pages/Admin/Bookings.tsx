@@ -4,53 +4,25 @@ import "../../styles/main.css";
 import { useNotifications } from "../../contexts/NotificationContext";
 import AdminLayout from "../../components/AdminLayout";
 import * as BookingsApi from "../../api/bookings";
+import type { AdminBooking } from "../../api/bookings";
+import { getBookingReference } from "../../api/bookings";
+import { getBookingStatusColor } from "../../utils/bookingStatus";
 import BookingDetailsModal from "../../components/admin/BookingDetailsModal";
 import CheckInModal from "../../components/admin/CheckInModal";
 import CheckOutModal from "../../components/admin/CheckOutModal";
+import WalkInBookingModal from "../../components/admin/WalkInBookingModal";
 import AdminTableContainer from "../../components/admin/AdminTableContainer";
 import Swal from "sweetalert2";
 import { confirmDialog, successAlert, errorAlert } from "../../utils/adminSwal";
-
-interface Booking {
-  _id: string;
-  user: {
-    _id: string;
-    username: string;
-  };
-  room: {
-    _id: string;
-    roomNumber: string;
-    roomType: string;
-    price: number;
-  };
-  checkInDate: string;
-  checkOutDate: string;
-  numberOfGuests: number;
-  totalAmount: number;
-  status: "pending" | "confirmed" | "checked-in" | "checked-out" | "cancelled";
-  guestName?: string;
-  contactNumber?: string;
-  specialRequests?: string;
-  paymentStatus: "pending" | "paid" | "refunded";
-  adminNotes?: string;
-  actualCheckInTime?: string;
-  actualCheckOutTime?: string;
-  lateCheckInFee?: number;
-  lateCheckOutFee?: number;
-  additionalCharges?: number;
-  checkoutNotes?: string;
-  cancellationRequested?: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+import { alerts, showSuccess, showError } from "../../utils/alerts";
 
 function Bookings() {
   const { notify } = useNotifications();
   const location = useLocation();
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useState<AdminBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<AdminBooking | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [adminNotes, setAdminNotes] = useState("");
   const [showCheckInModal, setShowCheckInModal] = useState(false);
@@ -61,10 +33,12 @@ function Bookings() {
   const [checkOutAdditionalCharges, setCheckOutAdditionalCharges] = useState("");
   const [roomCondition, setRoomCondition] = useState<"excellent" | "good" | "fair" | "poor" | "damaged">("good");
   const [userFilter, setUserFilter] = useState<string | null>(null);
+  const [showWalkInModal, setShowWalkInModal] = useState(false);
 
   useEffect(() => {
     fetchBookings();
-    const id = setInterval(() => fetchBookings(true), 15000);
+    // Auto-refresh bookings every 30 seconds instead of 15 to reduce network traffic
+    const id = setInterval(() => fetchBookings(true), 30000);
     return () => clearInterval(id);
   }, []);
 
@@ -76,11 +50,11 @@ function Bookings() {
 
   const fetchBookings = async (silent = false) => {
     try {
-      const next: Booking[] = await BookingsApi.getAll();
+      const next: AdminBooking[] = await BookingsApi.getAll();
         if (silent && bookings.length > 0) {
           const prevPending = new Set(bookings.filter(b => b.status === 'pending').map(b => b._id));
           const newPending = next.filter(b => b.status === 'pending' && !prevPending.has(b._id));
-          newPending.forEach(b => notify(`New booking request for Room ${b.room.roomNumber}`, 'info', 6000, '/admin/bookings'));
+          newPending.forEach(b => notify(`New booking request for Room ${b.room?.roomNumber || 'Unknown'}`, 'info', 6000, '/admin/bookings'));
         }
         setBookings(next);
     } catch (error) {
@@ -97,10 +71,18 @@ function Bookings() {
         setShowModal(false);
         setAdminNotes("");
         setSelectedBooking(null);
-        notify("Booking status updated", 'success');
+        
+        // Show appropriate SweetAlert based on status
+        if (status === "confirmed") {
+          await showSuccess("Booking Confirmed!", "The booking has been confirmed successfully.");
+        } else if (status === "cancelled") {
+          await showSuccess("Booking Declined", "The booking has been declined.");
+        } else {
+          await showSuccess("Status Updated", `Booking status changed to ${status}.`);
+        }
     } catch (error) {
       console.error("Error updating booking status:", error);
-      notify("Error updating booking status", 'error');
+      showError("Update Failed", "Error updating booking status");
     }
   };
 
@@ -120,18 +102,19 @@ function Bookings() {
         
         // Show detailed success message
         const summary = data.data?.booking?.checkInSummary;
-        let message = "Guest checked in successfully";
+        const roomNumber = data.data?.booking?.roomInfo?.roomNumber || "";
+        let details = "";
         if (summary) {
-          const details = [];
-          if (summary.isEarly) details.push("Early check-in");
+          const detailParts = [];
+          if (summary.isEarly) detailParts.push("Early check-in");
           if (summary.isLate && summary.lateCheckInFee > 0) {
-            details.push(`Late fee: ₱${summary.lateCheckInFee.toFixed(2)}`);
+            detailParts.push(`Late fee: ₱${summary.lateCheckInFee.toFixed(2)}`);
           }
-          if (details.length > 0) {
-            message += ` (${details.join(", ")})`;
+          if (detailParts.length > 0) {
+            details = detailParts.join(", ");
           }
         }
-        notify(message, 'success', 6000);
+        await alerts.checkInSuccess(roomNumber);
         
         // Log detailed info to console
         if (data.data?.booking) {
@@ -140,7 +123,7 @@ function Bookings() {
     } catch (error) {
       console.error("Error checking in guest:", error);
       const message = error instanceof Error ? error.message : "Error checking in guest";
-      notify(message, 'error');
+      showError("Check-in Failed", message);
     }
   };
 
@@ -180,11 +163,8 @@ function Bookings() {
           details.push(`Balance due: ₱${financial.balanceDue.toFixed(2)}`);
         }
         
-        if (details.length > 0) {
-          message += ` (${details.join(", ")})`;
-        }
-        
-        notify(message, financial?.balanceDue > 0 ? 'warning' : 'success', 8000);
+        const roomNumber = data.data?.booking?.roomInfo?.roomNumber || "";
+        await alerts.checkOutSuccess(roomNumber);
         
         // Log detailed info to console
         if (data.data?.booking) {
@@ -195,7 +175,7 @@ function Bookings() {
         }
     } catch (error) {
       console.error("Error checking out guest:", error);
-      notify("Error checking out guest", 'error');
+      showError("Check-out Failed", "Error checking out guest");
     }
   };
 
@@ -236,28 +216,20 @@ function Bookings() {
     return true;
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending": return "#f59e0b";
-      case "confirmed": return "#10b981";
-      case "checked-in": return "#3b82f6";
-      case "checked-out": return "#6b7280";
-      case "cancelled": return "#ef4444";
-      default: return "#6b7280";
-    }
-  };
-
   const updatePaymentStatus = async (bookingId: string, paymentStatus: "pending" | "paid" | "refunded") => {
     try {
       await BookingsApi.updatePayment(bookingId, paymentStatus as BookingsApi.PaymentStatus);
         await fetchBookings();
-        notify(`Payment status updated to ${paymentStatus}`, "success");
         if (selectedBooking && selectedBooking._id === bookingId) {
           setSelectedBooking({ ...selectedBooking, paymentStatus });
         }
+        
+        // Show appropriate SweetAlert based on payment status
+        const statusLabel = paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1);
+        await showSuccess("Payment Updated", `Payment status changed to ${statusLabel}.`);
     } catch (error) {
       console.error("Error updating payment status:", error);
-      notify("Error updating payment status", "error");
+      showError("Update Failed", "Error updating payment status");
     }
   };
 
@@ -317,6 +289,28 @@ function Bookings() {
     return new Date(dateString).toLocaleDateString();
   };
 
+  const handleCreateWalkInBooking = async (data: {
+    roomId: string;
+    guestName: string;
+    contactNumber: string;
+    checkInDate: string;
+    checkOutDate: string;
+    numberOfGuests: number;
+    specialRequests?: string;
+  }) => {
+    try {
+      await BookingsApi.createBooking(data);
+      notify("Walk-in booking created successfully", "success");
+      setShowWalkInModal(false);
+      await fetchBookings();
+    } catch (error) {
+      console.error("Error creating walk-in booking:", error);
+      const message = error instanceof Error ? error.message : "Failed to create booking";
+      notify(message, "error");
+      throw error; // Re-throw so the modal knows it failed
+    }
+  };
+
   if (loading) {
     return (
       <AdminLayout pageTitle="Bookings">
@@ -329,7 +323,16 @@ function Bookings() {
     <AdminLayout pageTitle="Bookings">
       <div className="bookings-content">
         <div className="bookings-header">
-          <h3>All Bookings ({filteredBookings.length})</h3>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "16px" }}>
+            <h3 style={{ margin: 0 }}>All Bookings ({filteredBookings.length})</h3>
+            <button
+              className="btn-accept"
+              onClick={() => setShowWalkInModal(true)}
+              style={{ marginLeft: "auto" }}
+            >
+              + Walk-in Booking
+            </button>
+          </div>
           <div className="filter-buttons">
             <button 
               className={filter === "all" ? "filter-btn active" : "filter-btn"}
@@ -374,6 +377,7 @@ function Bookings() {
           <table className="bookings-table">
             <thead>
               <tr>
+                <th>Reference</th>
                 <th>Guest</th>
                 <th>Room</th>
                 <th>Check-in</th>
@@ -388,6 +392,16 @@ function Bookings() {
               {filteredBookings.map((booking) => (
                 <tr key={booking._id}>
                   <td>
+                    <span className="booking-reference" style={{ 
+                      fontFamily: 'monospace', 
+                      fontWeight: 600,
+                      color: '#6366f1',
+                      fontSize: '0.85rem'
+                    }}>
+                      {getBookingReference(booking)}
+                    </span>
+                  </td>
+                  <td>
                     <div className="guest-info">
                       <div className="guest-name">
                         {booking.guestName || booking.user.username}
@@ -401,8 +415,8 @@ function Bookings() {
                   </td>
                   <td>
                     <div className="room-info">
-                      <div className="room-number">{booking.room.roomNumber}</div>
-                      <div className="room-type">{booking.room.roomType}</div>
+                      <div className="room-number">{booking.room?.roomNumber || "Deleted Room"}</div>
+                      <div className="room-type">{booking.room?.roomType || "N/A"}</div>
                     </div>
                   </td>
                   <td>{formatDate(booking.checkInDate)}</td>
@@ -412,7 +426,7 @@ function Bookings() {
                   <td>
                     <span 
                       className="status-badge"
-                      style={{ backgroundColor: getStatusColor(booking.status) }}
+                      style={{ backgroundColor: getBookingStatusColor(booking.status) }}
                     >
                       {booking.status.replace("-", " ").toUpperCase()}
                     </span>
@@ -556,6 +570,14 @@ function Bookings() {
             setCheckOutAdditionalCharges("");
             setRoomCondition("good");
           }}
+        />
+      )}
+
+      {/* Walk-in Booking Modal */}
+      {showWalkInModal && (
+        <WalkInBookingModal
+          onSubmit={handleCreateWalkInBooking}
+          onClose={() => setShowWalkInModal(false)}
         />
       )}
     </AdminLayout>

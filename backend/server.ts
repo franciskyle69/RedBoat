@@ -1,6 +1,9 @@
+import dotenv from "dotenv";
+// Load env vars FIRST before any other imports
+dotenv.config();
+
 import express from "express";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import path from "path";
@@ -13,14 +16,12 @@ import bookingRoutes from "./routes/bookingRoutes";
 import reportRoutes from "./routes/reportRoutes";
 import paymentRoutes from "./routes/paymentRoutes";
 import { PaymentController } from "./controllers/paymentController";
-import googleCalendarRoutes from "./routes/googleCalendarRoutes";
 import notificationRoutes from "./routes/notificationRoutes";
 import feedbackRoutes from "./routes/feedbackRoutes";
+import backupRoutes from "./routes/backupRoutes";
 
 // Import middleware
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
-
-dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -29,20 +30,20 @@ const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 // Stripe webhook must be registered BEFORE express.json to keep the raw body
 app.post("/payments/webhook", express.raw({ type: "application/json" }), PaymentController.webhook);
 
-// Middleware
-app.use(express.json());
-app.use(cookieParser());
-
-// Serve uploaded files from backend/uploads
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
+// CORS must be first for cookies to work properly
 app.use(cors({ 
   origin: [clientOrigin, "http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:3000"], 
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Set-Cookie']
 }));
+
+// Middleware
+app.use(express.json());
+app.use(cookieParser());
+
+// Serve uploaded files from backend/uploads
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // Connect to MongoDB
 mongoose
@@ -61,15 +62,15 @@ app.use("/", userRoutes);
 app.use("/rooms", roomRoutes);
 app.use("/bookings", bookingRoutes);
 app.use("/reports", reportRoutes);
-app.use("/google-calendar", googleCalendarRoutes);
 app.use("/payments", paymentRoutes);
 app.use("/notifications", notificationRoutes);
 app.use("/feedback", feedbackRoutes);
+app.use("/backup", backupRoutes);
 
 // Test email endpoint (keeping for backward compatibility)
 app.post("/test-email", async (req, res) => {
   try {
-    const { sendEmail } = await import("./emailService");
+    const { sendEmail } = await import("./services/emailService");
     const { to, subject, html } = req.body;
     if (!to || !subject || !html) {
       return res

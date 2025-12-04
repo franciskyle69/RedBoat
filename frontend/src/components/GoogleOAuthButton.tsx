@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import { API_BASE_URL } from "../config/api";
+import { dispatchLogin } from "../utils/authEvents";
 
 interface GoogleOAuthButtonProps {
   onSuccess?: (user: any) => void;
@@ -26,7 +28,7 @@ export default function GoogleOAuthButton({ onSuccess, onError }: GoogleOAuthBut
           client_id: clientId,
           callback: async (response: any) => {
             try {
-              const res = await fetch("http://localhost:5000/google-login", {
+              const res = await fetch(`${API_BASE_URL}/google-login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -39,26 +41,24 @@ export default function GoogleOAuthButton({ onSuccess, onError }: GoogleOAuthBut
                 throw new Error(data?.message || "Google login failed");
               }
 
-            // Call custom success handler if provided
-            if (onSuccess) {
-              onSuccess(data.data);
-            } else {
-              // Check if user has a username
-              if (!data.data.username) {
-                // No username - redirect to choose username screen
-                navigate("/choose-username", { 
-                  replace: true, 
-                  state: { user: data.data } 
-                });
+              // Dispatch auth event to notify other components
+              dispatchLogin();
+
+              // Call custom success handler if provided
+              if (onSuccess) {
+                onSuccess(data.data);
               } else {
-                // Has username - redirect to dashboard
-                const role = data?.data?.role;
-                navigate(role === "admin" ? "/admin" : "/dashboard", { 
-                  replace: true, 
-                  state: { user: data.data } 
-                });
+                // Force a complete page reload to ensure cookie is properly set
+                // Using location.replace ensures the browser picks up the new cookie
+                const targetUrl = !data.data.username 
+                  ? "/choose-username"
+                  : (data?.data?.role === "admin" || data?.data?.role === "superadmin") 
+                    ? "/admin" 
+                    : "/dashboard";
+                
+                // Use replace to avoid back button issues, with cache-busting
+                window.location.replace(targetUrl + "?t=" + Date.now());
               }
-            }
             } catch (err: any) {
               const errorMessage = err?.message || "Google login failed";
               console.error("Google OAuth error:", errorMessage);

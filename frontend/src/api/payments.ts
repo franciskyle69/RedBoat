@@ -1,4 +1,6 @@
-const BASE = "http://localhost:5000";
+import { API_BASE_URL } from '../config/api';
+
+const BASE = API_BASE_URL;
 
 export interface CheckoutSessionResponse {
   url?: string;

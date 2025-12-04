@@ -2,6 +2,9 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import NotificationBell from "./NotificationBell";
 import "../styles/admin-layout.css";
+import defaultAvatar from "../assets/redBoat.png";
+import { API_BASE_URL } from "../config/api";
+import { dispatchLogout } from "../utils/authEvents";
 
 interface UserLayoutProps {
   children: React.ReactNode;
@@ -23,12 +26,18 @@ function UserLayout({ children, pageTitle }: UserLayoutProps) {
   const [userInfo, setUserInfo] = useState<UserInfo>({});
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("http://localhost:5000/me", {
+        const res = await fetch(`${API_BASE_URL}/me`, {
           credentials: "include",
         });
         if (!cancelled && res.ok) {
@@ -49,11 +58,12 @@ function UserLayout({ children, pageTitle }: UserLayoutProps) {
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
     try {
-      await fetch("http://localhost:5000/logout", {
+      await fetch(`${API_BASE_URL}/logout`, {
         method: "POST",
         credentials: "include",
       });
     } catch {}
+    dispatchLogout();
     window.location.href = "/";
   };
 
@@ -90,11 +100,11 @@ function UserLayout({ children, pageTitle }: UserLayoutProps) {
       : userInfo.username || "Guest";
 
   const resolveAvatarSrc = (src?: string) => {
-    if (!src) return "/default-avatar.png";
+    if (!src) return defaultAvatar;
     if (src.startsWith("http://") || src.startsWith("https://")) return src;
     if (src.startsWith("/uploads") || src.startsWith("uploads/")) {
       const normalized = src.startsWith("/") ? src : `/${src}`;
-      return `http://localhost:5000${normalized}`;
+      return `${API_BASE_URL}${normalized}`;
     }
     return src;
   };
@@ -105,7 +115,7 @@ function UserLayout({ children, pageTitle }: UserLayoutProps) {
 
   return (
     <div className={`admin-layout ${sidebarOpen ? '' : 'sidebar-collapsed'}`}>
-      <div className={`sidebar ${sidebarOpen ? '' : 'collapsed'}`}>
+      <div className={`sidebar ${sidebarOpen ? '' : 'collapsed'} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="user-info">
           <img
             src={resolveAvatarSrc(userInfo.profilePicture)}
@@ -197,9 +207,28 @@ function UserLayout({ children, pageTitle }: UserLayoutProps) {
         </a>
       </div>
 
+      {/* Mobile overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="mobile-overlay" 
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       <div className={`main ${sidebarOpen ? '' : 'expanded'}`}>
         <div className="topbar">
-          <h2>{pageTitle}</h2>
+          <div className="topbar-left">
+            <button 
+              className="mobile-menu-btn"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              <span className="material-icons-outlined">
+                {mobileMenuOpen ? 'close' : 'menu'}
+              </span>
+            </button>
+            <h2>{pageTitle}</h2>
+          </div>
           <div className="actions">
             <NotificationBell />
             <span className="date">{getCurrentDate()}</span>

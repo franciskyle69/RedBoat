@@ -4,6 +4,9 @@ import RoomCalendar from "../../components/RoomCalendar";
 import { useNotifications } from "../../contexts/NotificationContext";
 import "../../styles/main.css";
 import UserLayout from "../../components/UserLayout";
+import StarRating from "../../components/StarRating";
+import { alerts, showError } from "../../utils/alerts";
+import { API_BASE_URL } from "../../config/api";
 
 interface Room {
   _id: string;
@@ -15,6 +18,8 @@ interface Room {
   description: string;
   isAvailable: boolean;
   images?: string[];
+   averageRating?: number;
+   reviewCount?: number;
 }
 
 const resolveRoomImageSrc = (src: string) => {
@@ -25,10 +30,15 @@ const resolveRoomImageSrc = (src: string) => {
   // Map upload paths to backend
   if (src.startsWith("/uploads") || src.startsWith("uploads/")) {
     const normalized = src.startsWith("/") ? src : `/${src}`;
-    return `http://localhost:5000${normalized}`;
+    return `${API_BASE_URL}${normalized}`;
   }
 
   return src;
+};
+
+// Format price with comma separators for consistency
+const formatPrice = (price: number) => {
+  return price.toLocaleString('en-PH');
 };
 
 function Rooms() {
@@ -50,6 +60,7 @@ function Rooms() {
     numberOfGuests: 1,
     specialRequests: "",
   });
+  const [bookingSubmitting, setBookingSubmitting] = useState(false);
 
   // Images for the booking modal carousel (selected room or placeholder)
   const bookingImages = selectedRoom && selectedRoom.images && selectedRoom.images.length > 0
@@ -78,7 +89,7 @@ function Rooms() {
 
   const fetchRooms = async () => {
     try {
-      const response = await fetch("http://localhost:5000/rooms", {
+      const response = await fetch(`${API_BASE_URL}/rooms`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -127,8 +138,14 @@ function Rooms() {
     
     if (!selectedRoom) return;
 
+    if (bookingSubmitting) {
+      return;
+    }
+
+    setBookingSubmitting(true);
+
     try {
-      const response = await fetch("http://localhost:5000/bookings", {
+      const response = await fetch(`${API_BASE_URL}/bookings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -141,7 +158,6 @@ function Rooms() {
       });
 
       if (response.ok) {
-        notify("Booking request submitted. Waiting for admin confirmation.", "success", 4000, "/user/bookings");
         setShowBookingModal(false);
         setSelectedRoom(null);
         setBookingForm({
@@ -152,13 +168,17 @@ function Rooms() {
           numberOfGuests: 1,
           specialRequests: "",
         });
+        await alerts.bookingCreated();
+        navigate("/user/bookings");
       } else {
         const error = await response.json();
-        notify(error.message || "Failed to submit booking request", "error");
+        showError("Booking Failed", error.message || "Failed to submit booking request");
       }
     } catch (error) {
       console.error("Error submitting booking:", error);
-      notify("Error submitting booking request", "error");
+      showError("Error", "Error submitting booking request");
+    } finally {
+      setBookingSubmitting(false);
     }
   };
 
@@ -245,7 +265,18 @@ function Rooms() {
                 </div>
                 
                 <div className="room-details">
-                  <div className="room-price">₱{room.price}/night</div>
+                  <div className="room-number">Room {room.roomNumber}</div>
+                  <div className="room-price">₱{formatPrice(room.price)}/night</div>
+                  <div className="room-rating-row" style={{ display: "flex", alignItems: "center", marginTop: 4, marginBottom: 4 }}>
+                    <StarRating
+                      rating={room.averageRating ?? 0}
+                      readonly
+                      size="small"
+                    />
+                    <span style={{ marginLeft: 8, fontSize: 14, color: "#6b7280" }}>
+                      {room.reviewCount ?? 0} review{(room.reviewCount ?? 0) === 1 ? "" : "s"}
+                    </span>
+                  </div>
                   <div className="room-capacity">Up to {room.capacity} guests</div>
                   <div className="room-description">{room.description}</div>
                   
@@ -480,7 +511,7 @@ function Rooms() {
                   </div>
                   <div className="summary-row">
                     <span>Price per night:</span>
-                    <span>₱{selectedRoom.price}</span>
+                    <span>₱{formatPrice(selectedRoom.price)}</span>
                   </div>
                   {bookingForm.checkInDate && bookingForm.checkOutDate && (
                     <>
@@ -497,21 +528,21 @@ function Rooms() {
                       <div className="summary-row">
                         <span>Base Amount:</span>
                         <span>
-                          ₱{selectedRoom.price * Math.ceil((new Date(bookingForm.checkOutDate).getTime() - new Date(bookingForm.checkInDate).getTime()) / (1000 * 60 * 60 * 24))}
+                          ₱{formatPrice(selectedRoom.price * Math.ceil((new Date(bookingForm.checkOutDate).getTime() - new Date(bookingForm.checkInDate).getTime()) / (1000 * 60 * 60 * 24)))}
                         </span>
                       </div>
                       {bookingForm.numberOfGuests > selectedRoom.capacity && (
                         <div className="summary-row">
                           <span>Extra Person Charge ({bookingForm.numberOfGuests - selectedRoom.capacity} × ₱300/night):</span>
                           <span>
-                            ₱{(bookingForm.numberOfGuests - selectedRoom.capacity) * 300 * Math.ceil((new Date(bookingForm.checkOutDate).getTime() - new Date(bookingForm.checkInDate).getTime()) / (1000 * 60 * 60 * 24))}
+                            ₱{formatPrice((bookingForm.numberOfGuests - selectedRoom.capacity) * 300 * Math.ceil((new Date(bookingForm.checkOutDate).getTime() - new Date(bookingForm.checkInDate).getTime()) / (1000 * 60 * 60 * 24)))}
                           </span>
                         </div>
                       )}
                       <div className="summary-row total">
                         <span>Total Amount:</span>
                         <span>
-                          ₱{calculateTotalPrice(selectedRoom, bookingForm.checkInDate, bookingForm.checkOutDate, bookingForm.numberOfGuests)}
+                          ₱{formatPrice(calculateTotalPrice(selectedRoom, bookingForm.checkInDate, bookingForm.checkOutDate, bookingForm.numberOfGuests))}
                         </span>
                       </div>
                     </>
@@ -526,14 +557,16 @@ function Rooms() {
                       setShowBookingModal(false);
                       setSelectedRoom(null);
                     }}
+                    disabled={bookingSubmitting}
                   >
                     Cancel
                   </button>
                   <button 
                     type="submit"
                     className="btn-confirm"
+                    disabled={bookingSubmitting}
                   >
-                    Submit Booking Request
+                    {bookingSubmitting ? "Submitting..." : "Submit Booking Request"}
                   </button>
                 </div>
               </form>

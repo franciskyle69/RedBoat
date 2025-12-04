@@ -3,6 +3,10 @@ import "../../styles/main.css";
 import { useNotifications } from "../../contexts/NotificationContext";
 import AdminLayout from "../../components/AdminLayout";
 import { confirmDialog } from "../../utils/adminSwal";
+import WalkInBookingModal from "../../components/admin/WalkInBookingModal";
+import { createBooking } from "../../api/bookings";
+import { alerts, showError, showSuccess } from "../../utils/alerts";
+import { API_BASE_URL } from "../../config/api";
 
 interface Room {
   _id: string;
@@ -28,7 +32,7 @@ function RoomImageStrip({ roomNumber, images }: { roomNumber: string; images: st
 
     if (src.startsWith('/uploads') || src.startsWith('uploads/')) {
       const normalized = src.startsWith('/') ? src : `/${src}`;
-      return `http://localhost:5000${normalized}`;
+      return `${API_BASE_URL}${normalized}`;
     }
 
     return src;
@@ -43,7 +47,7 @@ function RoomImageStrip({ roomNumber, images }: { roomNumber: string; images: st
         alt={`Room ${roomNumber} thumbnail`}
         style={{
           width: '100%',
-          height: 180,
+          height: 220,
           borderRadius: '10px 10px 0 0',
           objectFit: 'cover',
           display: 'block',
@@ -52,6 +56,26 @@ function RoomImageStrip({ roomNumber, images }: { roomNumber: string; images: st
     </div>
   );
 }
+
+// Format price with comma separators for consistency
+const formatPrice = (price: number) => {
+  return price.toLocaleString('en-PH');
+};
+
+const getRoomTypeColor = (roomType: string) => {
+  switch (roomType) {
+    case "Standard":
+      return "#10b981";
+    case "Deluxe":
+      return "#3b82f6";
+    case "Suite":
+      return "#8b5cf6";
+    case "Presidential":
+      return "#f59e0b";
+    default:
+      return "#6b7280";
+  }
+};
 
 function RoomManagement() {
   const { notify } = useNotifications();
@@ -71,6 +95,10 @@ function RoomManagement() {
   const [newAmenity, setNewAmenity] = useState("");
   const [imageFiles, setImageFiles] = useState<FileList | null>(null);
   const [message, setMessage] = useState("");
+  const [showWalkInModal, setShowWalkInModal] = useState(false);
+  const [selectedRoomForBooking, setSelectedRoomForBooking] = useState<Room | null>(null);
+  const [savingRoom, setSavingRoom] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   const roomTypes = ["Standard", "Deluxe", "Suite", "Presidential"];
 
@@ -80,12 +108,17 @@ function RoomManagement() {
 
   const fetchRooms = async () => {
     try {
-      const response = await fetch("http://localhost:5000/rooms/admin", {
+      const response = await fetch(`${API_BASE_URL}/rooms/admin`, {
         credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
         setRooms(data.data || []);
+      } else if (response.status === 403) {
+        console.warn("Failed to fetch rooms: insufficient permissions (403)");
+        setRooms([]);
+        setMessage("You do not have permission to manage rooms.");
+        notify("You do not have permission to manage rooms", "error");
       } else {
         console.warn("Failed to fetch rooms:", response.status);
         setRooms([]);
@@ -104,45 +137,77 @@ function RoomManagement() {
     e.preventDefault();
     setMessage("");
 
+    if (savingRoom) {
+      return;
+    }
+    setSavingRoom(true);
+
     try {
-      const roomData = {
-        ...formData,
-        price: parseFloat(formData.price),
-        capacity: parseInt(formData.capacity)
-      };
+      const isEdit = Boolean(editingRoom);
+      const url = isEdit ? `${API_BASE_URL}/rooms/${editingRoom!._id}` : `${API_BASE_URL}/rooms`;
+      const method = isEdit ? "PUT" : "POST";
 
-      const url = editingRoom 
-        ? `http://localhost:5000/rooms/${editingRoom._id}`
-        : "http://localhost:5000/rooms";
-      
-      const method = editingRoom ? "PUT" : "POST";
+      let response: Response;
+      if (isEdit) {
+        // Edit: keep using JSON body
+        const roomData = {
+          ...formData,
+          price: parseFloat(formData.price),
+          capacity: parseInt(formData.capacity)
+        };
+        response = await fetch(url, {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(roomData),
+        });
+      } else {
+        // Create: use multipart/form-data and send images along with fields
+        const fd = new FormData();
+        fd.append("roomNumber", formData.roomNumber);
+        fd.append("roomType", formData.roomType);
+        fd.append("price", formData.price);
+        fd.append("capacity", formData.capacity);
+        fd.append("description", formData.description || "");
+        fd.append("amenities", JSON.stringify(formData.amenities || []));
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(roomData),
-      });
+        if (imageFiles && imageFiles.length > 0) {
+          if (imageFiles.length > 5) {
+            notify("Please select up to 5 images", "error");
+            return;
+          }
+          Array.from(imageFiles).forEach((file) => fd.append("images", file));
+        }
+
+        response = await fetch(url, {
+          method,
+          credentials: "include",
+          body: fd,
+        });
+      }
 
       const result = await response.json();
 
       if (response.ok) {
-        setMessage(editingRoom ? "Room updated successfully!" : "Room created successfully!");
-        notify(editingRoom ? "Room updated successfully" : "Room created successfully", "success");
         setShowAddForm(false);
         setEditingRoom(null);
         resetForm();
         fetchRooms();
+        if (editingRoom) {
+          await alerts.roomUpdated();
+        } else {
+          await alerts.roomCreated();
+        }
       } else {
-        setMessage(result.message || "Error saving room");
-        notify(result.message || "Error saving room", "error");
+        showError("Error", result.message || "Error saving room");
       }
     } catch (error) {
       console.error("Error saving room:", error);
-      setMessage("Error saving room");
-      notify("Error saving room", "error");
+      showError("Error", "Error saving room");
+    } finally {
+      setSavingRoom(false);
     }
   };
 
@@ -173,7 +238,7 @@ function RoomManagement() {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/rooms/${roomId}`, {
+      const response = await fetch(`${API_BASE_URL}/rooms/${roomId}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -181,17 +246,14 @@ function RoomManagement() {
       const result = await response.json();
 
       if (response.ok) {
-        setMessage("Room deleted successfully!");
-        notify("Room deleted successfully", "success");
         fetchRooms();
+        await alerts.roomDeleted();
       } else {
-        setMessage(result.message || "Error deleting room");
-        notify(result.message || "Error deleting room", "error");
+        showError("Error", result.message || "Error deleting room");
       }
     } catch (error) {
       console.error("Error deleting room:", error);
-      setMessage("Error deleting room");
-      notify("Error deleting room", "error");
+      showError("Error", "Error deleting room");
     }
   };
 
@@ -243,10 +305,16 @@ function RoomManagement() {
       return;
     }
 
-    if (imageFiles.length < 3 || imageFiles.length > 5) {
-      notify("Please select between 3 and 5 images", "error");
+    if (imageFiles.length > 5) {
+      notify("Please select up to 5 images", "error");
       return;
     }
+
+    if (uploadingImages) {
+      return;
+    }
+
+    setUploadingImages(true);
 
     const formDataUpload = new FormData();
     Array.from(imageFiles).forEach((file) => {
@@ -255,7 +323,7 @@ function RoomManagement() {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/rooms/${editingRoom._id}/images`,
+        `${API_BASE_URL}/rooms/${editingRoom._id}/images`,
         {
           method: "POST",
           credentials: "include",
@@ -266,19 +334,48 @@ function RoomManagement() {
       const result = await response.json();
 
       if (response.ok) {
-        notify("Room images updated", "success");
         setFormData((prev) => ({
           ...prev,
           images: result.data?.images || [],
         }));
         setImageFiles(null);
         fetchRooms();
+        await alerts.roomImagesUpdated();
       } else {
-        notify(result.message || "Failed to upload images", "error");
+        showError("Upload Failed", result.message || "Failed to upload images");
       }
     } catch (error) {
       console.error("Error uploading images:", error);
-      notify("Error uploading images", "error");
+      showError("Upload Failed", "Error uploading images");
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
+  const handleBookRoom = (room: Room) => {
+    setSelectedRoomForBooking(room);
+    setShowWalkInModal(true);
+  };
+
+  const handleCreateWalkInBooking = async (data: {
+    roomId: string;
+    guestName: string;
+    contactNumber: string;
+    checkInDate: string;
+    checkOutDate: string;
+    numberOfGuests: number;
+    specialRequests?: string;
+  }) => {
+    try {
+      await createBooking(data);
+      setShowWalkInModal(false);
+      setSelectedRoomForBooking(null);
+      await showSuccess("Walk-in Booking Created!", "The booking has been created successfully.");
+    } catch (error) {
+      console.error("Error creating walk-in booking:", error);
+      const message = error instanceof Error ? error.message : "Failed to create booking";
+      showError("Booking Failed", message);
+      throw error;
     }
   };
 
@@ -298,7 +395,7 @@ function RoomManagement() {
     if (!isConfirmed) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/rooms/${room._id}`, {
+      const response = await fetch(`${API_BASE_URL}/rooms/${room._id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -310,18 +407,18 @@ function RoomManagement() {
       });
 
       if (response.ok) {
-        setMessage(`Room ${!room.isAvailable ? 'activated' : 'deactivated'} successfully!`);
-        notify(`Room ${!room.isAvailable ? 'activated' : 'deactivated'} successfully`, "success");
         fetchRooms();
+        await showSuccess(
+          `Room ${!room.isAvailable ? 'Activated' : 'Deactivated'}`,
+          `Room ${room.roomNumber} has been ${!room.isAvailable ? 'activated' : 'deactivated'}.`
+        );
       } else {
         const result = await response.json();
-        setMessage(result.message || "Error updating room");
-        notify(result.message || "Error updating room", "error");
+        showError("Error", result.message || "Error updating room");
       }
     } catch (error) {
       console.error("Error updating room:", error);
-      setMessage("Error updating room");
-      notify("Error updating room", "error");
+      showError("Error", "Error updating room");
     }
   };
 
@@ -341,21 +438,20 @@ function RoomManagement() {
         </div>
       )}
 
-      <div className="admin-content">
-        <div className="admin-section">
-          <div className="admin-section-header">
-            <h3>Rooms</h3>
-            <button 
-              className="admin-button primary"
-              onClick={() => {
-                setShowAddForm(true);
-                setEditingRoom(null);
-                resetForm();
-              }}
-            >
-              Add New Room
-            </button>
-          </div>
+      <div className="admin-content rooms-management">
+        <div className="rooms-page-header">
+          <h3>Rooms</h3>
+          <button 
+            className="admin-button primary"
+            onClick={() => {
+              setShowAddForm(true);
+              setEditingRoom(null);
+              resetForm();
+            }}
+          >
+            Add New Room
+          </button>
+        </div>
 
           {showAddForm && (
             <div className="modal-overlay">
@@ -487,30 +583,44 @@ function RoomManagement() {
                             ))}
                           </div>
                         </div>
-                        <label style={{ marginTop: "8px" }}>Upload new images (3-5)</label>
+                        <label style={{ marginTop: "8px" }}>
+                          {editingRoom
+                            ? "Upload new images (1-5). After selecting files, click the button below to save them."
+                            : "Select images (up to 5). They will be uploaded when you create the room."}
+                        </label>
                         <input
                           type="file"
                           accept="image/*"
                           multiple
                           onChange={(e) => setImageFiles(e.target.files)}
                         />
-                        <button
-                          type="button"
-                          className="admin-button small"
-                          onClick={handleUploadImages}
-                          disabled={!editingRoom || !imageFiles || imageFiles.length === 0}
-                        >
-                          Upload Images
-                        </button>
+                        {editingRoom && (
+                          <button
+                            type="button"
+                            className="admin-button primary"
+                            style={{ marginTop: "8px" }}
+                            onClick={handleUploadImages}
+                            disabled={uploadingImages || !imageFiles || imageFiles.length === 0}
+                          >
+                            {uploadingImages ? "Uploading..." : "Upload selected images"}
+                          </button>
+                        )}
                       </div>
 
                       <div className="form-actions">
-                        <button type="submit" className="admin-button primary">
-                          {editingRoom ? 'Update Room' : 'Create Room'}
+                        <button
+                          type="submit"
+                          className="admin-button primary"
+                          disabled={savingRoom}
+                        >
+                          {savingRoom
+                            ? (editingRoom ? 'Updating...' : 'Creating...')
+                            : (editingRoom ? 'Update Room' : 'Create Room')}
                         </button>
                         <button 
                           type="button" 
                           className="admin-button secondary"
+                          disabled={savingRoom}
                           onClick={() => {
                             setShowAddForm(false);
                             setEditingRoom(null);
@@ -527,78 +637,121 @@ function RoomManagement() {
             </div>
           )}
 
-          <div className="rooms-list">
-            {rooms.length === 0 ? (
-              <div className="no-rooms">
-                <p>No rooms found. Create your first room!</p>
-              </div>
-            ) : (
-              <div className="rooms-grid">
-                {rooms.map((room) => (
-                  <div key={room._id} className={`room-card ${!room.isAvailable ? 'unavailable' : ''}`}>
-                    <div className="room-header">
-                      <h4>Room {room.roomNumber}</h4>
-                      <span className={`room-status ${room.isAvailable ? 'available' : 'unavailable'}`}>
-                        {room.isAvailable ? 'Available' : 'Unavailable'}
-                      </span>
-                      <span 
-                        className={`room-status ${room.housekeepingStatus || 'clean'}`}
-                        title={`Housekeeping: ${(room.housekeepingStatus || 'clean').replace('-', ' ')}`}
-                        style={{ marginLeft: '8px' }}
-                      >
-                        {(room.housekeepingStatus || 'clean').replace('-', ' ')}
-                      </span>
-                    </div>
-                    <div className="room-details">
-                      <RoomImageStrip roomNumber={room.roomNumber} images={room.images || []} />
-                      <p><strong>Room:</strong> {room.roomNumber}</p>
-                      <p><strong>Type:</strong> {room.roomType}</p>
-                      <p><strong>Price:</strong> ₱{room.price}/night</p>
-                      <p><strong>Capacity:</strong> {room.capacity} guests</p>
-                      <p>
-                        <strong>Housekeeping:</strong> {(room.housekeepingStatus || 'clean').replace('-', ' ')}
-                        {room.assignedHousekeeper ? ` (Assigned: ${room.assignedHousekeeper})` : ''}
-                        {room.lastCleanedAt ? ` • Last cleaned: ${new Date(room.lastCleanedAt).toLocaleString()}` : ''}
-                      </p>
-                      {room.description && <p><strong>Description:</strong> {room.description}</p>}
-                      {room.amenities.length > 0 && (
-                        <div className="room-amenities">
-                          <strong>Amenities:</strong>
-                          <div className="amenities-tags">
-                            {room.amenities.map((amenity, index) => (
-                              <span key={index} className="amenity-tag">{amenity}</span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="room-actions">
-                      <button 
-                        className="admin-button small"
-                        onClick={() => handleEdit(room)}
-                      >
-                        Edit
-                      </button>
-                      <button 
-                        className={`admin-button small ${room.isAvailable ? 'warning' : 'success'}`}
-                        onClick={() => toggleRoomAvailability(room)}
-                      >
-                        {room.isAvailable ? 'Deactivate' : 'Activate'}
-                      </button>
-                      <button 
-                        className="admin-button small danger"
-                        onClick={() => handleDelete(room._id)}
-                      >
-                        Delete
-                      </button>
+          {rooms.length === 0 ? (
+            <div className="no-rooms">
+              <p>No rooms found. Create your first room!</p>
+            </div>
+          ) : (
+            <div className="rooms-grid">
+              {rooms.map((room) => (
+                <div
+                  key={room._id}
+                  className={`room-card ${!room.isAvailable ? "unavailable" : ""}`}
+                >
+                  <div className="room-header">
+                    <div className="room-number">Room {room.roomNumber}</div>
+                    <div
+                      className="room-type-badge"
+                      style={{ backgroundColor: getRoomTypeColor(room.roomType) }}
+                    >
+                      {room.roomType}
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+
+                  <RoomImageStrip
+                    roomNumber={room.roomNumber}
+                    images={room.images || []}
+                  />
+
+                  <div className="room-details">
+                    <div className="room-price">
+                      ₱{formatPrice(room.price)}/night
+                    </div>
+
+                    <div className="room-badges">
+                      <span
+                        className={`room-status ${
+                          room.isAvailable ? "available" : "unavailable"
+                        }`}
+                      >
+                        {room.isAvailable ? "Available" : "Unavailable"}
+                      </span>
+                      <span
+                        className={`room-status ${room.housekeepingStatus || "clean"}`}
+                      >
+                        {(room.housekeepingStatus || "clean").replace("-", " ")}
+                      </span>
+                    </div>
+
+                    <div className="room-capacity">
+                      Up to {room.capacity} guests
+                    </div>
+
+                    {room.description && (
+                      <div className="room-description">{room.description}</div>
+                    )}
+
+                    {room.amenities.length > 0 && (
+                      <div className="room-amenities">
+                        <h4>Amenities:</h4>
+                        <div className="amenities-list">
+                          {room.amenities.map((amenity, index) => (
+                            <span key={index} className="amenity-tag">
+                              {amenity}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="room-actions">
+                    {room.isAvailable && (
+                      <button
+                        className="admin-button primary"
+                        onClick={() => handleBookRoom(room)}
+                      >
+                        Book
+                      </button>
+                    )}
+                    <button
+                      className="admin-button secondary"
+                      onClick={() => handleEdit(room)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className={`admin-button ${
+                        room.isAvailable ? "warning" : "success"
+                      }`}
+                      onClick={() => toggleRoomAvailability(room)}
+                    >
+                      {room.isAvailable ? "Deactivate" : "Activate"}
+                    </button>
+                    <button
+                      className="admin-button danger"
+                      onClick={() => handleDelete(room._id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
       </div>
+
+      {/* Walk-in Booking Modal */}
+      {showWalkInModal && (
+        <WalkInBookingModal
+          onSubmit={handleCreateWalkInBooking}
+          onClose={() => {
+            setShowWalkInModal(false);
+            setSelectedRoomForBooking(null);
+          }}
+          preselectedRoomId={selectedRoomForBooking?._id}
+        />
+      )}
     </AdminLayout>
   );
 }

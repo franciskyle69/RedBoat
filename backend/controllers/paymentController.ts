@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 import { Booking } from '../models/Booking';
 import { User } from '../models/User';
 import { NotificationController } from './notificationController';
-import { sendAppEmail, buildBookingSummaryHtml, BookingSummaryDetails } from '../emailService';
+import { sendAppEmail, buildBookingSummaryHtml, BookingSummaryDetails, getBookingReference, getPaymentReference } from '../services/emailService';
 
 const formatDateShort = (date: Date | string | undefined): string | undefined => {
   if (!date) return undefined;
@@ -32,7 +32,8 @@ const buildPaymentBookingSummary = (booking: any, overrides: Partial<BookingSumm
     : undefined;
 
   const base: BookingSummaryDetails = {
-    reference: booking._id ? String(booking._id) : undefined,
+    reference: booking._id ? getBookingReference(String(booking._id)) : undefined,
+    paymentReference: booking._id && booking.paymentStatus === 'paid' ? getPaymentReference(String(booking._id)) : undefined,
     room: roomLabel,
     checkIn: formatDateShort(booking.checkInDate),
     checkOut: formatDateShort(booking.checkOutDate),
@@ -41,6 +42,8 @@ const buildPaymentBookingSummary = (booking: any, overrides: Partial<BookingSumm
     totalAmount,
     bookingStatus: booking.status,
     paymentStatus: booking.paymentStatus,
+    paymentMethod: booking.paymentMethod,
+    paymentDate: booking.paymentDate ? formatDateShort(booking.paymentDate) : undefined,
   };
 
   return buildBookingSummaryHtml({ ...base, ...overrides });
@@ -198,7 +201,12 @@ export class PaymentController {
           const session = event.data.object as Stripe.Checkout.Session;
           const bookingId = (session.metadata && session.metadata.bookingId) || '';
           if (bookingId) {
-            await Booking.findByIdAndUpdate(bookingId, { paymentStatus: 'paid' });
+            await Booking.findByIdAndUpdate(bookingId, { 
+              paymentStatus: 'paid',
+              paymentMethod: 'stripe',
+              paymentDate: new Date(),
+              stripePaymentIntentId: session.payment_intent as string,
+            });
             await PaymentController.notifyAdminsBookingPaid(bookingId);
           }
           break;
@@ -231,7 +239,12 @@ export class PaymentController {
       }
 
       if (bookingId) {
-        await Booking.findByIdAndUpdate(bookingId, { paymentStatus: 'paid' });
+        await Booking.findByIdAndUpdate(bookingId, { 
+          paymentStatus: 'paid',
+          paymentMethod: 'stripe',
+          paymentDate: new Date(),
+          stripePaymentIntentId: session.payment_intent as string,
+        });
         await PaymentController.notifyAdminsBookingPaid(bookingId);
       }
 

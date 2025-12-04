@@ -13,7 +13,6 @@ router.get('/profile', requireAuth, asyncHandler(UserController.getProfile));
 router.put('/profile', requireAuth, asyncHandler(UserController.updateProfile));
 router.put('/profile/password', requireAuth, asyncHandler(UserController.changePassword));
 router.post('/profile/avatar', requireAuth, uploadUserAvatar.single('avatar'), asyncHandler(UserController.uploadAvatar));
-router.delete('/profile', requireAuth, asyncHandler(UserController.deleteAccount));
 
 // Admin user management routes (admin permissions via RBAC)
 router.get(
@@ -28,6 +27,13 @@ router.put(
   requireAuth,
   requirePermission('updateAny', 'user'),
   asyncHandler(UserController.updateUserRole)
+);
+
+router.put(
+  '/users/:userId/admin-permissions',
+  requireAuth,
+  requirePermission('updateAny', 'user'),
+  asyncHandler(UserController.updateAdminPermissions)
 );
 
 export default router;

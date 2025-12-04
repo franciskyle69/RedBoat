@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import "../../styles/main.css";
 import AdminLayout from "../../components/AdminLayout";
+import { showSuccess, showError } from "../../utils/alerts";
 
 interface ReportData {
   occupancy?: any;
@@ -17,6 +18,7 @@ interface DateRange {
 function Reports() {
   const [activeReport, setActiveReport] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingReportType, setLoadingReportType] = useState<string | null>(null);
   const [reportData, setReportData] = useState<ReportData>({});
   const [dateRange, setDateRange] = useState<DateRange>({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -26,6 +28,7 @@ function Reports() {
 
   const fetchReport = async (reportType: string) => {
     setLoading(true);
+    setLoadingReportType(reportType);
     setMessage("");
     
     try {
@@ -42,15 +45,18 @@ function Reports() {
         const data = await response.json();
         setReportData(prev => ({ ...prev, [reportType]: data.data }));
         setActiveReport(reportType);
-        setMessage(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} report generated successfully!`);
+        const reportName = reportType === 'bookings' ? 'Booking Analytics' : 
+                          reportType.charAt(0).toUpperCase() + reportType.slice(1) + ' Report';
+        await showSuccess('Report Generated!', `${reportName} has been generated successfully.`);
       } else {
-        setMessage(`Failed to generate ${reportType} report`);
+        showError('Report Failed', `Failed to generate ${reportType} report`);
       }
     } catch (error) {
       console.error(`Error fetching ${reportType} report:`, error);
-      setMessage(`Error generating ${reportType} report`);
+      showError('Report Failed', `Error generating ${reportType} report`);
     } finally {
       setLoading(false);
+      setLoadingReportType(null);
     }
   };
 
@@ -76,20 +82,22 @@ function Reports() {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        setMessage(`PDF downloaded successfully!`);
+        await showSuccess('PDF Downloaded!', 'The report has been downloaded successfully.');
       } else {
         try {
           const err = await response.json();
-          setMessage(err?.message ? `Failed to download PDF: ${err.message}` : `Failed to download PDF`);
+          const errorMsg = err?.message ? `Failed to download PDF: ${err.message}` : `Failed to download PDF`;
+          showError('Download Failed', errorMsg);
           if (err?.details) console.error('PDF error details:', err.details);
         } catch {
           const text = await response.text();
-          setMessage(text ? `Failed to download PDF: ${text}` : `Failed to download PDF`);
+          const errorMsg = text ? `Failed to download PDF: ${text}` : `Failed to download PDF`;
+          showError('Download Failed', errorMsg);
         }
       }
     } catch (error) {
       console.error(`Error downloading PDF:`, error);
-      setMessage(`Error downloading PDF`);
+      showError('Download Failed', 'Error downloading PDF');
     }
   };
 
@@ -331,21 +339,21 @@ function Reports() {
                 onClick={() => fetchReport('occupancy')}
                 disabled={loading}
               >
-                {loading && activeReport === 'occupancy' ? 'Generating...' : 'Occupancy Report'}
+                {loading && loadingReportType === 'occupancy' ? 'Generating...' : 'Occupancy Report'}
               </button>
               <button 
                 className={`admin-button ${activeReport === 'revenue' ? 'active' : ''}`}
                 onClick={() => fetchReport('revenue')}
                 disabled={loading}
               >
-                {loading && activeReport === 'revenue' ? 'Generating...' : 'Revenue Report'}
+                {loading && loadingReportType === 'revenue' ? 'Generating...' : 'Revenue Report'}
               </button>
               <button 
                 className={`admin-button ${activeReport === 'bookings' ? 'active' : ''}`}
                 onClick={() => fetchReport('bookings')}
                 disabled={loading}
               >
-                {loading && activeReport === 'bookings' ? 'Generating...' : 'Booking Analytics'}
+                {loading && loadingReportType === 'bookings' ? 'Generating...' : 'Booking Analytics'}
               </button>
             </div>
           </div>

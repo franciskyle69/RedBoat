@@ -1,9 +1,18 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
+export interface AdminPermissions {
+  manageBookings?: boolean;
+  manageRooms?: boolean;
+  manageHousekeeping?: boolean;
+  manageUsers?: boolean;
+  viewReports?: boolean;
+}
+
 export interface IUser extends Document {
   username?: string;
   email: string;
-  password: string;
+  password?: string;
+  authProvider?: 'local' | 'google';
   firstName: string;
   lastName: string;
   phoneNumber?: string;
@@ -15,7 +24,8 @@ export interface IUser extends Document {
     zipCode?: string;
     country?: string;
   };
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'superadmin';
+  adminPermissions?: AdminPermissions;
   isEmailVerified: boolean;
   emailNotifications?: boolean;
   profilePicture?: string;
@@ -31,7 +41,8 @@ export interface IUser extends Document {
 const UserSchema = new Schema<IUser>({
   username: { type: String, required: false, unique: true, sparse: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  password: { type: String, required: false },
+  authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
   firstName: { type: String, required: true },
   lastName: { type: String, required: true },
   phoneNumber: { type: String, required: false },
@@ -43,7 +54,14 @@ const UserSchema = new Schema<IUser>({
     zipCode: { type: String, required: false },
     country: { type: String, required: false }
   },
-  role: { type: String, enum: ["user", "admin"], default: "user" },
+  role: { type: String, enum: ["user", "admin", "superadmin"], default: "user" },
+  adminPermissions: {
+    manageBookings: { type: Boolean, default: true },
+    manageRooms: { type: Boolean, default: true },
+    manageHousekeeping: { type: Boolean, default: true },
+    manageUsers: { type: Boolean, default: true },
+    viewReports: { type: Boolean, default: true }
+  },
   isEmailVerified: { type: Boolean, default: false },
   emailNotifications: { type: Boolean, default: true },
   profilePicture: { type: String, required: false },

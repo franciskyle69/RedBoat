@@ -1,4 +1,5 @@
 import React from "react";
+import { getBookingReference, getPaymentReference } from "../../api/bookings";
 
 interface BookingDetailsModalProps {
   booking: any;
@@ -25,6 +26,20 @@ export default function BookingDetailsModal({ booking, formatDate, adminNotes, s
         </div>
         <div className="modal-body">
           <div className="booking-details">
+            <div className="detail-row">
+              <strong>Booking Reference:</strong>{" "}
+              <span style={{ 
+                fontFamily: 'monospace', 
+                fontWeight: 600,
+                color: '#6366f1',
+                fontSize: '1rem',
+                background: '#eef2ff',
+                padding: '2px 8px',
+                borderRadius: '4px'
+              }}>
+                {getBookingReference(booking)}
+              </span>
+            </div>
             <div className="detail-row">
               <strong>Guest:</strong> {booking.user.username}
             </div>
@@ -63,6 +78,20 @@ export default function BookingDetailsModal({ booking, formatDate, adminNotes, s
               >
                 {booking.paymentStatus.charAt(0).toUpperCase() + booking.paymentStatus.slice(1)}
               </span>
+              {booking.paymentStatus === "paid" && (
+                <span style={{ 
+                  marginLeft: "12px",
+                  fontFamily: 'monospace', 
+                  fontWeight: 600,
+                  color: '#10b981',
+                  fontSize: '0.9rem',
+                  background: '#ecfdf5',
+                  padding: '2px 8px',
+                  borderRadius: '4px'
+                }}>
+                  {getPaymentReference(booking._id)}
+                </span>
+              )}
               <div style={{ marginTop: "10px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
                 {booking.paymentStatus !== "paid" && (
                   <button
@@ -96,7 +125,8 @@ export default function BookingDetailsModal({ booking, formatDate, adminNotes, s
                     Mark as Refunded
                   </button>
                 )}
-                {booking.paymentStatus !== "pending" && (
+                {/* Only show "Mark as Pending" if payment is refunded (not if paid - unfair to user who already paid) */}
+                {booking.paymentStatus === "refunded" && (
                   <button
                     onClick={() => updatePaymentStatus(booking._id, "pending")}
                     style={{

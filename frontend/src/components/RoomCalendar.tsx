@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import "../styles/calendar.css";
+import { API_BASE_URL } from "../config/api";
 
 interface RoomAvailability {
   roomNumber: string;
@@ -59,7 +60,7 @@ function RoomCalendar({ onDateSelect, onRoomSelect }: RoomCalendarProps) {
       const month = currentDate.getMonth() + 1;
       const year = currentDate.getFullYear();
       
-      const response = await fetch(`http://localhost:5000/rooms/calendar?month=${month}&year=${year}`, {
+      const response = await fetch(`${API_BASE_URL}/rooms/calendar?month=${month}&year=${year}`, {
         credentials: "include",
       });
       
@@ -240,7 +241,7 @@ function RoomCalendar({ onDateSelect, onRoomSelect }: RoomCalendarProps) {
     setLoadingRooms(true);
     try {
       const dateString = date.toISOString().split('T')[0];
-      const response = await fetch(`http://localhost:5000/rooms/availability?date=${dateString}`, {
+      const response = await fetch(`${API_BASE_URL}/rooms/availability?date=${dateString}`, {
         credentials: "include",
       });
       
@@ -497,7 +498,20 @@ function RoomCalendar({ onDateSelect, onRoomSelect }: RoomCalendarProps) {
         <div className="date-details-overlay">
           <div className="date-details-modal">
             <div className="date-details-header">
-              <h3>Room Availability - {selectedDate.toLocaleDateString()}</h3>
+              <div className="header-content">
+                <div className="header-icon">📅</div>
+                <div className="header-text">
+                  <h3>Room Availability</h3>
+                  <span className="header-date">
+                    {selectedDate.toLocaleDateString('en-US', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </span>
+                </div>
+              </div>
               <button 
                 className="close-btn"
                 onClick={() => setShowDateDetails(false)}
@@ -515,75 +529,98 @@ function RoomCalendar({ onDateSelect, onRoomSelect }: RoomCalendarProps) {
               ) : (
                 <>
                   <div className="availability-summary">
-                    <div className="summary-item available">
-                      <span className="summary-icon">✅</span>
-                      <span className="summary-text">
-                        {getAvailableRooms().length} Available Rooms
-                      </span>
+                    <div className="summary-card available">
+                      <div className="summary-icon-wrapper">
+                        <span className="summary-icon">🛏️</span>
+                      </div>
+                      <div className="summary-info">
+                        <span className="summary-count">{getAvailableRooms().length}</span>
+                        <span className="summary-label">Available</span>
+                      </div>
                     </div>
-                    <div className="summary-item occupied">
-                      <span className="summary-icon">❌</span>
-                      <span className="summary-text">
-                        {getOccupiedRooms().length} Occupied Rooms
-                      </span>
+                    <div className="summary-card occupied">
+                      <div className="summary-icon-wrapper">
+                        <span className="summary-icon">🔒</span>
+                      </div>
+                      <div className="summary-info">
+                        <span className="summary-count">{getOccupiedRooms().length}</span>
+                        <span className="summary-label">Occupied</span>
+                      </div>
                     </div>
                   </div>
 
-              <div className="rooms-details">
-                <div className="rooms-section">
-                  <h4>Available Rooms</h4>
-                  <div className="rooms-list">
-                    {getAvailableRooms().length > 0 ? (
-                      getAvailableRooms().map((room) => (
-                        <div key={room.roomNumber} className="room-item available">
-                          <span className="room-number">{room.roomNumber}</span>
-                          <span className="room-type">{room.roomType}</span>
-                          <button 
-                            className="book-btn"
-                            onClick={() => {
-                              handleRoomClick(room.roomNumber, selectedDate);
-                              setShowDateDetails(false);
-                            }}
-                          >
-                            Book Now
-                          </button>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="no-rooms">No available rooms for this date</p>
-                    )}
-                  </div>
-                </div>
+                  <div className="rooms-details">
+                    <div className="rooms-section available-section">
+                      <div className="section-header">
+                        <span className="section-icon">✓</span>
+                        <h4>Available Rooms</h4>
+                      </div>
+                      <div className="rooms-list">
+                        {getAvailableRooms().length > 0 ? (
+                          getAvailableRooms().map((room) => (
+                            <div key={room.roomNumber} className="room-card available">
+                              <div className="room-info">
+                                <span className="room-number">Room {room.roomNumber}</span>
+                                <span className="room-type-badge">{room.roomType}</span>
+                              </div>
+                              <button 
+                                className="book-btn"
+                                onClick={() => {
+                                  handleRoomClick(room.roomNumber, selectedDate);
+                                  setShowDateDetails(false);
+                                }}
+                              >
+                                <span>Book Now</span>
+                                <span className="btn-arrow">→</span>
+                              </button>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="no-rooms-card">
+                            <span className="no-rooms-icon">📭</span>
+                            <p>No available rooms for this date</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-                <div className="rooms-section">
-                  <h4>Occupied Rooms</h4>
-                  <div className="rooms-list">
-                    {getOccupiedRooms().length > 0 ? (
-                      getOccupiedRooms().map((room) => (
-                        <div key={room.roomNumber} className="room-item occupied">
-                          <span className="room-number">{room.roomNumber}</span>
-                          <span className="room-type">{room.roomType}</span>
-                          {room.booking && (
-                            <span className="booking-info">
-                              Guest: {room.booking.guestName || 'Unknown'}
-                            </span>
-                          )}
-                        </div>
-                      ))
-                    ) : (
-                      <p className="no-rooms">No occupied rooms for this date</p>
-                    )}
+                    <div className="rooms-section occupied-section">
+                      <div className="section-header">
+                        <span className="section-icon">✗</span>
+                        <h4>Occupied Rooms</h4>
+                      </div>
+                      <div className="rooms-list">
+                        {getOccupiedRooms().length > 0 ? (
+                          getOccupiedRooms().map((room) => (
+                            <div key={room.roomNumber} className="room-card occupied">
+                              <div className="room-info">
+                                <span className="room-number">Room {room.roomNumber}</span>
+                                <span className="room-type-badge">{room.roomType}</span>
+                              </div>
+                              {room.booking && (
+                                <div className="guest-info">
+                                  <span className="guest-icon">👤</span>
+                                  <span className="guest-name">{room.booking.guestName || 'Guest'}</span>
+                                </div>
+                              )}
+                            </div>
+                          ))
+                        ) : (
+                          <div className="no-rooms-card success">
+                            <span className="no-rooms-icon">🎉</span>
+                            <p>All rooms are available!</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-
                 </>
               )}
             </div>
 
             <div className="date-details-footer">
               <button 
-                className="btn btn-secondary"
+                className="btn-close-modal"
                 onClick={() => setShowDateDetails(false)}
               >
                 Close

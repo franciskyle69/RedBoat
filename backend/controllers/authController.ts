@@ -2,12 +2,14 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { User } from '../models/User';
-import { sendEmail } from '../emailService';
+import { sendEmail } from '../services/emailService';
 import { verifyRecaptcha } from '../middleware/recaptcha';
 import { AuthenticatedRequest } from '../middleware/auth';
+import { validatePassword, PASSWORD_REQUIREMENTS } from '../utils/passwordValidation';
 
 const jwtSecret = process.env.JWT_SECRET || "dev_secret";
 const jwtExpiresIn = process.env.JWT_EXPIRES_IN || "7d";
+const isProduction = process.env.NODE_ENV === "production";
 
 // Store pending verifications (in production, use Redis or database)
 const pendingVerifications = new Map<string, { 
@@ -48,6 +50,15 @@ export class AuthController {
 
       if (!username || !email || !password || !firstName || !lastName) {
         return res.status(400).json({ message: "Username, email, password, first name, and last name are required" });
+      }
+
+      // Validate password strength
+      const passwordValidation = validatePassword(password);
+      if (!passwordValidation.isValid) {
+        return res.status(400).json({ 
+          message: PASSWORD_REQUIREMENTS,
+          errors: passwordValidation.errors 
+        });
       }
 
       // Verify reCAPTCHA
@@ -197,7 +208,15 @@ export class AuthController {
         return res.status(400).json({ message: "Invalid email or password" });
       }
 
+      // Check if user signed up with Google OAuth
+      if (user.authProvider === 'google') {
+        return res.status(400).json({ message: "This account uses Google Sign-In. Please use the Google button to log in." });
+      }
+
       // Check password
+      if (!user.password) {
+        return res.status(400).json({ message: "Invalid email or password" });
+      }
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
         return res.status(400).json({ message: "Invalid email or password" });
@@ -207,8 +226,8 @@ export class AuthController {
       res
         .cookie("auth", token, {
           httpOnly: true,
-          secure: true,
-          sameSite: "none",
+          secure: isProduction,
+          sameSite: isProduction ? "none" : "lax",
           path: '/',
           maxAge: 7 * 24 * 60 * 60 * 1000,
         })
@@ -329,6 +348,15 @@ export class AuthController {
         return res.status(400).json({ message: "Email, code, and newPassword are required" });
       }
 
+      // Validate password strength
+      const passwordValidation = validatePassword(newPassword);
+      if (!passwordValidation.isValid) {
+        return res.status(400).json({ 
+          message: PASSWORD_REQUIREMENTS,
+          errors: passwordValidation.errors 
+        });
+      }
+
       // Verify the reset token
       const resetToken = passwordResetTokens.get(email);
       if (!resetToken) {
@@ -358,7 +386,7 @@ export class AuthController {
 
       return res.json({ message: "Password updated successfully" });
     } catch (err) {
-      console.error(err);
+      console.error("Reset password error:", err);
       return res.status(500).json({ message: "Server error" });
     }
   }
@@ -411,7 +439,8 @@ export class AuthController {
         user = new User({ 
           username: undefined, // Leave username blank for Google OAuth users
           email, 
-          password: await bcrypt.hash("google_oauth_placeholder", 10),
+          authProvider: 'google',
+          // No password for Google OAuth users
           firstName: payload.given_name || email.split("@")[0],
           lastName: payload.family_name || "",
           isEmailVerified: true
@@ -430,8 +459,8 @@ export class AuthController {
       return res
         .cookie("auth", token, {
           httpOnly: true,
-          secure: true,
-          sameSite: "none",
+          secure: isProduction,
+          sameSite: isProduction ? "none" : "lax",
           path: '/',
           maxAge: 7 * 24 * 60 * 60 * 1000,
         })
@@ -460,7 +489,12 @@ export class AuthController {
 
   // LOGOUT
   static async logout(req: Request, res: Response) {
-    res.clearCookie("auth", { httpOnly: true, secure: true, sameSite: "none", path: '/' }).json({ message: "Logged out" });
+    res.clearCookie("auth", { 
+      httpOnly: true, 
+      secure: isProduction, 
+      sameSite: isProduction ? "none" : "lax", 
+      path: '/' 
+    }).json({ message: "Logged out" });
   }
 
   // PROMOTE TO ADMIN

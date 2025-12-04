@@ -1,10 +1,7 @@
 import { lazy } from 'react';
 
 // Lazy load components for better performance
-const RedboatLandingIndex = lazy(() => import('../pages/RedboatLandingIndex'));
-const RedboatAboutPage = lazy(() => import('../pages/RedboatAboutPage'));
-const RedboatRoomsPage = lazy(() => import('../pages/RedboatRoomsPage'));
-const RedboatContactPage = lazy(() => import('../pages/RedboatContactPage'));
+const RedboatLandingPage = lazy(() => import('../pages/RedboatLandingPage'));
 const LoginPage = lazy(() => import('../pages/LoginPage'));
 const SignupPage = lazy(() => import('../pages/SignupPage'));
 const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'));
@@ -32,6 +29,7 @@ const AdminCalendar = lazy(() => import('../pages/Admin/Calendar'));
 const Housekeeping = lazy(() => import('../pages/Admin/Housekeeping'));
 const Reports = lazy(() => import('../pages/Admin/Reports'));
 const AdminSettings = lazy(() => import('../pages/Admin/Settings'));
+const AdminBackup = lazy(() => import('../pages/Admin/Backup'));
 
 // Import centralized types
 import { RouteConfig } from '../types/routing';
@@ -40,28 +38,31 @@ import { RouteConfig } from '../types/routing';
 export const publicRoutes: RouteConfig[] = [
   {
     path: '/',
-    component: RedboatLandingIndex,
+    component: RedboatLandingPage,
     title: 'Welcome',
     description: 'Hotel Management System',
     isPublic: true,
   },
   {
+    // Legacy route - redirects handled by single page with hash
     path: '/about',
-    component: RedboatAboutPage,
+    component: RedboatLandingPage,
     title: 'About RedBoat',
     description: 'Learn more about RedBoat Hotel and our story',
     isPublic: true,
   },
   {
+    // Legacy route - redirects handled by single page with hash
     path: '/rooms',
-    component: RedboatRoomsPage,
+    component: RedboatLandingPage,
     title: 'Rooms',
     description: 'Browse RedBoat rooms and rates',
     isPublic: true,
   },
   {
+    // Legacy route - redirects handled by single page with hash
     path: '/contact',
-    component: RedboatContactPage,
+    component: RedboatLandingPage,
     title: 'Contact Us',
     description: 'Get in touch with RedBoat Hotel',
     isPublic: true,
@@ -256,6 +257,16 @@ export const adminRoutes: RouteConfig[] = [
     icon: 'settings',
     requiresAuth: true,
     requiredRole: 'admin',
+  },
+  {
+    path: '/admin/backup',
+    component: AdminBackup,
+    title: 'Backup & Restore',
+    description: 'Database backup and restore (Superadmin only)',
+    icon: 'database',
+    requiresAuth: true,
+    requiredRole: 'admin',
+    isHidden: true, // Hidden from nav, only superadmin can access
   },
 ];
 

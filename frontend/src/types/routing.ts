@@ -15,13 +15,12 @@ export interface RouteConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   handler?: (req: any, res: any, next?: any) => void | Promise<void>;
   middleware?: Array<(req: any, res: any, next: any) => void>;
-  description?: string;
   tags?: string[];
 }
 
 export interface UserContext {
   isAuthenticated: boolean;
-  role?: 'user' | 'admin';
+  role?: 'user' | 'admin' | 'superadmin';
   permissions?: string[];
   loading?: boolean;
 }
@@ -49,10 +48,10 @@ export interface RouteStats {
 }
 
 export interface NavigationContextType {
-  userRole: 'user' | 'admin' | null;
+  userRole: 'user' | 'admin' | 'superadmin' | null;
   navigationRoutes: RouteConfig[];
   currentRoute: RouteConfig | null;
-  setUserRole: (role: 'user' | 'admin' | null) => void;
+  setUserRole: (role: 'user' | 'admin' | 'superadmin' | null) => void;
   getRouteByPath: (path: string) => RouteConfig | undefined;
   isRouteAccessible: (path: string) => boolean;
 }

@@ -1,4 +1,7 @@
 import { createContext, useContext, useMemo, useState, ReactNode, useCallback, useEffect } from "react";
+import { API_BASE_URL } from "../config/api";
+
+const API = API_BASE_URL;
 
 export type NotificationType = "success" | "error" | "info" | "warning";
 
@@ -61,7 +64,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     (async () => {
       if (!isAuthed) return;
       try {
-        await fetch('http://localhost:5000/notifications', {
+        await fetch(`${API}/notifications`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -74,7 +77,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const markAllRead = useCallback(async () => {
     if (!isAuthed) return;
     try {
-      await fetch('http://localhost:5000/notifications/mark-all-read', {
+      await fetch(`${API}/notifications/mark-all-read`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -87,7 +90,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const markRead = useCallback(async (id: string) => {
     if (!isAuthed) return;
     try {
-      await fetch(`http://localhost:5000/notifications/${id}/read`, {
+      await fetch(`${API}/notifications/${id}/read`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -99,7 +102,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const removePersisted = useCallback(async (id: string) => {
     if (!isAuthed) return;
     try {
-      await fetch(`http://localhost:5000/notifications/${id}`, {
+      await fetch(`${API}/notifications/${id}`, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -113,7 +116,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     setLoadingMore(true);
     try {
       const lastId = history[history.length - 1]?.id;
-      const res = await fetch(`http://localhost:5000/notifications?lastId=${encodeURIComponent(lastId)}&limit=20`, { credentials: 'include' });
+      const res = await fetch(`${API}/notifications?lastId=${encodeURIComponent(lastId)}&limit=20`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         const list: NotificationItem[] = (data.data || []).map((n: any) => ({ id: n._id, type: n.type, message: n.message, href: n.href, isRead: !!n.isRead }));
@@ -126,30 +129,26 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(() => ({ items, notify, remove, removePersisted, markRead, history, unread, markAllRead, loadMore, hasMore, loadingMore }), [items, notify, remove, removePersisted, markRead, history, unread, markAllRead, hasMore, loadingMore]);
 
-  // Auth watcher: check /me and update isAuthed; clear local state on logout
+  // Auth watcher: check /me once on mount and listen for auth events
   useEffect(() => {
     let cancelled = false;
-    let timer: any;
+    
     const checkAuth = async () => {
       try {
-        const res = await fetch('http://localhost:5000/me', { credentials: 'include' });
+        const res = await fetch(`${API}/me`, { credentials: 'include' });
         if (!cancelled) {
           if (res.ok) {
-            if (!isAuthed) {
-              setIsAuthed(true);
-            }
+            setIsAuthed(true);
           } else {
-            if (isAuthed) {
-              setIsAuthed(false);
-              setHistory([]);
-              setItems([]);
-              setUnread(0);
-              setHasMore(false);
-            }
+            setIsAuthed(false);
+            setHistory([]);
+            setItems([]);
+            setUnread(0);
+            setHasMore(false);
           }
         }
       } catch {
-        if (!cancelled && isAuthed) {
+        if (!cancelled) {
           setIsAuthed(false);
           setHistory([]);
           setItems([]);
@@ -157,11 +156,31 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           setHasMore(false);
         }
       }
-      timer = setTimeout(checkAuth, 15000);
     };
+    
+    // Check auth once on mount
     checkAuth();
-    return () => { cancelled = true; if (timer) clearTimeout(timer); };
-  }, [isAuthed]);
+    
+    // Listen for custom auth events (dispatched on login/logout)
+    const handleAuthChange = (e: CustomEvent) => {
+      if (e.detail?.authenticated) {
+        setIsAuthed(true);
+      } else {
+        setIsAuthed(false);
+        setHistory([]);
+        setItems([]);
+        setUnread(0);
+        setHasMore(false);
+      }
+    };
+    
+    window.addEventListener('auth-change', handleAuthChange as EventListener);
+    
+    return () => { 
+      cancelled = true; 
+      window.removeEventListener('auth-change', handleAuthChange as EventListener);
+    };
+  }, []);
 
   // Fetch persisted notifications periodically when authed
   useEffect(() => {
@@ -169,7 +188,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     const fetchNotifications = async () => {
       try {
-        const res = await fetch('http://localhost:5000/notifications?limit=20', { credentials: 'include' });
+        const res = await fetch(`${API}/notifications?limit=20`, { credentials: 'include' });
         if (!res.ok) return;
         const data = await res.json();
         if (cancelled) return;
@@ -194,7 +213,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     const connect = () => {
       try {
-        es = new EventSource('http://localhost:5000/notifications/stream', { withCredentials: true } as any);
+        es = new EventSource(`${API}/notifications/stream`, { withCredentials: true } as any);
         es.onmessage = (ev) => {
           try {
             const n = JSON.parse(ev.data);

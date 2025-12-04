@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import "../../styles/main.css";
 import UserLayout from "../../components/UserLayout";
 import ThemeToggle from "../../components/ThemeToggle";
-import Swal from "sweetalert2";
+import { API_BASE_URL } from "../../config/api";
 
 type UserSettingsState = {
   theme: "light" | "dark";
@@ -42,6 +42,7 @@ function UserSettings() {
   const [account, setAccount] = useState({
     username: "",
     email: "",
+    authProvider: "local" as "local" | "google",
   });
   const [accountMessage, setAccountMessage] = useState("");
   const [accountSaving, setAccountSaving] = useState(false);
@@ -53,9 +54,7 @@ function UserSettings() {
   });
   const [passwordMessage, setPasswordMessage] = useState("");
   const [passwordUpdating, setPasswordUpdating] = useState(false);
-
-  const [deleteMessage, setDeleteMessage] = useState("");
-  const [deletePending, setDeletePending] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
 
   useEffect(() => {
     try {
@@ -71,7 +70,7 @@ function UserSettings() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("http://localhost:5000/profile", {
+        const res = await fetch(`${API_BASE_URL}/profile`, {
           credentials: "include",
         });
         if (!res.ok) return;
@@ -89,6 +88,7 @@ function UserSettings() {
           setAccount({
             username: user.username || "",
             email: user.email || "",
+            authProvider: user.authProvider || "local",
           });
         }
       } catch {
@@ -112,7 +112,7 @@ function UserSettings() {
     if (setting === "emailNotifications") {
       (async () => {
         try {
-          await fetch("http://localhost:5000/profile", {
+          await fetch(`${API_BASE_URL}/profile`, {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
@@ -143,7 +143,7 @@ function UserSettings() {
 
     setAccountSaving(true);
     try {
-      const response = await fetch("http://localhost:5000/profile", {
+      const response = await fetch(`${API_BASE_URL}/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -186,7 +186,7 @@ function UserSettings() {
 
     setPasswordUpdating(true);
     try {
-      const response = await fetch("http://localhost:5000/profile/password", {
+      const response = await fetch(`${API_BASE_URL}/profile/password`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -214,64 +214,11 @@ function UserSettings() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    const result = await Swal.fire({
-      icon: "warning",
-      title: "Delete your account?",
-      text: "This will permanently delete your account and data. This action cannot be undone.",
-      showCancelButton: true,
-      confirmButtonText: "Yes, delete account",
-      cancelButtonText: "Cancel",
-      focusCancel: true,
-    });
-
-    if (!result.isConfirmed) {
-      return;
-    }
-
-    setDeleteMessage("");
-    setDeletePending(true);
-    try {
-      const response = await fetch("http://localhost:5000/profile", {
-        method: "DELETE",
-        credentials: "include",
-      });
-
-      const result = await response.json().catch(() => ({}));
-
-      if (response.ok) {
-        setDeleteMessage("Account deleted. Redirecting to login...");
-        try {
-          if (typeof window !== "undefined") {
-            localStorage.removeItem("userSettings");
-          }
-        } catch {
-          // ignore storage errors
-        }
-
-        await Swal.fire({
-          icon: "success",
-          title: "Account deleted",
-          text: "Your account has been deleted. You will be redirected to login.",
-        });
-
-        window.location.href = "/login";
-      } else {
-        setDeleteMessage(result.message || "Failed to delete account");
-      }
-    } catch (error) {
-      console.error("Error deleting account:", error);
-      setDeleteMessage("Failed to delete account");
-    } finally {
-      setDeletePending(false);
-    }
-  };
-
   return (
-    <UserLayout pageTitle="My Settings">
+    <UserLayout pageTitle="Account Security">
       <div className="settings-container">
         <div className="settings-card">
-          <h2>Account Settings</h2>
+          <h2>Account Information</h2>
           <p>Manage your login details and basic preferences for your RedBoat account.</p>
 
           {accountMessage && (
@@ -281,65 +228,96 @@ function UserSettings() {
           )}
 
           <form onSubmit={handleAccountSubmit} className="account-form">
-            <div className="setting-item">
-              <label htmlFor="username">Username</label>
-              <input
-                id="username"
-                type="text"
-                value={account.username}
-                onChange={(e) => setAccount({ ...account, username: e.target.value })}
-                placeholder="Your username"
-              />
+            <div className="settings-section">
+              <div className="settings-row">
+                <div className="settings-row-main">
+                  <span className="settings-row-title">Email address</span>
+                  <span className="settings-row-description">Primary email used for your bookings and notifications.</span>
+                </div>
+                <div className="settings-row-action">
+                  <input
+                    id="email"
+                    type="email"
+                    value={account.email}
+                    onChange={(e) => setAccount({ ...account, email: e.target.value })}
+                    required
+                    style={{ minWidth: 220 }}
+                  />
+                </div>
+              </div>
+
+              <div className="settings-row">
+                <div className="settings-row-main">
+                  <span className="settings-row-title">Username</span>
+                  <span className="settings-row-description">Public name shown on your bookings and feedback.</span>
+                </div>
+                <div className="settings-row-action">
+                  <input
+                    id="username"
+                    type="text"
+                    value={account.username}
+                    onChange={(e) => setAccount({ ...account, username: e.target.value })}
+                    placeholder="Your username"
+                    style={{ minWidth: 180 }}
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="setting-item">
-              <label htmlFor="email">Email</label>
-              <input
-                id="email"
-                type="email"
-                value={account.email}
-                onChange={(e) => setAccount({ ...account, email: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="form-actions">
+            <div className="form-actions" style={{ justifyContent: 'flex-end' }}>
               <button type="submit" className="user-button primary" disabled={accountSaving}>
                 {accountSaving ? 'Saving...' : 'Save account details'}
               </button>
             </div>
           </form>
 
-          <div className="setting-item">
-            <label>Theme</label>
-            <ThemeToggle />
-          </div>
+          <div className="settings-section">
+            <div className="settings-row">
+              <div className="settings-row-main">
+                <span className="settings-row-title">Theme</span>
+                <span className="settings-row-description">Switch between light and dark appearance.</span>
+              </div>
+              <div className="settings-row-action">
+                <ThemeToggle />
+              </div>
+            </div>
 
-          <div className="setting-item">
-            <label>Email Notifications</label>
-            <input
-              type="checkbox"
-              checked={userSettings.emailNotifications}
-              onChange={(e) => handleSettingChange('emailNotifications', e.target.checked)}
-            />
-          </div>
+            <div className="settings-row">
+              <div className="settings-row-main">
+                <span className="settings-row-title">Email notifications</span>
+                <span className="settings-row-description">Receive booking updates and important alerts by email.</span>
+              </div>
+              <div className="settings-row-action">
+                <input
+                  type="checkbox"
+                  checked={userSettings.emailNotifications}
+                  onChange={(e) => handleSettingChange('emailNotifications', e.target.checked)}
+                />
+              </div>
+            </div>
 
-          <div className="setting-item">
-            <label>Language</label>
-            <select
-              value={userSettings.language}
-              onChange={(e) => handleSettingChange('language', e.target.value)}
-            >
-              <option value="en">English</option>
-              <option value="es">Español</option>
-              <option value="fr">Français</option>
-            </select>
+            <div className="settings-row">
+              <div className="settings-row-main">
+                <span className="settings-row-title">Language</span>
+                <span className="settings-row-description">Choose your preferred language for the interface.</span>
+              </div>
+              <div className="settings-row-action">
+                <select
+                  value={userSettings.language}
+                  onChange={(e) => handleSettingChange('language', e.target.value)}
+                >
+                  <option value="en">English</option>
+                  <option value="es">Español</option>
+                  <option value="fr">Français</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 
         <div className="settings-card">
-          <h2>Security</h2>
-          <p>Update your password to help keep your account secure.</p>
+          <h2>Security Settings</h2>
+          <p>Manage how you protect access to your RedBoat account.</p>
 
           {passwordMessage && (
             <div className={`message ${passwordMessage.includes('successfully') ? 'success' : 'error'}`}>
@@ -347,70 +325,96 @@ function UserSettings() {
             </div>
           )}
 
-          <form onSubmit={handlePasswordSubmit} className="password-form">
-            <div className="form-group">
-              <label htmlFor="currentPassword">Current Password</label>
-              <input
-                id="currentPassword"
-                type="password"
-                value={passwordData.currentPassword}
-                onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                required
-              />
-            </div>
+          <div className="settings-section">
+            {account.authProvider === 'google' ? (
+              <div className="settings-row">
+                <div className="settings-row-main">
+                  <span className="settings-row-title">Password</span>
+                  <span className="settings-row-description">
+                    Your account uses Google Sign-In. Password management is handled through your Google account.
+                  </span>
+                </div>
+                <div className="settings-row-action">
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Google Account</span>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="settings-row">
+                  <div className="settings-row-main">
+                    <span className="settings-row-title">Password</span>
+                    <span className="settings-row-description">Set a unique password for better protection.</span>
+                  </div>
+                  <div className="settings-row-action">
+                    <button
+                      className="user-button secondary"
+                      type="button"
+                      onClick={() => setShowPasswordForm((v) => !v)}
+                    >
+                      {showPasswordForm ? "Close" : "Change password"}
+                    </button>
+                  </div>
+                </div>
 
-            <div className="form-group">
-              <label htmlFor="newPassword">New Password</label>
-              <input
-                id="newPassword"
-                type="password"
-                value={passwordData.newPassword}
-                onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                required
-                minLength={6}
-              />
-            </div>
+                {showPasswordForm && (
+                  <div className="settings-row" style={{ borderTop: 'none' }}>
+                    <form onSubmit={handlePasswordSubmit} className="password-form" style={{ paddingTop: 0, width: '100%' }}>
+                      <div className="form-group">
+                        <label htmlFor="currentPassword">Current Password *</label>
+                        <input
+                          id="currentPassword"
+                          type="password"
+                          value={passwordData.currentPassword}
+                          onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                          required
+                        />
+                      </div>
 
-            <div className="form-group">
-              <label htmlFor="confirmPassword">Confirm New Password</label>
-              <input
-                id="confirmPassword"
-                type="password"
-                value={passwordData.confirmPassword}
-                onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                required
-                minLength={6}
-              />
-            </div>
+                      <div className="form-group">
+                        <label htmlFor="newPassword">New Password *</label>
+                        <input
+                          id="newPassword"
+                          type="password"
+                          value={passwordData.newPassword}
+                          onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                          required
+                          minLength={6}
+                        />
+                      </div>
 
-            <div className="form-actions">
-              <button type="submit" className="user-button primary" disabled={passwordUpdating}>
-                {passwordUpdating ? 'Updating...' : 'Update Password'}
-              </button>
-            </div>
-          </form>
-        </div>
+                      <div className="form-group">
+                        <label htmlFor="confirmPassword">Confirm New Password *</label>
+                        <input
+                          id="confirmPassword"
+                          type="password"
+                          value={passwordData.confirmPassword}
+                          onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                          required
+                          minLength={6}
+                        />
+                      </div>
 
-        <div className="settings-card danger">
-          <h2>Danger zone</h2>
-          {deleteMessage && (
-            <div className={`message ${deleteMessage.toLowerCase().includes('deleted') ? 'success' : 'error'}`}>
-              {deleteMessage}
-            </div>
-          )}
-
-          <p>
-            Deleting your account will permanently remove your profile and associated data from RedBoat. This action cannot
-            be undone.
-          </p>
-          <button
-            type="button"
-            className="user-button secondary"
-            onClick={handleDeleteAccount}
-            disabled={deletePending}
-          >
-            {deletePending ? 'Deleting account...' : 'Delete account'}
-          </button>
+                      <div className="form-actions">
+                        <button type="submit" className="user-button primary" disabled={passwordUpdating}>
+                          {passwordUpdating ? 'Updating...' : 'Update Password'}
+                        </button>
+                        <button
+                          type="button"
+                          className="user-button secondary"
+                          onClick={() => {
+                            setShowPasswordForm(false);
+                            setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </UserLayout>

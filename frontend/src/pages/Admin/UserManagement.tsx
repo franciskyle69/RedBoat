@@ -15,6 +15,7 @@ function UserManagement() {
   const [showUserList, setShowUserList] = useState(false);
   const [users, setUsers] = useState<UsersApi.User[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     (async () => {
@@ -29,6 +30,21 @@ function UserManagement() {
       }
     })();
   }, [notify]);
+
+  // Load current user role to know if we should show superadmin-only controls
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("http://localhost:5000/me", { credentials: "include" });
+        if (res.ok) {
+          const json = await res.json();
+          setCurrentUserRole(json?.data?.role);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+  }, []);
 
   const formatDate = (iso: string) => {
     return new Date(iso).toLocaleString();
@@ -85,25 +101,39 @@ function UserManagement() {
     }
   };
 
+  const handlePermissionToggle = async (
+    userId: string,
+    key: keyof UsersApi.AdminPermissions,
+    value: boolean
+  ) => {
+    try {
+      const target = users.find(u => u._id === userId);
+      if (!target) return;
+      const current = target.adminPermissions || {};
+      const nextPerms: UsersApi.AdminPermissions = {
+        ...current,
+        [key]: value,
+      };
+      await UsersApi.updateAdminPermissions(userId, nextPerms);
+      setUsers(users.map(u => 
+        u._id === userId ? { ...u, adminPermissions: nextPerms } : u
+      ));
+      notify("Admin permissions updated", "success");
+    } catch (e) {
+      console.error(e);
+      notify("Failed to update admin permissions.", "error");
+    }
+  };
+
   return (
     <AdminLayout pageTitle="User Management">
       <section className="cards">
         <div className="card">
           <h2>User Login & Role Access</h2>
-          <p>Manage user roles (Admin, Staff, Guest) to ensure secure system access.</p>
+          <p>Manage user roles (Admin and standard users) to ensure secure system access.</p>
           <button className="btn primary" onClick={handleManageUsers}>
             {showUserList ? "Hide Users" : "Manage Users"}
           </button>
-        </div>
-        <div className="card">
-          <h2>Staff Management</h2>
-          <p>Manage hotel staff accounts and permissions.</p>
-          <button className="btn primary">Staff Accounts</button>
-        </div>
-        <div className="card">
-          <h2>Guest Accounts</h2>
-          <p>View and manage guest user accounts.</p>
-          <button className="btn primary">Guest Management</button>
         </div>
         <div className="card">
           <h2>Feedback & Reviews</h2>
@@ -179,7 +209,7 @@ function UserManagement() {
                         <span 
                           className="status-badge"
                           style={{ 
-                            backgroundColor: user.role === 'admin' ? '#ef4444' : '#10b981',
+                            backgroundColor: user.role === 'admin' ? '#ef4444' : user.role === 'superadmin' ? '#0f172a' : '#10b981',
                             color: 'white'
                           }}
                         >
@@ -190,23 +220,64 @@ function UserManagement() {
                       <td>{user.isEmailVerified ? "✓" : "✗"}</td>
                       <td>{formatDateShort(user.createdAt)}</td>
                       <td>
-                        <div className="action-buttons">
-                          <select
-                            value={user.role}
-                            onChange={(e) => handleRoleChange(user._id, e.target.value as 'user' | 'admin')}
-                            className="input"
-                            style={{ fontSize: '12px', padding: '4px' }}
-                          >
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
-                          </select>
-                          <Link
-                            to={`/admin/bookings?user=${encodeURIComponent(user.firstName + ' ' + user.lastName)}`}
-                            className="btn-view"
-                            style={{ marginLeft: '8px' }}
-                          >
-                            Bookings
-                          </Link>
+                        <div className="action-buttons" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <select
+                              value={user.role}
+                              onChange={(e) => handleRoleChange(user._id, e.target.value as 'user' | 'admin')}
+                              className="input"
+                              style={{ fontSize: '12px', padding: '4px' }}
+                              disabled={user.role === 'superadmin' || currentUserRole !== 'superadmin'}
+                            >
+                              <option value="user">User</option>
+                              <option value="admin">Admin</option>
+                            </select>
+                            <Link
+                              to={`/admin/bookings?user=${encodeURIComponent(user.firstName + ' ' + user.lastName)}`}
+                              className="btn-view"
+                              style={{ marginLeft: '8px' }}
+                            >
+                              Bookings
+                            </Link>
+                          </div>
+
+                          {currentUserRole === 'superadmin' && user.role === 'admin' && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
+                              {[
+                                { key: 'manageBookings', label: 'Bookings' },
+                                { key: 'manageRooms', label: 'Rooms' },
+                                { key: 'manageHousekeeping', label: 'Housekeeping' },
+                                { key: 'manageUsers', label: 'Users' },
+                                { key: 'viewReports', label: 'Reports' },
+                              ].map((perm) => (
+                                <label
+                                  key={perm.key}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    fontSize: '11px',
+                                    background: '#f1f5f9',
+                                    padding: '2px 6px',
+                                    borderRadius: '999px',
+                                  }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={(user.adminPermissions && (user.adminPermissions as any)[perm.key]) !== false}
+                                    onChange={(e) =>
+                                      handlePermissionToggle(
+                                        user._id,
+                                        perm.key as keyof UsersApi.AdminPermissions,
+                                        e.target.checked
+                                      )
+                                    }
+                                  />
+                                  {perm.label}
+                                </label>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -229,6 +300,7 @@ function UserManagement() {
               <thead>
                 <tr>
                   <th>User</th>
+                  <th>Email</th>
                   <th>Rating</th>
                   <th>Comment</th>
                   <th>Submitted At</th>
@@ -247,6 +319,7 @@ function UserManagement() {
                         {name}
                       </Link>
                     </td>
+                    <td>{fb.user?.email || "—"}</td>
                     <td>
                       <StarRating rating={fb.rating} readonly size="small" />
                     </td>

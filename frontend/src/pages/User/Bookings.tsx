@@ -3,9 +3,17 @@ import { useSearchParams, Link } from "react-router-dom";
 import { useNotifications } from "../../contexts/NotificationContext";
 import "../../styles/main.css";
 import UserLayout from "../../components/UserLayout";
-import { getUserBookings, requestUserCancellation, UserBooking } from "../../api/bookings";
+import StarRating from "../../components/StarRating";
+import { getUserBookings, requestUserCancellation, UserBooking, getBookingReference, getPaymentReference } from "../../api/bookings";
+import { getBookingStatusColor, getBookingStatusLabel } from "../../utils/bookingStatus";
 import { createCheckoutSession } from "../../api/payments";
+import * as RoomReviewsApi from "../../api/roomReviews";
 import Swal from "sweetalert2";
+
+// Format price with comma separators for consistency
+const formatPrice = (price: number) => {
+  return price.toLocaleString('en-PH');
+};
 
 function Bookings() {
   const [searchParams] = useSearchParams();
@@ -16,6 +24,12 @@ function Bookings() {
   const [showModal, setShowModal] = useState(false);
   const [filter, setFilter] = useState<string>("all");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [reviewBooking, setReviewBooking] = useState<UserBooking | null>(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState<number>(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [ratedBookingIds, setRatedBookingIds] = useState<string[]>([]);
 
   useEffect(() => {
     fetchBookings();
@@ -98,6 +112,43 @@ function Bookings() {
     }
   };
 
+  const openReviewModal = (booking: UserBooking) => {
+    setReviewBooking(booking);
+    setReviewRating(5);
+    setReviewComment("");
+    setShowReviewModal(true);
+  };
+
+  const submitReview = async () => {
+    if (!reviewBooking) return;
+    if (!reviewRating || !reviewComment.trim()) {
+      notify("Please select a rating and enter a comment.", "error");
+      return;
+    }
+
+    try {
+      setReviewSubmitting(true);
+      await RoomReviewsApi.submit(
+        reviewBooking.room._id,
+        reviewRating,
+        reviewComment.trim()
+      );
+      notify("Thank you for rating your stay!", "success");
+      setRatedBookingIds((prev) =>
+        prev.includes(reviewBooking._id) ? prev : [...prev, reviewBooking._id]
+      );
+      setShowReviewModal(false);
+      setReviewBooking(null);
+      setReviewRating(5);
+      setReviewComment("");
+    } catch (error: any) {
+      console.error("Error submitting room review:", error);
+      notify(error?.message || "Failed to submit review", "error");
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
   const filteredBookings = bookings.filter(booking => {
     // Filter by status
     if (filter !== "all" && booking.status !== filter) return false;
@@ -111,28 +162,6 @@ function Bookings() {
     
     return true;
   });
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending": return "#f59e0b";
-      case "confirmed": return "#10b981";
-      case "checked-in": return "#3b82f6";
-      case "checked-out": return "#6b7280";
-      case "cancelled": return "#ef4444";
-      default: return "#6b7280";
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "pending": return "Pending Approval";
-      case "confirmed": return "Confirmed";
-      case "checked-in": return "Checked In";
-      case "checked-out": return "Checked Out";
-      case "cancelled": return "Cancelled";
-      default: return status;
-    }
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
@@ -211,6 +240,7 @@ function Bookings() {
             <table className="bookings-table user-bookings-table">
               <thead>
                 <tr>
+                  <th>Reference</th>
                   <th>Room</th>
                   <th>Check-in</th>
                   <th>Check-out</th>
@@ -225,6 +255,16 @@ function Bookings() {
                 {filteredBookings.map((booking) => (
                   <tr key={booking._id}>
                     <td>
+                      <span className="booking-reference" style={{ 
+                        fontFamily: 'monospace', 
+                        fontWeight: 600,
+                        color: '#6366f1',
+                        fontSize: '0.85rem'
+                      }}>
+                        {getBookingReference(booking)}
+                      </span>
+                    </td>
+                    <td>
                       <div className="room-info">
                         <div className="room-number">Room {booking.room.roomNumber}</div>
                         <div className="room-type">{booking.room.roomType}</div>
@@ -237,9 +277,9 @@ function Bookings() {
                     <td>
                       <span
                         className="status-badge"
-                        style={{ backgroundColor: getStatusColor(booking.status) }}
+                        style={{ backgroundColor: getBookingStatusColor(booking.status) }}
                       >
-                        {getStatusText(booking.status)}
+                        {getBookingStatusLabel(booking.status)}
                       </span>
                     </td>
                     <td>
@@ -268,6 +308,14 @@ function Bookings() {
                         >
                           View
                         </button>
+                        {booking.status === "checked-out" && !ratedBookingIds.includes(booking._id) && (
+                          <button
+                            className="btn-view"
+                            onClick={() => openReviewModal(booking)}
+                          >
+                            Rate Stay
+                          </button>
+                        )}
                         {booking.paymentStatus === "pending" && booking.status === "confirmed" && (
                           <button
                             className="btn-pay-booking"
@@ -331,6 +379,24 @@ function Bookings() {
             <div className="modal-body">
               <div className="booking-details-full">
                 <div className="detail-section">
+                  <h4>Booking Reference</h4>
+                  <div className="detail-row">
+                    <span style={{ 
+                      fontFamily: 'monospace', 
+                      fontWeight: 600,
+                      color: '#6366f1',
+                      fontSize: '1.1rem',
+                      background: '#eef2ff',
+                      padding: '4px 12px',
+                      borderRadius: '6px',
+                      display: 'inline-block'
+                    }}>
+                      {getBookingReference(selectedBooking)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="detail-section">
                   <h4>Room Information</h4>
                   <div className="detail-row">
                     <strong>Room Number:</strong> {selectedBooking.room.roomNumber}
@@ -339,7 +405,7 @@ function Bookings() {
                     <strong>Room Type:</strong> {selectedBooking.room.roomType}
                   </div>
                   <div className="detail-row">
-                    <strong>Price per Night:</strong> ₱{selectedBooking.room.price}
+                    <strong>Price per Night:</strong> ₱{formatPrice(selectedBooking.room.price)}
                   </div>
                 </div>
 
@@ -355,15 +421,15 @@ function Bookings() {
                     <strong>Number of Guests:</strong> {selectedBooking.numberOfGuests}
                   </div>
                   <div className="detail-row">
-                    <strong>Total Amount:</strong> ₱{selectedBooking.totalAmount}
+                    <strong>Total Amount:</strong> ₱{formatPrice(selectedBooking.totalAmount)}
                   </div>
                   <div className="detail-row">
                     <strong>Status:</strong> 
                     <span 
                       className="status-badge"
-                      style={{ backgroundColor: getStatusColor(selectedBooking.status) }}
+                      style={{ backgroundColor: getBookingStatusColor(selectedBooking.status) }}
                     >
-                      {getStatusText(selectedBooking.status)}
+                      {getBookingStatusLabel(selectedBooking.status)}
                     </span>
                   </div>
                   <div className="detail-row">
@@ -378,6 +444,22 @@ function Bookings() {
                       {selectedBooking.paymentStatus.charAt(0).toUpperCase() + selectedBooking.paymentStatus.slice(1)}
                     </span>
                   </div>
+                  {selectedBooking.paymentStatus === "paid" && (
+                    <div className="detail-row">
+                      <strong>Payment Reference:</strong>{" "}
+                      <span style={{ 
+                        fontFamily: 'monospace', 
+                        fontWeight: 600,
+                        color: '#10b981',
+                        fontSize: '0.95rem',
+                        background: '#ecfdf5',
+                        padding: '2px 8px',
+                        borderRadius: '4px'
+                      }}>
+                        {getPaymentReference(selectedBooking._id)}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {selectedBooking.paymentStatus === "pending" && selectedBooking.status === "confirmed" && (
@@ -449,6 +531,87 @@ function Bookings() {
                   }}
                 >
                   Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Room Review Modal */}
+      {showReviewModal && reviewBooking && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Rate Your Stay</h3>
+              <button
+                className="modal-close"
+                onClick={() => {
+                  if (reviewSubmitting) return;
+                  setShowReviewModal(false);
+                  setReviewBooking(null);
+                  setReviewRating(5);
+                  setReviewComment("");
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="booking-details-full">
+                <div className="detail-section">
+                  <h4>Room Information</h4>
+                  <div className="detail-row">
+                    <strong>Room Number:</strong> {reviewBooking.room.roomNumber}
+                  </div>
+                  <div className="detail-row">
+                    <strong>Room Type:</strong> {reviewBooking.room.roomType}
+                  </div>
+                </div>
+
+                <div className="detail-section">
+                  <h4>Your Rating</h4>
+                  <div className="rating-container">
+                    <StarRating
+                      rating={reviewRating}
+                      onRatingChange={(value) => setReviewRating(value)}
+                      readonly={reviewSubmitting}
+                      size="medium"
+                    />
+                  </div>
+                </div>
+
+                <div className="detail-section">
+                  <h4>Your Review</h4>
+                  <textarea
+                    className="input"
+                    rows={4}
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    placeholder="Share your experience about this room..."
+                  />
+                </div>
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  className="btn-pay-booking"
+                  onClick={submitReview}
+                  disabled={reviewSubmitting}
+                >
+                  {reviewSubmitting ? "Submitting..." : "Submit Review"}
+                </button>
+                <button
+                  className="btn-close"
+                  onClick={() => {
+                    if (reviewSubmitting) return;
+                    setShowReviewModal(false);
+                    setReviewBooking(null);
+                    setReviewRating(5);
+                    setReviewComment("");
+                  }}
+                >
+                  Cancel
                 </button>
               </div>
             </div>

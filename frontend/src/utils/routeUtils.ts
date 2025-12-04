@@ -49,9 +49,10 @@ class RoutingManager {
       };
     }
 
-    // Check role requirements
-    if (route.requiredRole && this.userContext?.role !== route.requiredRole) {
-      const redirectTo = this.userContext?.role === 'admin' ? '/admin' : '/dashboard';
+    // Check role requirements (treat superadmin as admin for routing)
+    const currentRole = this.userContext?.role === 'superadmin' ? 'admin' : this.userContext?.role;
+    if (route.requiredRole && currentRole !== route.requiredRole) {
+      const redirectTo = currentRole === 'admin' ? '/admin' : '/dashboard';
       return {
         canAccess: false,
         redirectTo,
@@ -67,7 +68,11 @@ class RoutingManager {
       return getRoutesByRole('public');
     }
 
-    return getRoutesByRole(this.userContext.role || 'user');
+    const role = this.userContext.role === 'admin' || this.userContext.role === 'superadmin'
+      ? 'admin'
+      : 'user';
+
+    return getRoutesByRole(role);
   }
 
   public getNavigationRoutes(): RouteConfig[] {
@@ -311,10 +316,4 @@ export const getChildPaths = (parentPath: string, allRoutes: RouteConfig[]): Rou
   );
 };
 
-// Route validation schemas
-export const validateRouteParam = (param: string, value: string, type: keyof typeof routeParamSchema): boolean => {
-  const pattern = routeParamSchema[type];
-  return pattern ? pattern.test(value) : false;
-};
-
-// Note: routeParamSchema is already imported at the top
+// (Optional) Route parameter validation could be added here if needed in the future

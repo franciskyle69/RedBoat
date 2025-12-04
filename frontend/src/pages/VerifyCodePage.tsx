@@ -74,7 +74,9 @@ function VerifyCodePage() {
     <div className="auth-container">
       <div className="auth-card">
         <div className="logo-wrapper">
-          <h2 className="brand-name">Verify Reset Code</h2>
+          <h2 className="brand-name">
+            {isPasswordReset ? "Verify Reset Code" : "Verify Email"}
+          </h2>
         </div>
 
         {email && (

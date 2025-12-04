@@ -5,10 +5,16 @@ import Swal from "sweetalert2";
 import GoogleOAuthButton from "../components/GoogleOAuthButton";
 import ReCaptcha, { useReCaptcha } from "../components/ReCaptcha";
 import { getSiteKey } from "../config/recaptcha";
+import { API_BASE_URL } from "../config/api";
+import { Check, X, Eye, EyeOff } from "lucide-react";
+import { validatePassword } from "../utils/passwordValidation";
 
 function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -30,6 +36,27 @@ function SignupPage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate password
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      Swal.fire({
+        icon: "warning",
+        title: "Invalid Password",
+        text: "Please ensure your password meets all requirements.",
+      });
+      return;
+    }
+
+    // Check passwords match
+    if (password !== confirmPassword) {
+      Swal.fire({
+        icon: "warning",
+        title: "Passwords don't match",
+        text: "Please make sure both passwords are the same.",
+      });
+      return;
+    }
+
     // Check reCAPTCHA verification
     if (!isVerified) {
       Swal.fire({
@@ -43,7 +70,7 @@ function SignupPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/signup", {
+      const res = await fetch(`${API_BASE_URL}/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -67,6 +94,7 @@ function SignupPage() {
         // Reset form and redirect to verify page
         setEmail("");
         setPassword("");
+        setConfirmPassword("");
         setUsername("");
         setFirstName("");
         setLastName("");
@@ -151,13 +179,89 @@ function SignupPage() {
 
           <div className="form-group">
             <label>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Create a password"
-              required
-            />
+            <div className="password-input-wrapper">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Create a password"
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            
+            {/* Password Requirements */}
+            {password.length > 0 && (
+              <div className="password-requirements">
+                <div className="password-strength-bar">
+                  <div 
+                    className={`password-strength-fill strength-${validatePassword(password).strength}`}
+                  />
+                </div>
+                <p className="password-strength-text">
+                  Strength: <span className={`strength-${validatePassword(password).strength}`}>
+                    {validatePassword(password).strength}
+                  </span>
+                </p>
+                <ul className="requirements-list">
+                  <li className={password.length >= 8 ? "met" : ""}>
+                    {password.length >= 8 ? <Check size={14} /> : <X size={14} />}
+                    At least 8 characters
+                  </li>
+                  <li className={/[A-Z]/.test(password) ? "met" : ""}>
+                    {/[A-Z]/.test(password) ? <Check size={14} /> : <X size={14} />}
+                    1 uppercase letter (A-Z)
+                  </li>
+                  <li className={/[a-z]/.test(password) ? "met" : ""}>
+                    {/[a-z]/.test(password) ? <Check size={14} /> : <X size={14} />}
+                    1 lowercase letter (a-z)
+                  </li>
+                  <li className={/[0-9]/.test(password) ? "met" : ""}>
+                    {/[0-9]/.test(password) ? <Check size={14} /> : <X size={14} />}
+                    1 number (0-9)
+                  </li>
+                  <li className={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? "met" : ""}>
+                    {/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? <Check size={14} /> : <X size={14} />}
+                    1 special character (!@#$%^&*)
+                  </li>
+                </ul>
+              </div>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label>Confirm Password</label>
+            <div className="password-input-wrapper">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter your password"
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            {confirmPassword.length > 0 && (
+              <p className={`password-match ${password === confirmPassword ? "match" : "no-match"}`}>
+                {password === confirmPassword ? (
+                  <><Check size={14} /> Passwords match</>
+                ) : (
+                  <><X size={14} /> Passwords do not match</>
+                )}
+              </p>
+            )}
           </div>
 
           <div className="form-group">

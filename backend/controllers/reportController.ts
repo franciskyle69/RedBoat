@@ -13,7 +13,7 @@ export class ReportController {
     try {
       const payload = req.user!;
       
-      if (payload.role !== "admin") {
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -132,7 +132,7 @@ export class ReportController {
     try {
       const payload = req.user!;
       
-      if (payload.role !== "admin") {
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -263,7 +263,7 @@ export class ReportController {
     try {
       const payload = req.user!;
       
-      if (payload.role !== "admin") {
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -393,7 +393,7 @@ export class ReportController {
     try {
       const payload = req.user!;
       
-      if (payload.role !== "admin") {
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -494,7 +494,7 @@ export class ReportController {
     try {
       const payload = req.user!;
       
-      if (payload.role !== "admin") {
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -601,7 +601,7 @@ export class ReportController {
     try {
       const payload = req.user!;
       
-      if (payload.role !== "admin") {
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -696,7 +696,7 @@ export class ReportController {
     try {
       const payload = req.user!;
       
-      if (payload.role !== "admin") {
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 

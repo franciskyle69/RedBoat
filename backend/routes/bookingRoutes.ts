@@ -1,46 +1,68 @@
 import { Router } from 'express';
 import { BookingController } from '../controllers/bookingController';
+import { BookingCrudController } from '../controllers/bookingCrudController';
+import { BookingCancellationController } from '../controllers/bookingCancellationController';
 import { requireAuth } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { requirePermission } from '../middleware/rbac';
+import { validateBody, bookingSchemas } from '../middleware/validate';
 
 const router = Router();
 
-// Booking routes
+// ============================================
+// CRUD Operations (bookingCrudController)
+// ============================================
+
 // Admin: can manage any booking
 router.get(
   '/',
   requireAuth,
   requirePermission('readAny', 'booking'),
-  asyncHandler(BookingController.getAllBookings)
+  asyncHandler(BookingCrudController.getAllBookings)
 );
 
-// User: can work only with own bookings (controllers already scope by user)
+// User: can work only with own bookings
 router.get(
   '/user-bookings',
   requireAuth,
   requirePermission('readOwn', 'booking'),
-  asyncHandler(BookingController.getUserBookings)
+  asyncHandler(BookingCrudController.getUserBookings)
 );
 
 router.post(
   '/',
+  (req, res, next) => { console.log("POST /bookings route hit"); next(); },
   requireAuth,
   requirePermission('createOwn', 'booking'),
-  asyncHandler(BookingController.createBooking)
+  validateBody(bookingSchemas.createBooking),
+  asyncHandler(BookingCrudController.createBooking)
 );
 
 router.put(
   '/:id/status',
   requireAuth,
   requirePermission('updateAny', 'booking'),
-  asyncHandler(BookingController.updateBookingStatus)
+  validateBody(bookingSchemas.updateStatus),
+  asyncHandler(BookingCrudController.updateBookingStatus)
 );
+
+router.put(
+  '/:bookingId/payment',
+  requireAuth,
+  requirePermission('updateOwn', 'booking'),
+  validateBody(bookingSchemas.updatePaymentStatus),
+  asyncHandler(BookingCrudController.updatePaymentStatus)
+);
+
+// ============================================
+// Check-in/Check-out (bookingController - complex operations)
+// ============================================
 
 router.put(
   '/:id/checkin',
   requireAuth,
   requirePermission('updateAny', 'booking'),
+  validateBody(bookingSchemas.checkIn),
   asyncHandler(BookingController.checkInBooking)
 );
 
@@ -51,32 +73,31 @@ router.put(
   asyncHandler(BookingController.checkOutBooking)
 );
 
+// ============================================
+// Cancellation Flow (bookingCancellationController)
+// ============================================
+
 router.post(
   '/:id/request-cancel',
   requireAuth,
   requirePermission('updateOwn', 'booking'),
-  asyncHandler(BookingController.requestCancellation)
+  validateBody(bookingSchemas.requestCancellation),
+  asyncHandler(BookingCancellationController.requestCancellation)
 );
 
 router.post(
   '/:id/approve-cancel',
   requireAuth,
   requirePermission('updateAny', 'booking'),
-  asyncHandler(BookingController.approveCancellation)
+  asyncHandler(BookingCancellationController.approveCancellation)
 );
 
 router.post(
   '/:id/decline-cancel',
   requireAuth,
   requirePermission('updateAny', 'booking'),
-  asyncHandler(BookingController.declineCancellation)
-);
-
-router.put(
-  '/:bookingId/payment',
-  requireAuth,
-  requirePermission('updateOwn', 'booking'),
-  asyncHandler(BookingController.updatePaymentStatus)
+  validateBody(bookingSchemas.declineCancellation),
+  asyncHandler(BookingCancellationController.declineCancellation)
 );
 
 export default router;

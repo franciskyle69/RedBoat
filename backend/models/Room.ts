@@ -32,4 +32,10 @@ const RoomSchema = new Schema<IRoom>({
   updatedAt: { type: Date, default: Date.now },
 });
 
+// Database indexes for frequently queried fields
+RoomSchema.index({ isAvailable: 1 }); // Available rooms filter
+RoomSchema.index({ roomType: 1 }); // Room type filter
+RoomSchema.index({ housekeepingStatus: 1 }); // Housekeeping dashboard
+RoomSchema.index({ price: 1 }); // Price sorting/filtering
+
 export const Room = mongoose.model<IRoom>("Room", RoomSchema);

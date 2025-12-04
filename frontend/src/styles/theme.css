@@ -631,3 +631,670 @@ html[data-theme="dark"] .landing-page footer .follow-us .social-links li a {
 html[data-theme="dark"] .landing-page .rooms-section .room .text span.price {
   color: #fbbf24; /* highlight price with a warm accent in dark mode */
 }
+
+/* ========================================
+   COMPREHENSIVE DARK MODE FIXES
+   ======================================== */
+
+/* User pages - booking cards, room cards, profile sections */
+html[data-theme="dark"] .booking-card,
+html[data-theme="dark"] .room-card,
+html[data-theme="dark"] .room-calendar,
+html[data-theme="dark"] .profile-section,
+html[data-theme="dark"] .detail-section,
+html[data-theme="dark"] .booking-summary,
+html[data-theme="dark"] .feedback-form,
+html[data-theme="dark"] .room-type,
+html[data-theme="dark"] .settings-card,
+html[data-theme="dark"] .info-item,
+html[data-theme="dark"] .security-info {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] .settings-card.danger {
+  background: #1a0a0a !important;
+  border-color: #7f1d1d !important;
+}
+
+/* User page text colors */
+html[data-theme="dark"] .room-info h4,
+html[data-theme="dark"] .room-number,
+html[data-theme="dark"] .room-type-name,
+html[data-theme="dark"] .user-card-title,
+html[data-theme="dark"] .booking-summary h4,
+html[data-theme="dark"] .detail-section h4,
+html[data-theme="dark"] .profile-header h3,
+html[data-theme="dark"] .rooms-header h3,
+html[data-theme="dark"] .bookings-header h3,
+html[data-theme="dark"] .no-bookings-content h3,
+html[data-theme="dark"] .room-amenities h4,
+html[data-theme="dark"] .calendar-title,
+html[data-theme="dark"] .settings-card h2,
+html[data-theme="dark"] .settings-row-title {
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .room-type,
+html[data-theme="dark"] .room-capacity,
+html[data-theme="dark"] .room-description,
+html[data-theme="dark"] .detail-item,
+html[data-theme="dark"] .user-card-description,
+html[data-theme="dark"] .no-bookings-content p,
+html[data-theme="dark"] .rooms-header p,
+html[data-theme="dark"] .legend-item,
+html[data-theme="dark"] .day-of-week,
+html[data-theme="dark"] .settings-card p,
+html[data-theme="dark"] .settings-row-description,
+html[data-theme="dark"] .settings-row-secondary,
+html[data-theme="dark"] .user-status-list li,
+html[data-theme="dark"] .detail-section p,
+html[data-theme="dark"] .security-info p,
+html[data-theme="dark"] .security-info ul {
+  color: var(--muted) !important;
+}
+
+html[data-theme="dark"] .detail-item strong {
+  color: var(--text) !important;
+}
+
+/* Room price in dark mode - fancy badge style */
+html[data-theme="dark"] .room-price {
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%) !important;
+  color: #1a1a2e !important;
+  box-shadow: 0 4px 15px rgba(251, 191, 36, 0.4) !important;
+  min-width: 140px !important;
+  text-align: center !important;
+}
+
+html[data-theme="dark"] .room-type-price {
+  color: #fbbf24 !important;
+}
+
+/* Toggle buttons and filters */
+html[data-theme="dark"] .toggle-btn,
+html[data-theme="dark"] .view-toggle button {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--muted) !important;
+}
+
+html[data-theme="dark"] .toggle-btn:hover {
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+html[data-theme="dark"] .toggle-btn.active {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: #fff !important;
+}
+
+/* Calendar cells */
+html[data-theme="dark"] .calendar-days-header,
+html[data-theme="dark"] .day-header,
+html[data-theme="dark"] .room-header {
+  background: var(--surface-2) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .day-cell,
+html[data-theme="dark"] .room-cell {
+  border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .day-cell:hover {
+  background: var(--surface-2) !important;
+}
+
+html[data-theme="dark"] .day-number {
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .room-cell.available {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #34d399 !important;
+}
+
+html[data-theme="dark"] .room-cell.occupied {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #f87171 !important;
+}
+
+/* Profile and form elements */
+html[data-theme="dark"] .profile-header,
+html[data-theme="dark"] .profile-info {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .profile-form,
+html[data-theme="dark"] .password-form {
+  background: var(--surface) !important;
+}
+
+html[data-theme="dark"] .form-group label,
+html[data-theme="dark"] .booking-form label {
+  color: var(--muted) !important;
+}
+
+html[data-theme="dark"] .info-item label {
+  color: var(--muted) !important;
+}
+
+html[data-theme="dark"] .info-item span {
+  color: var(--text) !important;
+}
+
+/* Settings rows */
+html[data-theme="dark"] .settings-row {
+  border-color: var(--border) !important;
+}
+
+/* Amenity tags */
+html[data-theme="dark"] .amenity-tag {
+  background: var(--surface-2) !important;
+  color: var(--muted) !important;
+}
+
+/* No bookings / no rooms states */
+html[data-theme="dark"] .no-bookings,
+html[data-theme="dark"] .no-rooms {
+  color: var(--muted) !important;
+}
+
+/* Summary rows */
+html[data-theme="dark"] .summary-row {
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .summary-row.total {
+  border-color: var(--border) !important;
+}
+
+/* Loading states */
+html[data-theme="dark"] .user-loading,
+html[data-theme="dark"] .loading {
+  color: var(--muted) !important;
+}
+
+/* ========================================
+   LANDING PAGE DARK MODE
+   ======================================== */
+
+html[data-theme="dark"] .landing-page {
+  background: var(--bg) !important;
+}
+
+html[data-theme="dark"] .landing-page section.explore-work,
+html[data-theme="dark"] .landing-page footer {
+  background: var(--surface) !important;
+}
+
+html[data-theme="dark"] .landing-page .feature-card,
+html[data-theme="dark"] .landing-page .rooms-section .room,
+html[data-theme="dark"] .landing-page .rooms-section .room-card,
+html[data-theme="dark"] .landing-page .service-item,
+html[data-theme="dark"] .landing-page .testimonial-item,
+html[data-theme="dark"] .landing-page .contact-card {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .landing-page .section-heading h2,
+html[data-theme="dark"] .landing-page .feature-card h3,
+html[data-theme="dark"] .landing-page .services .service-item h4,
+html[data-theme="dark"] .landing-page .rooms-section .room .text h3,
+html[data-theme="dark"] .landing-page .what-they-say .testimonial-item h4,
+html[data-theme="dark"] .landing-page .contact-us .section-heading h2 {
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .landing-page .section-heading p,
+html[data-theme="dark"] .landing-page .feature-card p,
+html[data-theme="dark"] .landing-page .rooms-section .room .text ul.list li,
+html[data-theme="dark"] .landing-page .what-they-say .testimonial-item p,
+html[data-theme="dark"] .landing-page .what-they-say .testimonial-item span {
+  color: var(--muted) !important;
+}
+
+html[data-theme="dark"] .landing-page .rooms-section .room .text span.per {
+  color: var(--muted) !important;
+}
+
+/* Landing page contact form */
+html[data-theme="dark"] .landing-page .contact-us input,
+html[data-theme="dark"] .landing-page .contact-us textarea {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .landing-page .contact-us input::placeholder,
+html[data-theme="dark"] .landing-page .contact-us textarea::placeholder {
+  color: #6b7280 !important;
+}
+
+/* Footer widgets dark mode */
+html[data-theme="dark"] .landing-page footer .about-widget p,
+html[data-theme="dark"] .landing-page footer .location-widget p,
+html[data-theme="dark"] .landing-page footer .contact-widget p,
+html[data-theme="dark"] .landing-page footer .contact-widget a,
+html[data-theme="dark"] .landing-page footer .follow-us .social-links li a,
+html[data-theme="dark"] .landing-page footer .sub-footer p {
+  color: var(--muted) !important;
+}
+
+html[data-theme="dark"] .landing-page footer .location-widget h4,
+html[data-theme="dark"] .landing-page footer .contact-widget h4,
+html[data-theme="dark"] .landing-page footer .follow-us h4 {
+  color: var(--text) !important;
+}
+
+/* ========================================
+   MODAL DARK MODE
+   ======================================== */
+
+html[data-theme="dark"] .modal-overlay {
+  background: rgba(0, 0, 0, 0.7) !important;
+}
+
+html[data-theme="dark"] .modal-content,
+html[data-theme="dark"] .modal {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .modal-header,
+html[data-theme="dark"] .modal-footer {
+  border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .modal h2,
+html[data-theme="dark"] .modal h3,
+html[data-theme="dark"] .modal-content h2,
+html[data-theme="dark"] .modal-content h3 {
+  color: var(--text) !important;
+}
+
+/* ========================================
+   MISCELLANEOUS DARK MODE FIXES
+   ======================================== */
+
+/* Status list items in admin layout - fancy dark mode */
+html[data-theme="dark"] .status-list li {
+  background: linear-gradient(135deg, var(--surface-2) 0%, var(--surface) 100%) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .status-list li:hover {
+  box-shadow: 0 8px 20px rgba(198, 40, 40, 0.15) !important;
+  border-color: rgba(198, 40, 40, 0.3) !important;
+}
+
+/* Dashboard cards dark mode enhancements */
+html[data-theme="dark"] .card {
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3) !important;
+}
+
+html[data-theme="dark"] .card:hover {
+  box-shadow: 0 30px 70px rgba(198, 40, 40, 0.2) !important;
+}
+
+html[data-theme="dark"] .card::after {
+  background: radial-gradient(circle, rgba(198, 40, 40, 0.12) 0%, transparent 70%) !important;
+}
+
+/* Form actions border */
+html[data-theme="dark"] .form-actions {
+  border-color: var(--border) !important;
+}
+
+/* Booking status badges - ensure good contrast */
+html[data-theme="dark"] .booking-status.confirmed {
+  background: rgba(16, 185, 129, 0.2) !important;
+  color: #34d399 !important;
+}
+
+html[data-theme="dark"] .booking-status.pending {
+  background: rgba(251, 191, 36, 0.2) !important;
+  color: #fbbf24 !important;
+}
+
+html[data-theme="dark"] .booking-status.cancelled {
+  background: rgba(239, 68, 68, 0.2) !important;
+  color: #f87171 !important;
+}
+
+html[data-theme="dark"] .booking-status.completed {
+  background: rgba(99, 102, 241, 0.2) !important;
+  color: #a5b4fc !important;
+}
+
+/* Guest status */
+html[data-theme="dark"] .guest-status.active {
+  color: #34d399 !important;
+}
+
+html[data-theme="dark"] .guest-status.inactive {
+  color: #f87171 !important;
+}
+
+html[data-theme="dark"] .guest-status.pending {
+  color: #fbbf24 !important;
+}
+
+/* Rating stars */
+html[data-theme="dark"] .rating-star {
+  color: var(--border) !important;
+}
+
+html[data-theme="dark"] .rating-star.active,
+html[data-theme="dark"] .rating-star:hover {
+  color: #fbbf24 !important;
+}
+
+/* Feedback textarea */
+html[data-theme="dark"] .feedback-textarea {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+/* Selected date banner - keep gradient but adjust for dark */
+html[data-theme="dark"] .selected-date-banner {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
+}
+
+/* Info grid items */
+html[data-theme="dark"] .info-grid .info-item {
+  background: var(--surface-2) !important;
+}
+
+/* ========================================
+   ADDITIONAL LANDING PAGE DARK MODE
+   ======================================== */
+
+/* Rooms section background */
+html[data-theme="dark"] .landing-page .rooms-section {
+  background: var(--bg) !important;
+}
+
+/* Search form */
+html[data-theme="dark"] .landing-page .search-form #search-form {
+  background: var(--surface) !important;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+html[data-theme="dark"] .landing-page .search-form .form-label {
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .landing-page .search-form input,
+html[data-theme="dark"] .landing-page .search-form select {
+  background: var(--surface-2) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+/* About section */
+html[data-theme="dark"] .landing-page .about {
+  background: var(--bg) !important;
+}
+
+html[data-theme="dark"] .landing-page .about p {
+  color: var(--muted) !important;
+}
+
+html[data-theme="dark"] .landing-page .about .section-heading h2 {
+  color: var(--text) !important;
+}
+
+/* Accordion in about section */
+html[data-theme="dark"] .landing-page .about .accordion h4,
+html[data-theme="dark"] .landing-page .about .accordion-button {
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .landing-page .about .accordion-button.collapsed {
+  color: var(--muted) !important;
+}
+
+html[data-theme="dark"] .landing-page .about .accordion-item {
+  border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .landing-page .about .accordion-body p {
+  color: var(--muted) !important;
+}
+
+/* Testimonials section */
+html[data-theme="dark"] .landing-page .testimonials .testimonial-item {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .landing-page .testimonials .testimonial-item h4 {
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .landing-page .testimonials .testimonial-item span,
+html[data-theme="dark"] .landing-page .testimonials .testimonial-item p {
+  color: var(--muted) !important;
+}
+
+/* Contact page form */
+html[data-theme="dark"] .landing-page .contact-page-form {
+  background: var(--surface) !important;
+}
+
+html[data-theme="dark"] .landing-page .contact-page-form .right-info h6 {
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .landing-page .contact-page-form .right-info span {
+  color: var(--muted) !important;
+}
+
+/* User container and cards */
+html[data-theme="dark"] .user-container {
+  background: transparent !important;
+}
+
+html[data-theme="dark"] .user-card {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .user-title {
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .user-nav-link {
+  color: var(--muted) !important;
+}
+
+html[data-theme="dark"] .user-nav-link:hover {
+  background: var(--surface-2) !important;
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .user-nav-link.active {
+  background: var(--accent) !important;
+  color: #fff !important;
+}
+
+html[data-theme="dark"] .user-logout {
+  color: var(--accent) !important;
+}
+
+html[data-theme="dark"] .user-logout:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+/* ========================================
+   FANCY LANDING PAGE DARK MODE
+   ======================================== */
+
+/* Hero banner dark mode adjustments */
+html[data-theme="dark"] .landing-page .main-banner {
+  background-image: 
+    linear-gradient(135deg, rgba(7, 14, 46, 0.92) 0%, rgba(12, 26, 58, 0.88) 50%, rgba(15, 52, 96, 0.8) 100%),
+    url('../assets/banner-bg.jpg') !important;
+}
+
+/* Feature cards dark mode */
+html[data-theme="dark"] .landing-page .feature-card {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .landing-page .feature-card::before {
+  background: linear-gradient(135deg, rgba(255, 86, 91, 0.08) 0%, rgba(255, 143, 148, 0.08) 100%) !important;
+}
+
+html[data-theme="dark"] .landing-page .feature-card h3 {
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .landing-page .feature-card p {
+  color: var(--muted) !important;
+}
+
+html[data-theme="dark"] .landing-page .feature-card:hover {
+  box-shadow: 0 25px 60px rgba(255, 86, 91, 0.2) !important;
+}
+
+/* Rooms section dark mode */
+html[data-theme="dark"] .landing-page .rooms-section {
+  background: linear-gradient(180deg, var(--bg) 0%, #0a1530 100%) !important;
+}
+
+html[data-theme="dark"] .landing-page .rooms-section::before {
+  background: radial-gradient(circle, rgba(255, 86, 91, 0.12) 0%, transparent 70%) !important;
+}
+
+html[data-theme="dark"] .landing-page .rooms-section::after {
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%) !important;
+}
+
+html[data-theme="dark"] .landing-page .rooms-section .room-card {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .landing-page .rooms-section .room-card:hover {
+  box-shadow: 0 30px 60px rgba(255, 86, 91, 0.25) !important;
+}
+
+html[data-theme="dark"] .landing-page .rooms-section .room-card .room-details {
+  background: var(--surface) !important;
+}
+
+html[data-theme="dark"] .landing-page .rooms-section .room-card .room-price {
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%) !important;
+  color: #1a1a2e !important;
+  box-shadow: 0 4px 20px rgba(251, 191, 36, 0.4) !important;
+  min-width: 140px !important;
+  text-align: center !important;
+}
+
+html[data-theme="dark"] .landing-page .rooms-section .room-card .room-capacity,
+html[data-theme="dark"] .landing-page .rooms-section .room-card .room-description {
+  color: var(--muted) !important;
+}
+
+html[data-theme="dark"] .landing-page .rooms-section .room-card .amenity-tag {
+  background: linear-gradient(135deg, var(--surface-2) 0%, #1a2744 100%) !important;
+  color: var(--muted) !important;
+}
+
+html[data-theme="dark"] .landing-page .rooms-section .room-card .amenity-tag:hover {
+  background: linear-gradient(135deg, #ff565b 0%, #ff8f94 100%) !important;
+  color: #ffffff !important;
+}
+
+/* Testimonials dark mode */
+html[data-theme="dark"] .landing-page .testimonials .testimonial-item {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .landing-page .testimonials .testimonial-item::after {
+  color: rgba(255, 86, 91, 0.08) !important;
+}
+
+html[data-theme="dark"] .landing-page .testimonials .testimonial-item:hover {
+  box-shadow: 0 25px 50px rgba(255, 86, 91, 0.2) !important;
+}
+
+html[data-theme="dark"] .landing-page .testimonials .testimonial-item h4 {
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .landing-page .testimonials .testimonial-item span,
+html[data-theme="dark"] .landing-page .testimonials .testimonial-item p {
+  color: var(--muted) !important;
+}
+
+/* Contact section dark mode */
+html[data-theme="dark"] .landing-page .contact-card {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .landing-page .contact-us input,
+html[data-theme="dark"] .landing-page .contact-us textarea {
+  background: var(--surface-2) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .landing-page .contact-us input:focus,
+html[data-theme="dark"] .landing-page .contact-us textarea:focus {
+  border-color: #ff565b !important;
+  box-shadow: 0 0 0 4px rgba(255, 86, 91, 0.15) !important;
+}
+
+/* Footer dark mode */
+html[data-theme="dark"] .landing-page footer {
+  background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%) !important;
+}
+
+html[data-theme="dark"] .landing-page footer .sub-footer {
+  border-color: var(--border) !important;
+}
+
+/* Scrolled navigation dark mode */
+html[data-theme="dark"] .landing-page header.nav-scrolled .main-navigation {
+  background: rgba(7, 14, 46, 0.9) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Room Availability Modal - keep text dark on colored backgrounds */
+html[data-theme="dark"] .rooms-section .room-card .room-number {
+  color: #1e293b !important;
+}
+
+html[data-theme="dark"] .rooms-section .room-card .room-type-badge {
+  color: #475569 !important;
+  background: rgba(100, 116, 139, 0.2) !important;
+}
+
+html[data-theme="dark"] .rooms-section .room-card.available {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%) !important;
+  border-color: #86efac !important;
+}
+
+html[data-theme="dark"] .rooms-section .room-card.occupied {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%) !important;
+  border-color: #fca5a5 !important;
+}
+
+html[data-theme="dark"] .rooms-section .guest-info {
+  color: #64748b !important;
+}

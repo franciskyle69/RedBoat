@@ -2,6 +2,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { Navigate, useLocation, Outlet } from 'react-router-dom';
 import { routingManager } from '../utils/routeUtils';
+import { API_BASE_URL } from '../config/api';
 import { RoutePermission } from '../types/routing';
 import { UserContext } from '../types/routing';
 
@@ -15,7 +16,7 @@ export function RouteGuard({
   children, 
   requiredRole, 
   fallback 
-}: RouteGuardProps) {
+}: RouteGuardProps): JSX.Element | null {
   const [userContext, setUserContext] = useState<UserContext>({
     isAuthenticated: false,
     loading: true
@@ -26,7 +27,7 @@ export function RouteGuard({
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch('http://localhost:5000/me', {
+        const response = await fetch(`${API_BASE_URL}/me`, {
           credentials: 'include'
         });
 
@@ -77,18 +78,31 @@ export function RouteGuard({
 
   // Show loading spinner while checking authentication
   if (userContext.loading) {
-    return fallback || <LoadingSpinner />;
+    return <>{fallback || <LoadingSpinner />}</>;
   }
+
+  // Debug logging
+  console.log("RouteGuard check:", {
+    path: location.pathname,
+    isAuthenticated: userContext.isAuthenticated,
+    role: userContext.role,
+    requiredRole,
+    isPublicRoute: routingManager.isPublicRoute(location.pathname)
+  });
 
   // Check if user is authenticated for protected routes
   if (!userContext.isAuthenticated && !routingManager.isPublicRoute(location.pathname)) {
+    console.log("RouteGuard: Redirecting to login - not authenticated");
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Check role-based access
   if (requiredRole && userContext.role !== requiredRole) {
-    const redirectTo = userContext.role === 'admin' ? '/admin' : '/dashboard';
-    return <Navigate to={redirectTo} replace />;
+    const effectiveRole = userContext.role === 'superadmin' ? 'admin' : userContext.role;
+    if (requiredRole && effectiveRole !== requiredRole) {
+      const redirectTo = effectiveRole === 'admin' ? '/admin' : '/dashboard';
+      return <Navigate to={redirectTo} replace />;
+    }
   }
 
   // Check route-specific permissions

@@ -5,7 +5,8 @@ import { Room } from '../models/Room';
 import { NotificationController } from './notificationController';
 import { User } from '../models/User';
 import { AuthenticatedRequest } from '../middleware/auth';
-import { sendAppEmail, buildBookingSummaryHtml, BookingSummaryDetails, buildChargeBreakdownHtml } from '../emailService';
+import { sendAppEmail, buildBookingSummaryHtml, BookingSummaryDetails, buildChargeBreakdownHtml, getBookingReference } from '../services/emailService';
+import { calculateBookingPricing } from '../services/bookingService';
 
 const formatDateShort = (date: Date | string | undefined): string | undefined => {
   if (!date) return undefined;
@@ -34,7 +35,7 @@ const buildBookingSummary = (booking: any, overrides: Partial<BookingSummaryDeta
     : undefined;
 
   const base: BookingSummaryDetails = {
-    reference: booking._id ? String(booking._id) : undefined,
+    reference: booking._id ? getBookingReference(String(booking._id)) : undefined,
     room: roomLabel,
     checkIn: formatDateShort(booking.checkInDate),
     checkOut: formatDateShort(booking.checkOutDate),
@@ -54,7 +55,7 @@ export class BookingController {
     try {
       const payload = req.user!;
       
-      if (payload.role !== "admin") {
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -63,10 +64,16 @@ export class BookingController {
         .populate("room", "roomNumber roomType price")
         .sort({ createdAt: -1 });
 
-      res.json({ data: bookings });
+      res.json({
+        message: "Bookings fetched successfully",
+        data: bookings,
+      });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({
+        message: "Server error",
+        details: err instanceof Error ? err.message : "An unexpected error occurred",
+      });
     }
   }
 
@@ -79,10 +86,16 @@ export class BookingController {
         .populate("room", "roomNumber roomType price")
         .sort({ createdAt: -1 });
 
-      res.json({ data: bookings });
+      res.json({
+        message: "User bookings fetched successfully",
+        data: bookings,
+      });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({
+        message: "Server error",
+        details: err instanceof Error ? err.message : "An unexpected error occurred",
+      });
     }
   }
 
@@ -122,23 +135,25 @@ export class BookingController {
         return res.status(400).json({ message: "Room is not available for the selected dates" });
       }
 
-      // Calculate total amount
-      const nights = Math.ceil((new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) / (1000 * 60 * 60 * 24));
-      const baseAmount = room.price * nights;
-      
-      // Add 300 pesos per night for each additional person beyond room capacity
-      const extraPersons = Math.max(0, numberOfGuests - room.capacity);
-      const extraPersonCharge = extraPersons * 300 * nights;
-      
-      const totalAmount = baseAmount + extraPersonCharge;
+      // Calculate total amount (including extra person charges)
+      const checkIn = new Date(checkInDate);
+      const checkOut = new Date(checkOutDate);
+
+      const pricing = calculateBookingPricing({
+        roomPrice: room.price,
+        capacity: room.capacity,
+        checkInDate: checkIn,
+        checkOutDate: checkOut,
+        numberOfGuests,
+      });
 
       const booking = new Booking({
         user: payload.sub,
         room: roomId,
-        checkInDate: new Date(checkInDate),
-        checkOutDate: new Date(checkOutDate),
+        checkInDate: checkIn,
+        checkOutDate: checkOut,
         numberOfGuests,
-        totalAmount,
+        totalAmount: pricing.totalAmount,
         guestName,
         contactNumber,
         specialRequests
@@ -200,8 +215,8 @@ export class BookingController {
           }
         }
 
-        // Email admins about the new booking
-        const admins = await User.find({ role: 'admin' }).select('_id email emailNotifications');
+        // Email admins and superadmins about the new booking
+        const admins = await User.find({ role: { $in: ['admin', 'superadmin'] } }).select('_id email emailNotifications username');
         await Promise.all(
           admins.map(async (a) => {
             await NotificationController.createForUser(
@@ -213,16 +228,34 @@ export class BookingController {
 
             const adminEmail = (a as any).email as string | undefined;
             const adminEmailPref = (a as any).emailNotifications as boolean | undefined;
+            const adminName = (a as any).username || 'Admin';
             if (adminEmail && adminEmailPref !== false) {
-              const subject = 'New booking request';
+              const subject = '🔔 New Booking Request - Action Required';
               const summaryHtml = buildBookingSummary(savedBooking, {
                 guestName: guestName || displayName,
               });
               const bodyHtml = `
-                <p>${message}</p>
-                ${summaryHtml}
-                ${specialRequests ? `<p><strong>Special requests:</strong> ${specialRequests}</p>` : ''}
-                <p><a href="${adminBookingsLink}">Review booking in admin panel</a></p>
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px 8px 0 0;">
+                    <h2 style="color: white; margin: 0; font-size: 20px;">New Booking Request</h2>
+                  </div>
+                  <div style="background: #f8fafc; padding: 20px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px;">
+                    <p style="margin: 0 0 16px 0; color: #334155;">Hi ${adminName},</p>
+                    <p style="margin: 0 0 16px 0; color: #334155;">${message}</p>
+                    
+                    <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 12px; margin-bottom: 16px;">
+                      <strong style="color: #856404;">⚠️ Action Required:</strong>
+                      <span style="color: #856404;"> Please review and approve or decline this booking.</span>
+                    </div>
+                    
+                    ${summaryHtml}
+                    ${specialRequests ? `<p style="margin-top: 12px;"><strong>Special requests:</strong> ${specialRequests}</p>` : ''}
+                    
+                    <div style="margin-top: 20px; text-align: center;">
+                      <a href="${adminBookingsLink}" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">Review Booking</a>
+                    </div>
+                  </div>
+                </div>
               `;
               try {
                 await sendAppEmail(adminEmail, subject, bodyHtml);
@@ -242,7 +275,10 @@ export class BookingController {
       });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({
+        message: "Server error",
+        details: err instanceof Error ? err.message : "An unexpected error occurred",
+      });
     }
   }
 
@@ -251,7 +287,7 @@ export class BookingController {
     try {
       const payload = req.user!;
       
-      if (payload.role !== "admin") {
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -363,7 +399,10 @@ export class BookingController {
       });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({
+        message: "Server error",
+        details: err instanceof Error ? err.message : "An unexpected error occurred",
+      });
     }
   }
 
@@ -459,7 +498,10 @@ export class BookingController {
       res.json({ message: "Cancellation request submitted", data: booking });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({
+        message: "Server error",
+        details: err instanceof Error ? err.message : "An unexpected error occurred",
+      });
     }
   }
 
@@ -467,7 +509,7 @@ export class BookingController {
   static async approveCancellation(req: AuthenticatedRequest, res: Response) {
     try {
       const payload = req.user!;
-      if (payload.role !== 'admin') {
+      if (payload.role !== 'admin' && payload.role !== 'superadmin') {
         return res.status(403).json({ message: 'Admin access required' });
       }
 
@@ -514,7 +556,10 @@ export class BookingController {
       res.json({ message: 'Cancellation approved', data: booking });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ message: 'Server error' });
+      res.status(500).json({
+        message: 'Server error',
+        details: err instanceof Error ? err.message : 'An unexpected error occurred',
+      });
     }
   }
 
@@ -522,7 +567,7 @@ export class BookingController {
   static async declineCancellation(req: AuthenticatedRequest, res: Response) {
     try {
       const payload = req.user!;
-      if (payload.role !== 'admin') {
+      if (payload.role !== 'admin' && payload.role !== 'superadmin') {
         return res.status(403).json({ message: 'Admin access required' });
       }
 
@@ -571,7 +616,10 @@ export class BookingController {
       res.json({ message: 'Cancellation declined', data: booking });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ message: 'Server error' });
+      res.status(500).json({
+        message: 'Server error',
+        details: err instanceof Error ? err.message : 'An unexpected error occurred',
+      });
     }
   }
 
@@ -582,7 +630,7 @@ export class BookingController {
       const { checkinNotes, additionalCharges } = req.body as { checkinNotes?: string; additionalCharges?: number };
       
       // Step 1: Verify admin authorization
-      if (payload.role !== "admin") {
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
         return res.status(403).json({ 
           message: "Admin access required",
           details: "Only administrators can perform check-in operations"
@@ -601,9 +649,7 @@ export class BookingController {
       let actualCheckInTime: Date;
 
       try {
-        session.startTransaction();
-
-        // Step 2: Fetch booking with all related data
+        // Step 2: Fetch booking with all related data (no multi-document transaction)
         booking = await Booking.findById(bookingId)
           .populate("user", "username email firstName lastName phoneNumber")
           .populate("room", "roomNumber roomType price capacity amenities isAvailable housekeepingStatus")
@@ -754,8 +800,6 @@ export class BookingController {
         room.housekeepingStatus = "dirty"; // Room becomes occupied
         room.updatedAt = new Date();
         await room.save({ session });
-
-        await session.commitTransaction();
       } catch (err) {
         if (session.inTransaction()) {
           await session.abortTransaction();
@@ -770,14 +814,25 @@ export class BookingController {
       await booking.populate("room", "roomNumber roomType price capacity amenities");
       await booking.populate("checkedInBy", "username email firstName lastName");
 
-      // Step 12: Send notification to user
-      const checkInMessage = `You have been checked in! Room: ${(booking.room as any).roomNumber}. Check-in time: ${actualCheckInTime.toLocaleString()}`;
-      await NotificationController.createForUser(
-        (booking.user as any)._id.toString(),
-        'success',
-        checkInMessage,
-        '/user/bookings'
-      );
+      const populatedUser: any = booking.user || {};
+      const populatedRoom: any = booking.room || {};
+
+      // Step 12: Send notification to user (do not let failures break check-in)
+      const roomNumberForMessage = populatedRoom.roomNumber || 'N/A';
+      const checkInMessage = `You have been checked in! Room: ${roomNumberForMessage}. Check-in time: ${actualCheckInTime.toLocaleString()}`;
+
+      if (populatedUser && populatedUser._id) {
+        try {
+          await NotificationController.createForUser(
+            populatedUser._id.toString(),
+            'success',
+            checkInMessage,
+            '/user/bookings'
+          );
+        } catch (err) {
+          console.error('[CHECK-IN NOTIFICATION ERROR]', err);
+        }
+      }
 
       const checkInUser: any = booking.user;
       if (checkInUser?.email && checkInUser.emailNotifications !== false) {
@@ -803,44 +858,68 @@ export class BookingController {
       }
 
       // Step 13: Log check-in activity
-      console.log(`[CHECK-IN] Booking ${bookingId} - User: ${(booking.user as any).email} - Room: ${(booking.room as any).roomNumber} - Admin: ${payload.email} - Time: ${actualCheckInTime.toISOString()}${lateCheckInFee > 0 ? ` - Late Fee: ₱${lateCheckInFee}` : ''}`);
+      const userEmailForLog = populatedUser.email || 'unknown';
+      const roomNumberForLog = populatedRoom.roomNumber || 'unknown';
+      const adminEmailForLog = payload.email || 'unknown';
+      const actualCheckInIsoForLog =
+        actualCheckInTime instanceof Date && !Number.isNaN(actualCheckInTime.getTime())
+          ? actualCheckInTime.toISOString()
+          : '';
+
+      console.log(
+        `[CHECK-IN] Booking ${bookingId} - User: ${userEmailForLog} - Room: ${roomNumberForLog} - Admin: ${adminEmailForLog} - Time: ${actualCheckInIsoForLog}` +
+          (lateCheckInFee > 0 ? ` - Late Fee: ₱${lateCheckInFee}` : '')
+      );
 
       // Step 14: Return detailed response
-      res.json({ 
+      const scheduledCheckInIso =
+        scheduledCheckIn instanceof Date && !Number.isNaN(scheduledCheckIn.getTime())
+          ? scheduledCheckIn.toISOString()
+          : undefined;
+      const actualCheckInIso =
+        actualCheckInTime instanceof Date && !Number.isNaN(actualCheckInTime.getTime())
+          ? actualCheckInTime.toISOString()
+          : undefined;
+
+      res.json({
         message: "Guest checked in successfully",
         data: {
           booking: {
             ...booking.toObject(),
             checkInSummary: {
-              scheduledCheckIn: scheduledCheckIn.toISOString(),
-              actualCheckIn: actualCheckInTime.toISOString(),
+              scheduledCheckIn: scheduledCheckInIso,
+              actualCheckIn: actualCheckInIso,
               isEarly: daysDifference < 0,
               isLate: lateCheckInFee > 0,
               lateCheckInFee: lateCheckInFee,
               checkedInBy: {
                 id: payload.sub,
-                email: payload.email
-              }
+                email: payload.email,
+              },
             },
             guestInfo: {
-              name: `${(booking.user as any).firstName || ''} ${(booking.user as any).lastName || ''}`.trim() || (booking.user as any).email,
-              email: (booking.user as any).email,
-              phoneNumber: (booking.user as any).phoneNumber || "Not provided"
+              name:
+                `${(checkInUser?.firstName || '')} ${(checkInUser?.lastName || '')}`.trim() ||
+                checkInUser?.username ||
+                checkInUser?.email ||
+                'Guest',
+              email: checkInUser?.email || 'Not provided',
+              phoneNumber: checkInUser?.phoneNumber || 'Not provided',
             },
             roomInfo: {
-              roomNumber: (booking.room as any).roomNumber,
-              roomType: (booking.room as any).roomType,
-              capacity: (booking.room as any).capacity,
-              amenities: (booking.room as any).amenities
+              roomNumber: populatedRoom.roomNumber,
+              roomType: populatedRoom.roomType,
+              capacity: populatedRoom.capacity,
+              amenities: populatedRoom.amenities,
             },
             totalCharges: {
               baseAmount: booking.totalAmount,
               lateCheckInFee: lateCheckInFee,
               additionalCharges: booking.additionalCharges || 0,
-              total: booking.totalAmount + lateCheckInFee + (booking.additionalCharges || 0)
-            }
-          }
-        }
+              total: (booking.totalAmount || 0) + lateCheckInFee + (booking.additionalCharges || 0),
+            },
+          },
+        },
       });
     } catch (err) {
       console.error('[CHECK-IN ERROR]', err);
@@ -862,7 +941,7 @@ export class BookingController {
       };
       
       // Step 1: Verify admin authorization
-      if (payload.role !== "admin") {
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
         return res.status(403).json({ 
           message: "Admin access required",
           details: "Only administrators can perform check-out operations"
@@ -896,9 +975,7 @@ export class BookingController {
       let actualCheckOutTime: Date;
 
       try {
-        session.startTransaction();
-
-        // Step 2: Fetch booking with all related data
+        // Step 2: Fetch booking with all related data (no multi-document transaction)
         booking = await Booking.findById(bookingId)
           .populate("user", "username email firstName lastName phoneNumber")
           .populate("room", "roomNumber roomType price capacity amenities isAvailable housekeepingStatus")
@@ -1020,8 +1097,6 @@ export class BookingController {
         room.lastCleanedAt = roomCondition === "excellent" || roomCondition === "good" ? new Date() : undefined;
         room.updatedAt = new Date();
         await room.save({ session });
-
-        await session.commitTransaction();
       } catch (err) {
         if (session.inTransaction()) {
           await session.abortTransaction();
@@ -1171,9 +1246,9 @@ export class BookingController {
         return res.status(404).json({ message: "Booking not found" });
       }
 
-      // Check if user owns the booking or is admin
+      // Check if user owns the booking or is admin/superadmin
       const isOwner = booking.user.toString() === payload.sub;
-      const isAdmin = payload.role === "admin";
+      const isAdmin = payload.role === "admin" || payload.role === "superadmin";
 
       if (!isOwner && !isAdmin) {
         return res.status(403).json({ 
@@ -1181,7 +1256,7 @@ export class BookingController {
         });
       }
 
-      // Only allow users to mark as paid, admins can set any status
+      // Only allow non-admin users to mark as paid; admins/superadmins can set any status
       if (!isAdmin && paymentStatus !== "paid") {
         return res.status(403).json({ 
           message: "You can only mark bookings as paid" 
@@ -1191,7 +1266,7 @@ export class BookingController {
       booking.paymentStatus = paymentStatus as "pending" | "paid" | "refunded";
       await booking.save();
 
-      // Notify user if payment was marked as paid
+      // Notify user if payment was marked as paid by an admin/superadmin
       if (paymentStatus === "paid" && isAdmin) {
         const populated = await booking.populate("room", "roomNumber");
         const roomDoc: any = populated.room;
@@ -1211,7 +1286,10 @@ export class BookingController {
       });
     } catch (error: any) {
       console.error("Error updating payment status:", error);
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({
+        message: "Server error",
+        details: error instanceof Error ? error.message : "An unexpected error occurred",
+      });
     }
   }
 }

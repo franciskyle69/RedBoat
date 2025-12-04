@@ -1,15 +1,7 @@
 import multer from "multer";
-import path from "path";
 
-const roomImageStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/rooms");
-  },
-  filename: (req, file, cb) => {
-    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, unique + path.extname(file.originalname));
-  },
-});
+// Use memory storage for Google Drive uploads
+const roomImageStorage = multer.memoryStorage();
 
 export const uploadRoomImages = multer({
   storage: roomImageStorage,
@@ -19,5 +11,8 @@ export const uploadRoomImages = multer({
     }
     cb(null, true);
   },
-  limits: { files: 5 },
+  limits: { 
+    files: 5,
+    fileSize: 10 * 1024 * 1024, // 10MB max per file
+  },
 });

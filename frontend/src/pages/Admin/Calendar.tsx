@@ -5,6 +5,9 @@ import ErrorBoundary from "../../components/ErrorBoundary";
 import "../../styles/main.css";
 import AdminLayout from "../../components/AdminLayout";
 import { successAlert, errorAlert } from "../../utils/adminSwal";
+import { getAll as getAllBookings, updateStatus as updateBookingStatusApi, createBooking } from "../../api/bookings";
+import WalkInBookingModal from "../../components/admin/WalkInBookingModal";
+import { useNotifications } from "../../contexts/NotificationContext";
 
 interface Room {
   _id: string;
@@ -38,6 +41,7 @@ interface Booking {
 
 function AdminCalendar() {
   const navigate = useNavigate();
+  const { notify } = useNotifications();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +50,9 @@ function AdminCalendar() {
   const [showBookingDetails, setShowBookingDetails] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [viewMode, setViewMode] = useState<'calendar' | 'bookings'>('calendar');
+  const [showWalkInModal, setShowWalkInModal] = useState(false);
+  const [preselectedRoom, setPreselectedRoom] = useState<Room | null>(null);
+  const [preselectedDate, setPreselectedDate] = useState<string>("");
 
   useEffect(() => {
     fetchRooms();
@@ -72,16 +79,8 @@ function AdminCalendar() {
 
   const fetchBookings = async () => {
     try {
-      const response = await fetch("http://localhost:5000/admin-bookings", {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setBookings(data.data || []);
-      } else {
-        console.warn("Failed to fetch bookings:", response.status);
-        setBookings([]);
-      }
+      const data = await getAllBookings();
+      setBookings(data || []);
     } catch (error) {
       console.error("Error fetching bookings:", error);
       setBookings([]);
@@ -110,36 +109,54 @@ function AdminCalendar() {
     });
 
     if (roomBookings.length > 0) {
+      // Show existing booking details
       setSelectedBooking(roomBookings[0]);
       setShowBookingDetails(true);
+    } else {
+      // No booking - open walk-in booking modal with preselected room and date
+      const room = rooms.find(r => r.roomNumber === roomNumber);
+      if (room) {
+        setPreselectedRoom(room);
+        setPreselectedDate(dateString);
+        setShowWalkInModal(true);
+      }
+    }
+  };
+
+  const handleCreateWalkInBooking = async (data: {
+    roomId: string;
+    guestName: string;
+    contactNumber: string;
+    checkInDate: string;
+    checkOutDate: string;
+    numberOfGuests: number;
+    specialRequests?: string;
+  }) => {
+    try {
+      await createBooking(data);
+      notify("Walk-in booking created successfully", "success");
+      setShowWalkInModal(false);
+      setPreselectedRoom(null);
+      setPreselectedDate("");
+      await fetchBookings();
+    } catch (error) {
+      console.error("Error creating walk-in booking:", error);
+      const message = error instanceof Error ? error.message : "Failed to create booking";
+      notify(message, "error");
+      throw error;
     }
   };
 
   const updateBookingStatus = async (bookingId: string, newStatus: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/admin-bookings/${bookingId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ status: newStatus }),
+      await updateBookingStatusApi(bookingId, newStatus);
+      successAlert({
+        title: 'Status updated',
+        text: 'Booking status updated successfully!',
       });
-
-      if (response.ok) {
-        successAlert({
-          title: 'Status updated',
-          text: 'Booking status updated successfully!',
-        });
-        fetchBookings(); // Refresh bookings
-        setShowBookingDetails(false);
-        setSelectedBooking(null);
-      } else {
-        errorAlert({
-          title: 'Update failed',
-          text: 'Error updating booking status',
-        });
-      }
+      fetchBookings(); // Refresh bookings
+      setShowBookingDetails(false);
+      setSelectedBooking(null);
     } catch (error) {
       console.error('Error updating booking status:', error);
       errorAlert({
@@ -318,10 +335,24 @@ function AdminCalendar() {
           <div className="room-selection-info">
             <h4>Selected Room: {selectedRoomNumber}</h4>
             <p>Date: {selectedDate.toLocaleDateString()}</p>
-            <p>Click on the room cell to view booking details.</p>
+            <p>Click on an available room cell to create a booking, or on a booked cell to view details.</p>
           </div>
         )}
       </div>
+
+      {/* Walk-in Booking Modal */}
+      {showWalkInModal && (
+        <WalkInBookingModal
+          onSubmit={handleCreateWalkInBooking}
+          onClose={() => {
+            setShowWalkInModal(false);
+            setPreselectedRoom(null);
+            setPreselectedDate("");
+          }}
+          preselectedRoomId={preselectedRoom?._id}
+          preselectedCheckInDate={preselectedDate}
+        />
+      )}
 
       {/* Booking Details Modal */}
       {showBookingDetails && selectedBooking && (

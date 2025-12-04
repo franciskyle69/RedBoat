@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import "../../styles/main.css";
 import UserLayout from "../../components/UserLayout";
+import defaultAvatar from "../../assets/redBoat.png";
+import { API_BASE_URL } from "../../config/api";
 
 interface UserProfile {
   _id: string;
@@ -28,7 +30,6 @@ function Profile() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [message, setMessage] = useState("");
   const [formData, setFormData] = useState({
     firstName: "",
@@ -43,11 +44,6 @@ function Profile() {
       country: ""
     }
   });
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: ""
-  });
   const [avatarUploading, setAvatarUploading] = useState(false);
 
   useEffect(() => {
@@ -56,7 +52,7 @@ function Profile() {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch("http://localhost:5000/profile", {
+      const response = await fetch(`${API_BASE_URL}/profile`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -90,7 +86,7 @@ function Profile() {
     setMessage("");
 
     try {
-      const response = await fetch("http://localhost:5000/profile", {
+      const response = await fetch(`${API_BASE_URL}/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -114,48 +110,6 @@ function Profile() {
     }
   };
 
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage("");
-
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setMessage("New passwords do not match");
-      return;
-    }
-
-    if (passwordData.newPassword.length < 6) {
-      setMessage("New password must be at least 6 characters long");
-      return;
-    }
-
-    try {
-      const response = await fetch("http://localhost:5000/profile/password", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword
-        }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        setMessage("Password updated successfully!");
-        setShowPasswordForm(false);
-        setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
-      } else {
-        setMessage(result.message || "Error updating password");
-      }
-    } catch (error) {
-      console.error("Error updating password:", error);
-      setMessage("Error updating password");
-    }
-  };
-
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -167,7 +121,7 @@ function Profile() {
       const formData = new FormData();
       formData.append("avatar", file);
 
-      const response = await fetch("http://localhost:5000/profile/avatar", {
+      const response = await fetch(`${API_BASE_URL}/profile/avatar`, {
         method: "POST",
         credentials: "include",
         body: formData,
@@ -235,8 +189,8 @@ function Profile() {
                 src={profile.profilePicture && (profile.profilePicture.startsWith("http://") || profile.profilePicture.startsWith("https://"))
                   ? profile.profilePicture
                   : profile.profilePicture && (profile.profilePicture.startsWith("/uploads") || profile.profilePicture.startsWith("uploads/"))
-                    ? `http://localhost:5000${profile.profilePicture.startsWith("/") ? profile.profilePicture : `/${profile.profilePicture}`}`
-                    : "/default-avatar.png"}
+                    ? `${API_BASE_URL}${profile.profilePicture.startsWith("/") ? profile.profilePicture : `/${profile.profilePicture}`}`
+                    : defaultAvatar}
                 alt="Profile avatar"
                 style={{ width: 120, height: 120, borderRadius: "50%", objectFit: "cover" }}
               />
@@ -443,80 +397,7 @@ function Profile() {
           )}
         </div>
 
-        <div className="profile-section">
-          <div className="profile-header">
-            <h3>Account Security</h3>
-            <button 
-              className="user-button secondary"
-              onClick={() => setShowPasswordForm(!showPasswordForm)}
-            >
-              {showPasswordForm ? 'Cancel' : 'Change Password'}
-            </button>
-          </div>
-
-          {showPasswordForm && (
-            <form onSubmit={handlePasswordSubmit} className="password-form">
-              <div className="form-group">
-                <label htmlFor="currentPassword">Current Password *</label>
-                <input
-                  type="password"
-                  id="currentPassword"
-                  value={passwordData.currentPassword}
-                  onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="newPassword">New Password *</label>
-                <input
-                  type="password"
-                  id="newPassword"
-                  value={passwordData.newPassword}
-                  onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
-                  required
-                  minLength={6}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="confirmPassword">Confirm New Password *</label>
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  value={passwordData.confirmPassword}
-                  onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-                  required
-                  minLength={6}
-                />
-              </div>
-              <div className="form-actions">
-                <button type="submit" className="user-button primary">
-                  Update Password
-                </button>
-                <button 
-                  type="button" 
-                  className="user-button secondary"
-                  onClick={() => {
-                    setShowPasswordForm(false);
-                    setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
-
-          {!showPasswordForm && (
-            <div className="security-info">
-              <p>Keep your account secure by using a strong password.</p>
-              <ul>
-                <li>Use at least 6 characters</li>
-                <li>Include numbers and special characters</li>
-                <li>Don't reuse passwords from other accounts</li>
-              </ul>
-        </div>
-          )}
-        </div>
+        {/* Account security and password changes are now managed from the Settings page */}
       </div>
     </UserLayout>
   );

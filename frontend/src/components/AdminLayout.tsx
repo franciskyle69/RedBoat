@@ -2,10 +2,21 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import NotificationBell from "./NotificationBell";
 import "../styles/admin-layout.css";
+import defaultAvatar from "../assets/redBoat.png";
+import { API_BASE_URL } from "../config/api";
+import { dispatchLogout } from "../utils/authEvents";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
   pageTitle: string;
+}
+
+interface AdminPermissions {
+  manageBookings?: boolean;
+  manageRooms?: boolean;
+  manageHousekeeping?: boolean;
+  manageUsers?: boolean;
+  viewReports?: boolean;
 }
 
 interface UserInfo {
@@ -15,6 +26,7 @@ interface UserInfo {
   email?: string;
   role?: string;
   profilePicture?: string;
+  adminPermissions?: AdminPermissions;
 }
 
 function AdminLayout({ children, pageTitle }: AdminLayoutProps) {
@@ -23,12 +35,18 @@ function AdminLayout({ children, pageTitle }: AdminLayoutProps) {
   const [userInfo, setUserInfo] = useState<UserInfo>({});
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("http://localhost:5000/me", {
+        const res = await fetch(`${API_BASE_URL}/me`, {
           credentials: "include",
         });
         if (!cancelled && res.ok) {
@@ -49,11 +67,12 @@ function AdminLayout({ children, pageTitle }: AdminLayoutProps) {
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
     try {
-      await fetch("http://localhost:5000/logout", {
+      await fetch(`${API_BASE_URL}/logout`, {
         method: "POST",
         credentials: "include",
       });
     } catch {}
+    dispatchLogout();
     window.location.href = "/";
   };
 
@@ -86,12 +105,20 @@ function AdminLayout({ children, pageTitle }: AdminLayoutProps) {
       ? `${userInfo.firstName} ${userInfo.lastName}`
       : userInfo.username || "Admin";
 
+  const isSuperadmin = userInfo.role === "superadmin";
+  const perms: AdminPermissions = userInfo.adminPermissions || {};
+  const canBookings = isSuperadmin || (userInfo.role === "admin" && perms.manageBookings !== false);
+  const canRooms = isSuperadmin || (userInfo.role === "admin" && perms.manageRooms !== false);
+  const canHousekeeping = isSuperadmin || (userInfo.role === "admin" && perms.manageHousekeeping !== false);
+  const canUsers = isSuperadmin || (userInfo.role === "admin" && perms.manageUsers !== false);
+  const canReports = isSuperadmin || (userInfo.role === "admin" && perms.viewReports !== false);
+
   const resolveAvatarSrc = (src?: string) => {
-    if (!src) return "/default-avatar.png";
+    if (!src) return defaultAvatar;
     if (src.startsWith("http://") || src.startsWith("https://")) return src;
     if (src.startsWith("/uploads") || src.startsWith("uploads/")) {
       const normalized = src.startsWith("/") ? src : `/${src}`;
-      return `http://localhost:5000${normalized}`;
+      return `${API_BASE_URL}${normalized}`;
     }
     return src;
   };
@@ -102,7 +129,7 @@ function AdminLayout({ children, pageTitle }: AdminLayoutProps) {
 
   return (
     <div className={`admin-layout ${sidebarOpen ? '' : 'sidebar-collapsed'}`}>
-      <div className={`sidebar ${sidebarOpen ? '' : 'collapsed'}`}>
+      <div className={`sidebar ${sidebarOpen ? '' : 'collapsed'} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="user-info">
           <img
             src={resolveAvatarSrc(userInfo.profilePicture)}
@@ -139,53 +166,65 @@ function AdminLayout({ children, pageTitle }: AdminLayoutProps) {
           Dashboard
         </Link>
 
-        <Link
-          to="/admin/bookings"
-          className={`menu-item ${isActive("/admin/bookings") ? "active" : ""}`}
-        >
-          <span className="material-icons-outlined">book_online</span>
-          Bookings
-        </Link>
+        {canBookings && (
+          <Link
+            to="/admin/bookings"
+            className={`menu-item ${isActive("/admin/bookings") ? "active" : ""}`}
+          >
+            <span className="material-icons-outlined">book_online</span>
+            Bookings
+          </Link>
+        )}
 
-        <Link
-          to="/admin/user-management"
-          className={`menu-item ${isActive("/admin/user-management") ? "active" : ""}`}
-        >
-          <span className="material-icons-outlined">group</span>
-          Users
-        </Link>
+        {canUsers && (
+          <Link
+            to="/admin/user-management"
+            className={`menu-item ${isActive("/admin/user-management") ? "active" : ""}`}
+          >
+            <span className="material-icons-outlined">group</span>
+            Users
+          </Link>
+        )}
 
-        <Link
-          to="/admin/room-management"
-          className={`menu-item ${isActive("/admin/room-management") ? "active" : ""}`}
-        >
-          <span className="material-icons-outlined">meeting_room</span>
-          Rooms
-        </Link>
+        {canRooms && (
+          <Link
+            to="/admin/room-management"
+            className={`menu-item ${isActive("/admin/room-management") ? "active" : ""}`}
+          >
+            <span className="material-icons-outlined">meeting_room</span>
+            Rooms
+          </Link>
+        )}
 
-        <Link
-          to="/admin/housekeeping"
-          className={`menu-item ${isActive("/admin/housekeeping") ? "active" : ""}`}
-        >
-          <span className="material-icons-outlined">cleaning_services</span>
-          Housekeeping
-        </Link>
+        {canHousekeeping && (
+          <Link
+            to="/admin/housekeeping"
+            className={`menu-item ${isActive("/admin/housekeeping") ? "active" : ""}`}
+          >
+            <span className="material-icons-outlined">cleaning_services</span>
+            Housekeeping
+          </Link>
+        )}
 
-        <Link
-          to="/admin/calendar"
-          className={`menu-item ${isActive("/admin/calendar") ? "active" : ""}`}
-        >
-          <span className="material-icons-outlined">calendar_month</span>
-          Calendar
-        </Link>
+        {canBookings && (
+          <Link
+            to="/admin/calendar"
+            className={`menu-item ${isActive("/admin/calendar") ? "active" : ""}`}
+          >
+            <span className="material-icons-outlined">calendar_month</span>
+            Calendar
+          </Link>
+        )}
 
-        <Link
-          to="/admin/reports"
-          className={`menu-item ${isActive("/admin/reports") ? "active" : ""}`}
-        >
-          <span className="material-icons-outlined">bar_chart</span>
-          Reports
-        </Link>
+        {canReports && (
+          <Link
+            to="/admin/reports"
+            className={`menu-item ${isActive("/admin/reports") ? "active" : ""}`}
+          >
+            <span className="material-icons-outlined">bar_chart</span>
+            Reports
+          </Link>
+        )}
 
         <p className="menu-label">SYSTEM OPTION</p>
 
@@ -207,9 +246,28 @@ function AdminLayout({ children, pageTitle }: AdminLayoutProps) {
         </a>
       </div>
 
+      {/* Mobile overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="mobile-overlay" 
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       <div className={`main ${sidebarOpen ? '' : 'expanded'}`}>
         <div className="topbar">
-          <h2>{pageTitle}</h2>
+          <div className="topbar-left">
+            <button 
+              className="mobile-menu-btn"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              <span className="material-icons-outlined">
+                {mobileMenuOpen ? 'close' : 'menu'}
+              </span>
+            </button>
+            <h2>{pageTitle}</h2>
+          </div>
           <div className="actions">
             <NotificationBell />
             <span className="date">{getCurrentDate()}</span>

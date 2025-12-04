@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useNavigation } from '../contexts/NavigationContext';
-import { RouteConfig } from '../config/routes';
+import { RouteConfig } from '../types/routing';
 
 interface DynamicNavigationProps {
   className?: string;

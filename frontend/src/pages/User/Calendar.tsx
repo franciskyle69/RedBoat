@@ -18,11 +18,18 @@ interface Room {
 }
 
 interface BookingForm {
+  guestName: string;
+  contactNumber: string;
   checkInDate: string;
   checkOutDate: string;
   numberOfGuests: number;
   specialRequests: string;
 }
+
+// Format price with comma separators for consistency
+const formatPrice = (price: number) => {
+  return price.toLocaleString('en-PH');
+};
 
 function Calendar() {
   const navigate = useNavigate();
@@ -33,11 +40,14 @@ function Calendar() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedRoomNumber, setSelectedRoomNumber] = useState<string | null>(null);
   const [bookingForm, setBookingForm] = useState<BookingForm>({
+    guestName: "",
+    contactNumber: "",
     checkInDate: "",
     checkOutDate: "",
     numberOfGuests: 1,
     specialRequests: ""
   });
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     fetchRooms();
@@ -90,6 +100,12 @@ function Calendar() {
     
     if (!selectedRoom) return;
 
+    if (submitting) {
+      return;
+    }
+
+    setSubmitting(true);
+
     try {
       const response = await fetch("http://localhost:5000/bookings", {
         method: "POST",
@@ -99,6 +115,8 @@ function Calendar() {
         credentials: "include",
         body: JSON.stringify({
           roomId: selectedRoom._id,
+          guestName: bookingForm.guestName,
+          contactNumber: bookingForm.contactNumber,
           checkInDate: bookingForm.checkInDate,
           checkOutDate: bookingForm.checkOutDate,
           numberOfGuests: bookingForm.numberOfGuests,
@@ -117,6 +135,8 @@ function Calendar() {
         setSelectedDate(null);
         setSelectedRoomNumber(null);
         setBookingForm({
+          guestName: "",
+          contactNumber: "",
           checkInDate: "",
           checkOutDate: "",
           numberOfGuests: 1,
@@ -139,6 +159,8 @@ function Calendar() {
         title: "Booking failed",
         text: "Error creating booking",
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -231,12 +253,36 @@ function Calendar() {
                   <div className="room-type-badge" style={{ backgroundColor: getRoomTypeColor(selectedRoom.roomType) }}>
                     {selectedRoom.roomType}
                   </div>
-                  <div className="room-price">₱{selectedRoom.price}/night</div>
+                  <div className="room-price">₱{formatPrice(selectedRoom.price)}/night</div>
                   <div className="room-capacity">Up to {selectedRoom.capacity} guests</div>
                 </div>
               </div>
 
               <form onSubmit={handleBookingSubmit} className="booking-form">
+                <div className="form-group">
+                  <label htmlFor="guestName">Full Name</label>
+                  <input
+                    type="text"
+                    id="guestName"
+                    value={bookingForm.guestName}
+                    onChange={(e) => setBookingForm(prev => ({ ...prev, guestName: e.target.value }))}
+                    placeholder="Your full name"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="contactNumber">Contact Number</label>
+                  <input
+                    type="tel"
+                    id="contactNumber"
+                    value={bookingForm.contactNumber}
+                    onChange={(e) => setBookingForm(prev => ({ ...prev, contactNumber: e.target.value }))}
+                    placeholder="09xx xxx xxxx"
+                    required
+                  />
+                </div>
+
                 <div className="form-group">
                   <label htmlFor="checkInDate">Check-in Date</label>
                   <input
@@ -284,11 +330,20 @@ function Calendar() {
                 </div>
 
                 <div className="form-actions">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowBookingModal(false)}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setShowBookingModal(false)}
+                    disabled={submitting}
+                  >
                     Cancel
                   </button>
-                  <button type="submit" className="btn btn-primary">
-                    Create Booking
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={submitting}
+                  >
+                    {submitting ? "Creating..." : "Create Booking"}
                   </button>
                 </div>
               </form>

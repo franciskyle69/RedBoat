@@ -1,10 +1,15 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/auth.css";
+import { API_BASE_URL } from "../config/api";
+import { Check, X, Eye, EyeOff } from "lucide-react";
+import { validatePassword } from "../utils/passwordValidation";
 
 function ResetPassword() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -25,8 +30,9 @@ function ResetPassword() {
     setError(null);
     setMessage(null);
 
-    if (!password || password.length < 6) {
-      setError("Password must be at least 6 characters");
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      setError("Please ensure your password meets all requirements");
       return;
     }
     if (password !== confirmPassword) {
@@ -41,7 +47,7 @@ function ResetPassword() {
 
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/reset-password", {
+      const res = await fetch(`${API_BASE_URL}/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code, newPassword: password }),
@@ -80,27 +86,92 @@ function ResetPassword() {
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
             <label>New Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your new password"
-              required
-            />
+            <div className="password-input-wrapper">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your new password"
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            
+            {/* Password Requirements */}
+            {password.length > 0 && (
+              <div className="password-requirements">
+                <div className="password-strength-bar">
+                  <div 
+                    className={`password-strength-fill strength-${validatePassword(password).strength}`}
+                  />
+                </div>
+                <p className="password-strength-text">
+                  Strength: <span className={`strength-${validatePassword(password).strength}`}>
+                    {validatePassword(password).strength}
+                  </span>
+                </p>
+                <ul className="requirements-list">
+                  <li className={password.length >= 8 ? "met" : ""}>
+                    {password.length >= 8 ? <Check size={14} /> : <X size={14} />}
+                    At least 8 characters
+                  </li>
+                  <li className={/[A-Z]/.test(password) ? "met" : ""}>
+                    {/[A-Z]/.test(password) ? <Check size={14} /> : <X size={14} />}
+                    1 uppercase letter (A-Z)
+                  </li>
+                  <li className={/[a-z]/.test(password) ? "met" : ""}>
+                    {/[a-z]/.test(password) ? <Check size={14} /> : <X size={14} />}
+                    1 lowercase letter (a-z)
+                  </li>
+                  <li className={/[0-9]/.test(password) ? "met" : ""}>
+                    {/[0-9]/.test(password) ? <Check size={14} /> : <X size={14} />}
+                    1 number (0-9)
+                  </li>
+                  <li className={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? "met" : ""}>
+                    {/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? <Check size={14} /> : <X size={14} />}
+                    1 special character (!@#$%^&*)
+                  </li>
+                </ul>
+              </div>
+            )}
           </div>
 
           <div className="form-group">
             <label>Confirm New Password</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm your new password"
-              required
-            />
+            <div className="password-input-wrapper">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm your new password"
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            {confirmPassword.length > 0 && (
+              <p className={`password-match ${password === confirmPassword ? "match" : "no-match"}`}>
+                {password === confirmPassword ? (
+                  <><Check size={14} /> Passwords match</>
+                ) : (
+                  <><X size={14} /> Passwords do not match</>
+                )}
+              </p>
+            )}
           </div>
 
-          <button type="submit" className="btn-primary" disabled={loading}>
+          <button type="submit" className="btn-primary" disabled={loading || !validatePassword(password).isValid || password !== confirmPassword}>
             {loading ? "Updating..." : "Update Password"}
           </button>
         </form>

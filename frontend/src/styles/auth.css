@@ -1,8 +1,12 @@
-/* Background of REDBOAT */
+/* Background of REDBOAT auth pages (reuse landing hero image) */
 .auth-container {
   margin: 0;
   font-family: "Inter", sans-serif;
-  background: linear-gradient(135deg, #ff565b, #f36c71);
+  background-color: #333;
+  background-image: url("../assets/banner-bg.jpg");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center center;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -299,4 +303,179 @@ html[data-theme="dark"] .success-message {
   background: #0b2b18;
   border-color: #064e3b;
   color: #bbf7d0;
+}
+
+/* Password Input Wrapper */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  padding-right: 40px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle:hover {
+  color: #333;
+}
+
+/* Password Requirements */
+.password-requirements {
+  margin-top: 8px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.password-strength-bar {
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.password-strength-fill {
+  height: 100%;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+}
+
+.password-strength-fill.strength-weak {
+  width: 25%;
+  background: #ef4444;
+}
+
+.password-strength-fill.strength-fair {
+  width: 50%;
+  background: #f59e0b;
+}
+
+.password-strength-fill.strength-good {
+  width: 75%;
+  background: #3b82f6;
+}
+
+.password-strength-fill.strength-strong {
+  width: 100%;
+  background: #22c55e;
+}
+
+.password-strength-text {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 8px;
+  text-transform: capitalize;
+}
+
+.password-strength-text .strength-weak { color: #ef4444; }
+.password-strength-text .strength-fair { color: #f59e0b; }
+.password-strength-text .strength-good { color: #3b82f6; }
+.password-strength-text .strength-strong { color: #22c55e; }
+
+.requirements-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.requirements-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #94a3b8;
+  padding: 4px 0;
+}
+
+.requirements-list li svg {
+  flex-shrink: 0;
+}
+
+.requirements-list li.met {
+  color: #22c55e;
+}
+
+.requirements-list li:not(.met) svg {
+  color: #94a3b8;
+}
+
+.requirements-list li.met svg {
+  color: #22c55e;
+}
+
+/* Password Match Indicator */
+.password-match {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.password-match.match {
+  color: #22c55e;
+}
+
+.password-match.no-match {
+  color: #ef4444;
+}
+
+/* Dark theme for password validation */
+html[data-theme="dark"] .password-toggle {
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .password-toggle:hover {
+  color: #e2e8f0;
+}
+
+html[data-theme="dark"] .password-requirements {
+  background: var(--surface-2, #1e293b);
+  border-color: var(--border, #334155);
+}
+
+html[data-theme="dark"] .password-strength-bar {
+  background: #334155;
+}
+
+html[data-theme="dark"] .password-strength-text {
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .requirements-list li {
+  color: #64748b;
+}
+
+html[data-theme="dark"] .requirements-list li.met {
+  color: #4ade80;
+}
+
+html[data-theme="dark"] .requirements-list li.met svg {
+  color: #4ade80;
+}
+
+html[data-theme="dark"] .password-match.match {
+  color: #4ade80;
+}
+
+html[data-theme="dark"] .password-match.no-match {
+  color: #f87171;
 }

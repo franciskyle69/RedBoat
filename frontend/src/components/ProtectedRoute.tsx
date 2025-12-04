@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "../config/api";
 
 type MeResponse = { data?: { username: string; email: string; role?: string } };
 
@@ -12,7 +13,7 @@ export function AdminRoute() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("http://localhost:5000/me", {
+        const res = await fetch(`${API_BASE_URL}/me`, {
           credentials: "include",
         });
         if (!cancelled) {
@@ -48,7 +49,7 @@ function ProtectedRoute() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("http://localhost:5000/me", {
+        const res = await fetch(`${API_BASE_URL}/me`, {
           credentials: "include",
         });
         if (!cancelled) {

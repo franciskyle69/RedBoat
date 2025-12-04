@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { RouteConfig, getNavigationRoutes, getRouteByPath } from '../config/routes';
+import { RouteConfig } from '../types/routing';
+import { getNavigationRoutes, getRouteByPath } from '../config/routes';
 
 interface NavigationContextType {
-  userRole: 'user' | 'admin' | null;
+  userRole: 'user' | 'admin' | 'superadmin' | null;
   navigationRoutes: RouteConfig[];
   currentRoute: RouteConfig | null;
-  setUserRole: (role: 'user' | 'admin' | null) => void;
+  setUserRole: (role: 'user' | 'admin' | 'superadmin' | null) => void;
   getRouteByPath: (path: string) => RouteConfig | undefined;
   isRouteAccessible: (path: string) => boolean;
   clearAuthState: () => void;
@@ -18,7 +19,7 @@ interface NavigationProviderProps {
 }
 
 export function NavigationProvider({ children }: NavigationProviderProps) {
-  const [userRole, setUserRole] = useState<'user' | 'admin' | null>(null);
+  const [userRole, setUserRole] = useState<'user' | 'admin' | 'superadmin' | null>(null);
   const [navigationRoutes, setNavigationRoutes] = useState<RouteConfig[]>([]);
   const [currentRoute, setCurrentRoute] = useState<RouteConfig | null>(null);
 
@@ -32,9 +33,22 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
         
         if (res.ok) {
           const data = await res.json();
-          const role = data?.data?.role;
-          setUserRole(role);
-          setNavigationRoutes(getNavigationRoutes(role));
+          const role = data?.data?.role as 'user' | 'admin' | 'superadmin' | undefined;
+
+          // Treat superadmin as admin for navigation routes, but keep raw role exposed
+          const effectiveRole: 'user' | 'admin' | null =
+            role === 'admin' || role === 'superadmin'
+              ? 'admin'
+              : role === 'user'
+              ? 'user'
+              : null;
+
+          setUserRole(role ?? null);
+          if (effectiveRole) {
+            setNavigationRoutes(getNavigationRoutes(effectiveRole));
+          } else {
+            setNavigationRoutes([]);
+          }
         } else {
           // Clear authentication state
           setUserRole(null);
@@ -68,18 +82,21 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
 
   const isRouteAccessible = (path: string): boolean => {
     if (!userRole) return false;
-    
+
     const route = getRouteByPath(path);
     if (!route) return false;
-    
+
     // Public routes are always accessible
     if (route.isPublic) return true;
-    
+
+    // Treat superadmin as admin for route access checks
+    const effectiveRole = userRole === 'superadmin' ? 'admin' : userRole;
+
     // Check role requirements
-    if (route.requiredRole && route.requiredRole !== userRole) {
+    if (route.requiredRole && route.requiredRole !== effectiveRole) {
       return false;
     }
-    
+
     return true;
   };
 

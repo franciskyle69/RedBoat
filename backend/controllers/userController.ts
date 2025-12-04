@@ -1,15 +1,21 @@
 import { Response } from 'express';
+import fs from 'fs';
+import path from 'path';
 import { User } from '../models/User';
 import { AuthenticatedRequest } from '../middleware/auth';
-import { optimizeAvatarImage } from '../utils/userAvatarUpload';
+import { optimizeAvatarImage, AVATAR_DIR } from '../utils/userAvatarUpload';
+import { validatePassword, PASSWORD_REQUIREMENTS } from '../utils/passwordValidation';
 
 export class UserController {
   // Get current user
   static async getCurrentUser(req: AuthenticatedRequest, res: Response) {
     try {
       const payload = req.user!;
-      const user = await User.findById(payload.sub).select("username email role firstName lastName profilePicture");
+      const user = await User.findById(payload.sub).select("username email role firstName lastName profilePicture adminPermissions authProvider");
       if (!user) return res.status(401).json({ message: "Unauthorized" });
+      
+      console.log("getCurrentUser - user:", user.email, "role:", user.role, "adminPermissions:", (user as any).adminPermissions);
+      
       return res.json({ 
         data: { 
           username: user.username, 
@@ -19,6 +25,8 @@ export class UserController {
           lastName: (user as any).lastName,
           profilePicture: (user as any).profilePicture,
           name: `${(user as any).firstName} ${(user as any).lastName}`,
+          adminPermissions: (user as any).adminPermissions,
+          authProvider: (user as any).authProvider || 'local',
         } 
       });
     } catch (err) {
@@ -124,41 +132,41 @@ export class UserController {
     }
   }
 
-  // Delete the currently authenticated user's account
-  static async deleteAccount(req: AuthenticatedRequest, res: Response) {
-    try {
-      const payload = req.user!;
-
-      const user = await User.findByIdAndDelete(payload.sub);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      return res
-        .clearCookie("auth", { httpOnly: true, secure: true, sameSite: "none", path: "/" })
-        .status(200)
-        .json({ message: "Account deleted successfully" });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Server error" });
-    }
-  }
-
   // Change password
   static async changePassword(req: AuthenticatedRequest, res: Response) {
     try {
       const payload = req.user!;
       const { currentPassword, newPassword } = req.body;
 
+      const user = await User.findById(payload.sub);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      // Check if user signed up with Google OAuth
+      if (user.authProvider === 'google' && !user.password) {
+        return res.status(400).json({ 
+          message: "Your account uses Google Sign-In. You cannot change password here.",
+          isGoogleAccount: true
+        });
+      }
+
       if (!currentPassword || !newPassword) {
         return res.status(400).json({ message: "Current password and new password are required" });
       }
 
-      const user = await User.findById(payload.sub);
-      if (!user) return res.status(404).json({ message: "User not found" });
+      // Validate password strength
+      const passwordValidation = validatePassword(newPassword);
+      if (!passwordValidation.isValid) {
+        return res.status(400).json({ 
+          message: PASSWORD_REQUIREMENTS,
+          errors: passwordValidation.errors 
+        });
+      }
 
       // Verify current password
       const bcrypt = require('bcrypt');
+      if (!user.password) {
+        return res.status(400).json({ message: "No password set for this account" });
+      }
       const isMatch = await bcrypt.compare(currentPassword, user.password);
       if (!isMatch) {
         return res.status(400).json({ message: "Current password is incorrect" });
@@ -190,6 +198,8 @@ export class UserController {
       const user = await User.findById(payload.sub);
       if (!user) return res.status(404).json({ message: "User not found" });
 
+      const oldAvatar = (user as any).profilePicture as string | undefined;
+
       // Optimize the stored avatar image (resize/compress) before saving the path
       await optimizeAvatarImage(file.filename);
 
@@ -197,6 +207,23 @@ export class UserController {
       (user as any).profilePicture = relativePath;
       user.updatedAt = new Date();
       await user.save();
+
+      // After successfully saving the new avatar, delete the previous local avatar file (if any)
+      if (oldAvatar && typeof oldAvatar === "string") {
+        try {
+          if (oldAvatar.startsWith("/uploads/avatars/")) {
+            const oldFilename = oldAvatar.split("/").pop();
+            if (oldFilename && oldFilename !== file.filename) {
+              const oldPath = path.join(AVATAR_DIR, oldFilename);
+              if (fs.existsSync(oldPath)) {
+                await fs.promises.unlink(oldPath);
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Failed to delete old avatar image", err);
+        }
+      }
 
       const updatedUser = await User.findById(payload.sub).select("-password -googleCalendarTokens");
       return res.json({
@@ -214,11 +241,11 @@ export class UserController {
     try {
       const payload = req.user!;
       
-      if (payload.role !== "admin") {
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const users = await User.find({}).select("username email role createdAt firstName lastName phoneNumber isEmailVerified");
+      const users = await User.find({}).select("username email role createdAt firstName lastName phoneNumber isEmailVerified adminPermissions");
       res.json({ data: users });
     } catch (err) {
       console.error(err);
@@ -231,8 +258,8 @@ export class UserController {
     try {
       const payload = req.user!;
       
-      if (payload.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
+      if (payload.role !== "superadmin") {
+        return res.status(403).json({ message: "Superadmin access required" });
       }
 
       const { userId } = req.params;
@@ -254,6 +281,59 @@ export class UserController {
       res.json({ 
         message: "User role updated successfully", 
         data: { userId, role } 
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+
+  // Update admin module permissions (superadmin only)
+  static async updateAdminPermissions(req: AuthenticatedRequest, res: Response) {
+    try {
+      const payload = req.user!;
+
+      if (payload.role !== "superadmin") {
+        return res.status(403).json({ message: "Superadmin access required" });
+      }
+
+      const { userId } = req.params;
+      const { adminPermissions } = req.body as { adminPermissions?: any };
+
+      if (!adminPermissions || typeof adminPermissions !== 'object') {
+        return res.status(400).json({ message: "adminPermissions object is required" });
+      }
+
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.role !== "admin") {
+        return res.status(400).json({ message: "Permissions can only be set for admin users" });
+      }
+
+      const current: any = (user as any).adminPermissions || {};
+
+      const updated = {
+        ...current,
+        manageBookings: adminPermissions.manageBookings ?? current.manageBookings,
+        manageRooms: adminPermissions.manageRooms ?? current.manageRooms,
+        manageHousekeeping: adminPermissions.manageHousekeeping ?? current.manageHousekeeping,
+        manageUsers: adminPermissions.manageUsers ?? current.manageUsers,
+        viewReports: adminPermissions.viewReports ?? current.viewReports,
+      };
+
+      (user as any).adminPermissions = updated;
+      user.updatedAt = new Date();
+      await user.save();
+
+      return res.json({
+        message: "Admin permissions updated successfully",
+        data: {
+          userId,
+          adminPermissions: updated,
+        },
       });
     } catch (err) {
       console.error(err);

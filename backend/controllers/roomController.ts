@@ -1,30 +1,64 @@
 import { Response } from 'express';
 import { Room } from '../models/Room';
 import { Booking } from '../models/Booking';
+import { RoomReview } from '../models/RoomReview';
 import { AuthenticatedRequest } from '../middleware/auth';
+import { uploadMultipleToCloudinary, deleteFromCloudinary, extractPublicIdFromUrl } from '../services/cloudinaryService';
 
 export class RoomController {
   // Get all rooms
   static async getAllRooms(req: any, res: Response) {
     try {
       const rooms = await Room.find({ isAvailable: true });
-      res.json({ data: rooms });
+
+      const roomIds = rooms.map((room) => room._id);
+      const ratingAggregates = await RoomReview.aggregate([
+        { $match: { room: { $in: roomIds } } },
+        {
+          $group: {
+            _id: '$room',
+            averageRating: { $avg: '$rating' },
+            reviewCount: { $sum: 1 },
+          },
+        },
+      ]);
+
+      const ratingsByRoomId = new Map<string, { averageRating: number; reviewCount: number }>();
+      for (const agg of ratingAggregates) {
+        ratingsByRoomId.set(String(agg._id), {
+          averageRating: agg.averageRating,
+          reviewCount: agg.reviewCount,
+        });
+      }
+
+      const roomsWithRatings = rooms.map((room: any) => {
+        const rating = ratingsByRoomId.get(String(room._id));
+        const avg = rating?.averageRating ?? 0;
+        const count = rating?.reviewCount ?? 0;
+        return {
+          ...room.toObject(),
+          averageRating: Number(avg.toFixed ? avg.toFixed(1) : avg),
+          reviewCount: count,
+        };
+      });
+
+      res.json({ data: roomsWithRatings });
     } catch (err) {
       console.error(err);
       res.status(500).json({ message: "Server error" });
     }
   }
 
-  // Update room images (admin only)
+  // Update room images (admin only) - uploads to Cloudinary
   static async updateRoomImages(req: AuthenticatedRequest, res: Response) {
     try {
       const payload = req.user!;
-      if (!payload || payload.role !== "admin") {
+      if (!payload || (payload.role !== "admin" && payload.role !== "superadmin")) {
         return res.status(403).json({ message: "Admin access required" });
       }
 
       const roomId = req.params.id;
-      const files = req.files as any[] | undefined;
+      const files = req.files as Express.Multer.File[] | undefined;
 
       if (!files || files.length === 0) {
         return res.status(400).json({ message: "No images uploaded" });
@@ -35,8 +69,29 @@ export class RoomController {
         return res.status(404).json({ message: "Room not found" });
       }
 
-      const newImagePaths = files.map((file) => `/uploads/rooms/${file.filename}`);
-      (room as any).images = newImagePaths.slice(0, 5);
+      // Delete old images from Cloudinary if they exist
+      const oldImages = (room as any).images || [];
+      for (const oldImageUrl of oldImages) {
+        if (oldImageUrl.includes('cloudinary.com')) {
+          const publicId = extractPublicIdFromUrl(oldImageUrl);
+          if (publicId) {
+            try {
+              await deleteFromCloudinary(publicId);
+            } catch (err) {
+              console.warn(`Failed to delete old image from Cloudinary: ${publicId}`, err);
+            }
+          }
+        }
+      }
+
+      // Upload new images to Cloudinary
+      const uploadResults = await uploadMultipleToCloudinary(
+        files.map(f => ({ buffer: f.buffer }))
+      );
+
+      // Store the secure URLs
+      const newImageUrls = uploadResults.map(r => r.secureUrl);
+      (room as any).images = newImageUrls.slice(0, 5);
       room.updatedAt = new Date();
 
       const updatedRoom = await room.save();
@@ -224,7 +279,7 @@ export class RoomController {
     try {
       const payload = req.user!;
       
-      if (payload.role !== "admin") {
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -234,9 +289,11 @@ export class RoomController {
         price, 
         capacity, 
         amenities, 
-        description, 
-        images 
-      } = req.body;
+        description
+      } = req.body as any;
+
+      // Files come from multer (uploadRoomImages.array('images', 5))
+      const files = (req.files as Express.Multer.File[] | undefined) || [];
 
       // Validate required fields
       if (!roomNumber || !roomType || !price || !capacity) {
@@ -259,24 +316,49 @@ export class RoomController {
         return res.status(400).json({ message: "Room number already exists" });
       }
 
-      // Validate price and capacity
-      if (price <= 0) {
+      // Coerce and validate price and capacity (multipart form sends strings)
+      const priceNum = Number(price);
+      const capacityNum = Number(capacity);
+
+      if (!Number.isFinite(priceNum) || priceNum <= 0) {
         return res.status(400).json({ message: "Price must be greater than 0" });
       }
 
-      if (capacity <= 0) {
+      if (!Number.isFinite(capacityNum) || capacityNum <= 0) {
         return res.status(400).json({ message: "Capacity must be greater than 0" });
+      }
+
+      // Upload images to Cloudinary if provided
+      let imageUrls: string[] = [];
+      if (files.length > 0) {
+        const uploadResults = await uploadMultipleToCloudinary(
+          files.map(f => ({ buffer: f.buffer }))
+        );
+        imageUrls = uploadResults.map(r => r.secureUrl).slice(0, 5);
+      }
+
+      // Parse amenities if it comes as a string in multipart
+      let parsedAmenities: string[] = [];
+      if (Array.isArray(amenities)) {
+        parsedAmenities = amenities as string[];
+      } else if (typeof amenities === 'string') {
+        try {
+          const maybeJson = JSON.parse(amenities);
+          parsedAmenities = Array.isArray(maybeJson) ? maybeJson : String(amenities).split(',').map((a) => a.trim()).filter(Boolean);
+        } catch {
+          parsedAmenities = String(amenities).split(',').map((a) => a.trim()).filter(Boolean);
+        }
       }
 
       // Create new room
       const newRoom = new Room({
         roomNumber,
         roomType,
-        price,
-        capacity,
-        amenities: amenities || [],
+        price: priceNum,
+        capacity: capacityNum,
+        amenities: parsedAmenities,
         description: description || "",
-        images: images || [],
+        images: imageUrls,
         isAvailable: true
       });
 
@@ -297,7 +379,7 @@ export class RoomController {
     try {
       const payload = req.user!;
       
-      if (payload.role !== "admin") {
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -375,7 +457,7 @@ export class RoomController {
     try {
       const payload = req.user!;
       
-      if (payload.role !== "admin") {
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -412,7 +494,7 @@ export class RoomController {
     try {
       const payload = req.user!;
       
-      if (payload.role !== "admin") {
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -428,7 +510,7 @@ export class RoomController {
   static async getHousekeepingOverview(req: AuthenticatedRequest, res: Response) {
     try {
       const payload = req.user!;
-      if (payload.role !== "admin") {
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -453,7 +535,7 @@ export class RoomController {
   static async updateHousekeepingStatus(req: AuthenticatedRequest, res: Response) {
     try {
       const payload = req.user!;
-      if (payload.role !== "admin") {
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -500,7 +582,7 @@ export class RoomController {
     try {
       const payload = req.user!;
       
-      if (payload.role !== "admin") {
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 

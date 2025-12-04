@@ -70,12 +70,12 @@ export function RouteGenerator({ routes, fallback }: RouteGeneratorProps) {
         element={
           GuardComponent ? (
             <GuardComponent>
-              <Suspense fallback={fallback || defaultFallback}>
+              <Suspense fallback={<>{fallback || defaultFallback}</>}>
                 <Component />
               </Suspense>
             </GuardComponent>
           ) : (
-            <Suspense fallback={fallback || defaultFallback}>
+            <Suspense fallback={<>{fallback || defaultFallback}</>}>
               <Component />
             </Suspense>
           )

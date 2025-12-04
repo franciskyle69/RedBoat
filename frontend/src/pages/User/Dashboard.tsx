@@ -1,5 +1,6 @@
 import { Link, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { CalendarDays, BedDouble, CheckCircle, Hotel, Bell, Star, Calendar } from "lucide-react";
 import "../../styles/main.css";
 import UserLayout from "../../components/UserLayout";
 
@@ -30,38 +31,48 @@ function UserDashboard() {
   }, []);
 
   if (loading) return <div className="admin-loading">Loading...</div>;
-  if (userRole === "admin") return <Navigate to="/admin" replace />;
+  const isAdminLike = userRole === "admin" || userRole === "superadmin";
+  if (isAdminLike) return <Navigate to="/admin" replace />;
   
   return (
     <UserLayout pageTitle="Dashboard">
       <section className="cards">
         <div className="card">
           <h2>Quick Actions</h2>
-          <p>Access hotel services quickly.</p>
+          <p>Access hotel services and manage your bookings with ease.</p>
           <div className="actions">
-            <Link to="/user/bookings" className="btn blue">Book Room</Link>
-            <Link to="/user/rooms" className="btn success">View Rooms</Link>
-            <Link to="/user/calendar" className="btn blue">Calendar</Link>
+            <Link to="/user/bookings" className="btn blue">
+              <CalendarDays size={18} />
+              My Bookings
+            </Link>
+            <Link to="/user/rooms" className="btn success">
+              <BedDouble size={18} />
+              Browse Rooms
+            </Link>
+            <Link to="/user/calendar" className="btn primary">
+              <Calendar size={18} />
+              Calendar
+            </Link>
           </div>
         </div>
         <div className="card">
           <h2>Guest Status</h2>
           <ul className="status-list">
             <li>
-              <span className="material-icons-outlined">check_circle</span>
-              Account Active
+              <CheckCircle size={20} />
+              <span><strong>Active</strong> Account Status</span>
             </li>
             <li>
-              <span className="material-icons-outlined">hotel</span>
-              No Active Bookings
+              <Hotel size={20} />
+              <span><strong>0</strong> Active Bookings</span>
             </li>
             <li>
-              <span className="material-icons-outlined">notifications</span>
-              Booking Notifications On
+              <Bell size={20} />
+              <span><strong>On</strong> Booking Notifications</span>
             </li>
             <li>
-              <span className="material-icons-outlined">star</span>
-              0 Reviews Given
+              <Star size={20} />
+              <span><strong>0</strong> Reviews Given</span>
             </li>
           </ul>
         </div>

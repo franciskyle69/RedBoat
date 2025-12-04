@@ -5,6 +5,8 @@ import { allRoutes } from '../config/routes';
 import NotificationBell from './NotificationBell';
 import { useNavigation } from '../contexts/NavigationContext';
 import { RouteBreadcrumbs } from './RouteBreadcrumbs';
+import { API_BASE_URL } from '../config/api';
+import { dispatchLogout } from '../utils/authEvents';
 
 interface SmartNavigationProps {
   className?: string;
@@ -73,10 +75,13 @@ export function SmartNavigation({
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:5000/logout', {
+      await fetch(`${API_BASE_URL}/logout`, {
         method: 'POST',
         credentials: 'include'
       });
+      
+      // Dispatch logout event
+      dispatchLogout();
       
       // Clear all authentication state using context method
       clearAuthState();

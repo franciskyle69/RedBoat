@@ -6,6 +6,8 @@ import { sendEmail } from '../services/emailService';
 import { verifyRecaptcha } from '../middleware/recaptcha';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { validatePassword, PASSWORD_REQUIREMENTS } from '../utils/passwordValidation';
+import { logActivity } from '../services/activityLogService';
+import { encrypt, encryptObject } from '../utils/encryption';
 
 const jwtSecret = process.env.JWT_SECRET || "dev_secret";
 const jwtExpiresIn = process.env.JWT_EXPIRES_IN || "7d";
@@ -123,6 +125,13 @@ export class AuthController {
 
       await sendEmail(email, subject, html);
 
+      await logActivity(req, {
+        action: 'signup_requested',
+        resource: 'auth',
+        actorEmail: email,
+        details: { username, firstName, lastName }
+      });
+
       res.status(200).json({ 
         message: "Verification code sent to your email. Please check your inbox and verify your account.",
         email: email
@@ -156,7 +165,7 @@ export class AuthController {
         return res.status(400).json({ message: "Invalid verification code" });
       }
 
-      // Create the user account
+      // Create the user account (encrypt sensitive fields at rest)
       const hashedPassword = await bcrypt.hash(pending.password, 10);
       const newUser = new User({
         username: pending.username,
@@ -164,16 +173,24 @@ export class AuthController {
         password: hashedPassword,
         firstName: pending.firstName,
         lastName: pending.lastName,
-        phoneNumber: pending.phoneNumber,
+        phoneNumber: pending.phoneNumber ? (encrypt(pending.phoneNumber) ?? undefined) : undefined,
         dateOfBirth: pending.dateOfBirth ? new Date(pending.dateOfBirth) : undefined,
         address: pending.address,
+        addressEncrypted: pending.address ? (encryptObject(pending.address) ?? undefined) : undefined,
         isEmailVerified: true,
-      });
+      } as any);
 
       const savedUser = await newUser.save();
       
       // Clean up pending verification
       pendingVerifications.delete(email);
+
+      await logActivity(req, {
+        action: 'signup_verified',
+        resource: 'auth',
+        actorEmail: email,
+        details: { userId: (savedUser._id as any).toString() }
+      });
 
       res.status(201).json({ 
         message: "Email verified and account created successfully", 
@@ -208,6 +225,10 @@ export class AuthController {
         return res.status(400).json({ message: "Invalid email or password" });
       }
 
+      if ((user as any).isBlocked) {
+        return res.status(403).json({ message: "Your account has been blocked. Please contact support." });
+      }
+
       // Check if user signed up with Google OAuth
       if (user.authProvider === 'google') {
         return res.status(400).json({ message: "This account uses Google Sign-In. Please use the Google button to log in." });
@@ -223,6 +244,14 @@ export class AuthController {
       }
 
       const token = jwt.sign({ sub: (user._id as any).toString(), email: user.email, role: user.role }, jwtSecret, { expiresIn: jwtExpiresIn } as SignOptions);
+      await logActivity(req, {
+        action: 'login',
+        resource: 'auth',
+        actorEmail: user.email,
+        details: { role: user.role },
+        status: 'success'
+      });
+
       res
         .cookie("auth", token, {
           httpOnly: true,
@@ -384,6 +413,13 @@ export class AuthController {
       // Clean up the reset token
       passwordResetTokens.delete(email);
 
+      await logActivity(req, {
+        action: 'reset_password',
+        resource: 'auth',
+        actorEmail: email,
+        status: 'success'
+      });
+
       return res.json({ message: "Password updated successfully" });
     } catch (err) {
       console.error("Reset password error:", err);
@@ -452,10 +488,22 @@ export class AuthController {
         console.log("Existing user found:", user.email);
       }
 
+      if ((user as any).isBlocked) {
+        return res.status(403).json({ message: "Your account has been blocked. Please contact support." });
+      }
+
       const token = jwt.sign({ sub: (user._id as any).toString(), email: user.email, role: user.role }, jwtSecret, { expiresIn: jwtExpiresIn } as SignOptions);
       
       console.log("Google login successful for user:", user.email);
       
+      await logActivity(req, {
+        action: 'login_google',
+        resource: 'auth',
+        actorEmail: user.email,
+        details: { role: user.role },
+        status: 'success'
+      });
+
       return res
         .cookie("auth", token, {
           httpOnly: true,
@@ -489,6 +537,7 @@ export class AuthController {
 
   // LOGOUT
   static async logout(req: Request, res: Response) {
+    await logActivity(req, { action: 'logout', resource: 'auth', status: 'success' });
     res.clearCookie("auth", { 
       httpOnly: true, 
       secure: isProduction, 
@@ -513,6 +562,13 @@ export class AuthController {
 
       user.role = "admin";
       await user.save();
+
+      await logActivity(req, {
+        action: 'promote_to_admin',
+        resource: 'user',
+        resourceId: (user._id as any).toString(),
+        details: { email }
+      });
 
       res.json({ 
         message: "User promoted to admin successfully", 
@@ -556,6 +612,13 @@ export class AuthController {
 
       user.username = username;
       await user.save();
+
+      await logActivity(req, {
+        action: 'set_username',
+        resource: 'user',
+        resourceId: (user._id as any).toString(),
+        details: { username }
+      });
 
       res.json({
         message: "Username set successfully",

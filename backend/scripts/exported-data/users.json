@@ -1,0 +1,88 @@
+[
+  {
+    "_id": "690f109ead39ad0003044bdb",
+    "email": "franciskyle6969@gmail.com",
+    "password": "$2b$10$PBmUUUV3tNO9q60RVzH1w.x1NSHXI07cV22GEg66VTFxAgIxPKtJe",
+    "firstName": "Francis Kyle",
+    "lastName": "Arranchado",
+    "role": "superadmin",
+    "isEmailVerified": true,
+    "createdAt": "2025-11-08T09:42:54.081Z",
+    "updatedAt": "2025-11-08T09:42:54.081Z",
+    "__v": 0,
+    "username": "Franciskyle",
+    "emailNotifications": true,
+    "adminPermissions": {
+      "manageBookings": true,
+      "manageHousekeeping": true,
+      "manageRooms": true,
+      "manageUsers": true,
+      "viewReports": true
+    }
+  },
+  {
+    "_id": "690ffef34f144e91ce99d1f7",
+    "email": "2301102820@student.buksu.edu.ph",
+    "password": "$2b$10$AH6/ZsTvTxeALC2JX05BI.g1eTHkS5N6Gj/x9dSDfmFDeQJitdI.y",
+    "firstName": "Francis Kyle",
+    "lastName": "Arranchado",
+    "role": "admin",
+    "isEmailVerified": false,
+    "createdAt": "2025-11-09T02:39:47.569Z",
+    "updatedAt": "2025-12-01T01:04:34.431Z",
+    "__v": 0,
+    "username": "Francis",
+    "emailNotifications": true,
+    "profilePicture": "/uploads/avatars/1763287676223-767870128.jpg",
+    "adminPermissions": {
+      "manageBookings": true,
+      "manageRooms": false,
+      "manageHousekeeping": true,
+      "manageUsers": false,
+      "viewReports": false
+    }
+  },
+  {
+    "_id": "691173cd33361fc72bb90afc",
+    "email": "maelangracep@gmail.com",
+    "password": "$2b$10$niX/nBdSiJfVofs5R1Y45O17BO6sPFpBoJT5LrPhLwzB4vyT1IQAW",
+    "firstName": "Maelan grace",
+    "lastName": "Parrilla",
+    "role": "user",
+    "isEmailVerified": false,
+    "createdAt": "2025-11-10T05:10:37.033Z",
+    "updatedAt": "2025-11-29T16:17:55.108Z",
+    "__v": 0,
+    "username": "Mealan",
+    "emailNotifications": true,
+    "adminPermissions": {
+      "manageBookings": true,
+      "manageHousekeeping": true,
+      "manageRooms": true,
+      "manageUsers": true,
+      "viewReports": true
+    },
+    "profilePicture": "/uploads/avatars/1763911013901-404177520.jpg"
+  },
+  {
+    "_id": "692e38077e84ed0baee2fd64",
+    "email": "2301104202@student.buksu.edu.ph",
+    "password": "$2b$10$TLY1EjbM6xwFzk//6W35tehVDQTJ8zYJ..iHDhV4kGbQQmUWC/4ZG",
+    "firstName": "Mealan Grace",
+    "lastName": "Parrilla",
+    "role": "user",
+    "adminPermissions": {
+      "manageBookings": true,
+      "manageRooms": true,
+      "manageHousekeeping": true,
+      "manageUsers": true,
+      "viewReports": true
+    },
+    "isEmailVerified": true,
+    "emailNotifications": true,
+    "createdAt": "2025-12-02T00:51:19.689Z",
+    "updatedAt": "2025-12-02T00:51:19.689Z",
+    "__v": 0,
+    "username": "JOJOWAIN"
+  }
+]

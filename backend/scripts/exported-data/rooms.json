@@ -1,0 +1,105 @@
+[
+  {
+    "_id": "691f19c7a9c78301023659bc",
+    "roomNumber": "405",
+    "roomType": "Deluxe",
+    "price": 1000,
+    "capacity": 2,
+    "amenities": [
+      "Air conditioned",
+      "Hot and cold shower"
+    ],
+    "isAvailable": true,
+    "description": "King sized bed",
+    "images": [
+      "https://res.cloudinary.com/dzvpdv3r8/image/upload/v1764608273/room-images/e9dwhea8n6z9vzfmql41.jpg",
+      "https://res.cloudinary.com/dzvpdv3r8/image/upload/v1764608274/room-images/dde0srvwhcz8rkamv7fj.jpg"
+    ],
+    "housekeepingStatus": "clean",
+    "createdAt": "2025-11-20T13:38:15.774Z",
+    "updatedAt": "2025-12-01T16:57:49.386Z",
+    "__v": 3,
+    "lastCleanedAt": "2025-11-23T16:13:48.302Z"
+  },
+  {
+    "_id": "691f1a05a9c78301023659d9",
+    "roomNumber": "305",
+    "roomType": "Standard",
+    "price": 800,
+    "capacity": 2,
+    "amenities": [
+      "Air conditioned",
+      "Hot and cold shower"
+    ],
+    "isAvailable": true,
+    "description": "",
+    "images": [
+      "/uploads/rooms/1763655866612-937271685.jpg"
+    ],
+    "housekeepingStatus": "clean",
+    "createdAt": "2025-11-20T13:39:17.469Z",
+    "updatedAt": "2025-11-28T06:16:01.022Z",
+    "__v": 1,
+    "lastCleanedAt": "2025-11-28T06:16:01.022Z"
+  },
+  {
+    "_id": "69231b12ae8c2e53970601ac",
+    "roomNumber": "401",
+    "roomType": "Presidential",
+    "price": 1500,
+    "capacity": 3,
+    "amenities": [
+      "Balcony",
+      "Air conditioned"
+    ],
+    "isAvailable": true,
+    "description": "1 Queen size and 1 single bed",
+    "images": [
+      "https://res.cloudinary.com/dzvpdv3r8/image/upload/v1764609519/room-images/nhkc3krror0wujjzsanx.jpg"
+    ],
+    "housekeepingStatus": "clean",
+    "createdAt": "2025-11-23T14:32:50.199Z",
+    "updatedAt": "2025-12-01T17:18:30.910Z",
+    "__v": 1
+  },
+  {
+    "_id": "69231de9ae8c2e539706022d",
+    "roomNumber": "402",
+    "roomType": "Presidential",
+    "price": 1500,
+    "capacity": 3,
+    "amenities": [
+      "Air conditioned",
+      "Hot and cold shower",
+      "Balcony"
+    ],
+    "isAvailable": true,
+    "description": " 1 Queen size and 1 single bed",
+    "images": [],
+    "housekeepingStatus": "clean",
+    "createdAt": "2025-11-23T14:44:57.109Z",
+    "updatedAt": "2025-11-23T14:44:57.109Z",
+    "__v": 0
+  },
+  {
+    "_id": "69231e1fae8c2e539706023f",
+    "roomNumber": "403",
+    "roomType": "Presidential",
+    "price": 1500,
+    "capacity": 3,
+    "amenities": [
+      "Hot and cold shower",
+      "Air conditioned"
+    ],
+    "isAvailable": true,
+    "description": " 1 Queen size and 1 single bed",
+    "images": [
+      "https://res.cloudinary.com/dzvpdv3r8/image/upload/v1764606880/room-images/eqndri23h3k73crwrnvf.jpg"
+    ],
+    "housekeepingStatus": "clean",
+    "createdAt": "2025-11-23T14:45:51.204Z",
+    "updatedAt": "2025-12-02T08:32:43.828Z",
+    "__v": 1,
+    "lastCleanedAt": "2025-12-02T08:32:43.828Z"
+  }
+]

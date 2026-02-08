@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import "../../styles/main.css";
 import AdminLayout from "../../components/AdminLayout";
 import { showSuccess, showError } from "../../utils/alerts";
+import { API_BASE_URL } from "../../config/api";
 
 interface ReportData {
   occupancy?: any;
@@ -67,7 +68,7 @@ function Reports() {
         endDate: dateRange.endDate
       });
 
-      const response = await fetch(`http://localhost:5000/reports/${reportType}/pdf?${params}`, {
+      const response = await fetch(`${API_BASE_URL}/reports/${reportType}/pdf?${params}`, {
         credentials: "include",
       });
 
@@ -310,57 +311,62 @@ function Reports() {
         </div>
       )}
 
-      <div className="reports-content">
-        <div className="reports-controls">
-          <div className="date-range-selector">
-            <label htmlFor="startDate">Start Date:</label>
-            <input
-              type="date"
-              id="startDate"
-              value={dateRange.startDate}
-              onChange={(e) => setDateRange({...dateRange, startDate: e.target.value})}
-            />
-            <label htmlFor="endDate">End Date:</label>
-            <input
-              type="date"
-              id="endDate"
-              value={dateRange.endDate}
-              onChange={(e) => setDateRange({...dateRange, endDate: e.target.value})}
-            />
+      <div className="reports-content reports-page">
+        <section className="reports-controls reports-controls--responsive">
+          <h2 className="reports-controls__title">Date range</h2>
+          <div className="date-range-selector date-range-selector--responsive">
+            <div className="date-range-group">
+              <label htmlFor="startDate">Start</label>
+              <input
+                type="date"
+                id="startDate"
+                value={dateRange.startDate}
+                onChange={(e) => setDateRange({...dateRange, startDate: e.target.value})}
+              />
+            </div>
+            <div className="date-range-group">
+              <label htmlFor="endDate">End</label>
+              <input
+                type="date"
+                id="endDate"
+                value={dateRange.endDate}
+                onChange={(e) => setDateRange({...dateRange, endDate: e.target.value})}
+              />
+            </div>
           </div>
-        </div>
+        </section>
 
-        <div className="reports-section">
-          <div className="report-types">
-            <h3>Generate Reports</h3>
-            <div className="report-buttons">
+        <section className="reports-section reports-section--responsive">
+          <div className="report-types report-types--responsive">
+            <h3 className="report-types__title">Report type</h3>
+            <div className="report-buttons report-buttons--grid">
               <button 
-                className={`admin-button ${activeReport === 'occupancy' ? 'active' : ''}`}
+                className={`admin-button report-btn ${activeReport === 'occupancy' ? 'active' : ''}`}
                 onClick={() => fetchReport('occupancy')}
                 disabled={loading}
               >
-                {loading && loadingReportType === 'occupancy' ? 'Generating...' : 'Occupancy Report'}
+                {loading && loadingReportType === 'occupancy' ? 'Generating...' : 'Occupancy'}
               </button>
               <button 
-                className={`admin-button ${activeReport === 'revenue' ? 'active' : ''}`}
+                className={`admin-button report-btn ${activeReport === 'revenue' ? 'active' : ''}`}
                 onClick={() => fetchReport('revenue')}
                 disabled={loading}
               >
-                {loading && loadingReportType === 'revenue' ? 'Generating...' : 'Revenue Report'}
+                {loading && loadingReportType === 'revenue' ? 'Generating...' : 'Revenue'}
               </button>
               <button 
-                className={`admin-button ${activeReport === 'bookings' ? 'active' : ''}`}
+                className={`admin-button report-btn ${activeReport === 'bookings' ? 'active' : ''}`}
                 onClick={() => fetchReport('bookings')}
                 disabled={loading}
               >
-                {loading && loadingReportType === 'bookings' ? 'Generating...' : 'Booking Analytics'}
+                {loading && loadingReportType === 'bookings' ? 'Generating...' : 'Bookings'}
               </button>
             </div>
           </div>
 
           {activeReport && (
-            <div className="report-display">
-              <div className="report-actions">
+            <div className="report-display report-display--responsive">
+              <div className="report-actions report-actions--responsive">
                 <button 
                   className="admin-button secondary"
                   onClick={() => downloadPDF(activeReport)}
@@ -373,7 +379,7 @@ function Reports() {
               {activeReport === 'bookings' && renderBookingsReport()}
             </div>
           )}
-        </div>
+        </section>
       </div>
     </AdminLayout>
   );

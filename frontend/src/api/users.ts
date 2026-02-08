@@ -14,13 +14,15 @@ export interface User {
   _id: string;
   username?: string;
   email: string;
-  role: 'user' | 'admin' | 'superadmin';
+  role: string;
   firstName: string;
   lastName: string;
   phoneNumber?: string;
   isEmailVerified: boolean;
   createdAt: string;
   adminPermissions?: AdminPermissions;
+  isBlocked?: boolean;
+  blockedAt?: string;
 }
 
 export async function getAllUsers(): Promise<User[]> {
@@ -30,7 +32,7 @@ export async function getAllUsers(): Promise<User[]> {
   return json.data || [];
 }
 
-export async function updateUserRole(userId: string, role: 'user' | 'admin') {
+export async function updateUserRole(userId: string, role: string) {
   const res = await fetch(`${BASE}/users/${userId}/role`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -49,5 +51,23 @@ export async function updateAdminPermissions(userId: string, adminPermissions: A
     body: JSON.stringify({ adminPermissions }),
   });
   if (!res.ok) throw new Error((await res.json()).message || 'Failed to update admin permissions');
+  return await res.json();
+}
+
+export async function blockUser(userId: string) {
+  const res = await fetch(`${BASE}/users/${userId}/block`, {
+    method: 'PUT',
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error((await res.json()).message || 'Failed to block user');
+  return await res.json();
+}
+
+export async function unblockUser(userId: string) {
+  const res = await fetch(`${BASE}/users/${userId}/unblock`, {
+    method: 'PUT',
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error((await res.json()).message || 'Failed to unblock user');
   return await res.json();
 }

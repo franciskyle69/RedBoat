@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { ac } from '../config/rbac';
 import { AuthenticatedRequest } from './auth';
-import { User } from '../models/User';
+import { Role } from '../models/Role';
 
 // Allowed actions map directly to accesscontrol API methods
 export type RbacAction =
@@ -14,6 +14,23 @@ export type RbacAction =
   | 'updateAny'
   | 'deleteAny';
 
+function getModuleAllowed(perms: any, resource: string): boolean {
+  switch (resource) {
+    case 'booking':
+      return perms.manageBookings !== false;
+    case 'room':
+      return perms.manageRooms !== false;
+    case 'housekeeping':
+      return perms.manageHousekeeping !== false;
+    case 'user':
+      return perms.manageUsers !== false;
+    case 'report':
+      return perms.viewReports !== false;
+    default:
+      return true;
+  }
+}
+
 export function requirePermission(action: RbacAction, resource: string) {
   return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
@@ -22,62 +39,28 @@ export function requirePermission(action: RbacAction, resource: string) {
         return res.status(401).json({ message: 'Unauthorized' });
       }
 
-      const role = payload.role as string | undefined;
-      if (!role) {
+      const roleName = payload.role as string | undefined;
+      if (!roleName) {
         return res.status(401).json({ message: 'Unauthorized' });
       }
 
-      const acRole = role as string;
+      // Only user, admin, superadmin are in accesscontrol; custom roles use Role collection only
+      const acRole = ['user', 'admin', 'superadmin'].includes(roleName) ? roleName : 'admin';
       const permission = (ac.can(acRole) as any)[action](resource);
       if (!permission || !permission.granted) {
         return res.status(403).json({ message: 'Insufficient permissions' });
       }
 
-      // Superadmin bypasses per-module checks
-      if (role === 'superadmin') {
+      if (roleName === 'superadmin') {
         return next();
       }
 
-      // For admins, also enforce module-level permissions stored on the user record
-      if (role === 'admin') {
-        const userId = payload.sub;
-        if (!userId) {
-          return res.status(401).json({ message: 'Unauthorized' });
-        }
-
-        const user = await User.findById(userId).select('role adminPermissions');
-        if (!user) {
-          return res.status(401).json({ message: 'Unauthorized' });
-        }
-
-        const perms: any = (user as any).adminPermissions || {};
-
-        let allowed = true;
-
-        // Map resources to module flags; undefined means "allowed" by default
-        switch (resource) {
-          case 'booking':
-            allowed = perms.manageBookings !== false;
-            break;
-          case 'room':
-            allowed = perms.manageRooms !== false;
-            break;
-          case 'housekeeping':
-            allowed = perms.manageHousekeeping !== false;
-            break;
-          case 'user':
-            allowed = perms.manageUsers !== false;
-            break;
-          case 'report':
-            allowed = perms.viewReports !== false;
-            break;
-          default:
-            allowed = true;
-        }
-
-        if (!allowed) {
-          return res.status(403).json({ message: 'Insufficient module permissions' });
-        }
+      // For admin and custom roles: enforce module-level permissions from Role collection (per-role, not per-user)
+      const roleDoc = await Role.findOne({ name: roleName }).lean();
+      const perms = roleDoc?.permissions ?? {};
+      const allowed = getModuleAllowed(perms, resource);
+      if (!allowed) {
+        return res.status(403).json({ message: 'Insufficient module permissions for this role' });
       }
 
       return next();

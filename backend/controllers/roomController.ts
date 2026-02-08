@@ -4,6 +4,7 @@ import { Booking } from '../models/Booking';
 import { RoomReview } from '../models/RoomReview';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { uploadMultipleToCloudinary, deleteFromCloudinary, extractPublicIdFromUrl } from '../services/cloudinaryService';
+import { logActivity } from '../services/activityLogService';
 
 export class RoomController {
   // Get all rooms
@@ -95,6 +96,13 @@ export class RoomController {
       room.updatedAt = new Date();
 
       const updatedRoom = await room.save();
+
+      await logActivity(req, {
+        action: 'update_room_images',
+        resource: 'room',
+        resourceId: roomId,
+        details: { imageCount: newImageUrls.length }
+      });
 
       return res.json({ message: "Room images updated", data: updatedRoom });
     } catch (err) {
@@ -364,6 +372,13 @@ export class RoomController {
 
       const savedRoom = await newRoom.save();
 
+      await logActivity(req, {
+        action: 'create_room',
+        resource: 'room',
+        resourceId: (savedRoom._id as any).toString(),
+        details: { roomNumber, roomType }
+      });
+
       res.status(201).json({ 
         message: "Room created successfully", 
         data: savedRoom 
@@ -442,6 +457,13 @@ export class RoomController {
 
       const updatedRoom = await room.save();
 
+      await logActivity(req, {
+        action: 'update_room',
+        resource: 'room',
+        resourceId: roomId,
+        details: { roomNumber, roomType, price, capacity, amenities, description, images, isAvailable }
+      });
+
       res.json({ 
         message: "Room updated successfully", 
         data: updatedRoom 
@@ -481,6 +503,13 @@ export class RoomController {
       }
 
       await Room.findByIdAndDelete(roomId);
+
+      await logActivity(req, {
+        action: 'delete_room',
+        resource: 'room',
+        resourceId: roomId,
+        details: { roomNumber: room.roomNumber }
+      });
 
       res.json({ message: "Room deleted successfully" });
     } catch (err) {
@@ -570,6 +599,12 @@ export class RoomController {
       room.updatedAt = new Date();
 
       const updated = await room.save();
+      await logActivity(req, {
+        action: 'update_housekeeping',
+        resource: 'room',
+        resourceId: roomId,
+        details: { housekeepingStatus, assignedHousekeeper }
+      });
       res.json({ message: "Housekeeping status updated", data: updated });
     } catch (err) {
       console.error(err);
@@ -622,6 +657,11 @@ export class RoomController {
       ];
 
       const createdRooms = await Room.insertMany(sampleRooms);
+      await logActivity(req, {
+        action: 'create_sample_rooms',
+        resource: 'room',
+        details: { count: createdRooms.length }
+      });
       res.status(201).json({ 
         message: "Sample rooms created successfully", 
         data: createdRooms 

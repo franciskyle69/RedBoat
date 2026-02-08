@@ -38,7 +38,15 @@ export function getPaymentReference(bookingId: string): string {
   return `PAY-${bookingId.slice(-6).toUpperCase()}`;
 }
 
-export interface UserBooking extends BaseBooking {}
+export interface UserBooking extends BaseBooking {
+  pendingSince?: string;
+  pendingExpiresAt?: string;
+  pendingDurationSeconds?: number;
+  pendingDurationMinutes?: number;
+  pendingExpiresInMinutes?: number;
+  actualCheckInTime?: string;
+  actualCheckOutTime?: string;
+}
 
 export interface AdminBooking extends BaseBooking {
   user: {
@@ -54,6 +62,12 @@ export interface AdminBooking extends BaseBooking {
   additionalCharges?: number;
   checkoutNotes?: string;
   cancellationRequested?: boolean;
+  /** Set when status is pending: minutes since booking entered pending */
+  pendingDurationMinutes?: number;
+  /** Set when status is pending: minutes until pending expires (0 = expired) */
+  pendingExpiresInMinutes?: number;
+  pendingSince?: string;
+  pendingExpiresAt?: string;
 }
 
 import { API_BASE_URL } from '../config/api';

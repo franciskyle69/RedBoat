@@ -10,6 +10,7 @@ const ResetPassword = lazy(() => import('../pages/ResetPassword'));
 const ChooseUsername = lazy(() => import('../pages/ChooseUsername'));
 const CheckoutSuccess = lazy(() => import('../pages/CheckoutSuccess'));
 const CheckoutCancel = lazy(() => import('../pages/CheckoutCancel'));
+const Blocked = lazy(() => import('../pages/Blocked'));
 
 // User pages
 const UserDashboard = lazy(() => import('../pages/User/Dashboard'));
@@ -30,6 +31,7 @@ const Housekeeping = lazy(() => import('../pages/Admin/Housekeeping'));
 const Reports = lazy(() => import('../pages/Admin/Reports'));
 const AdminSettings = lazy(() => import('../pages/Admin/Settings'));
 const AdminBackup = lazy(() => import('../pages/Admin/Backup'));
+const ActivityLogs = lazy(() => import('../pages/Admin/ActivityLogs'));
 
 // Import centralized types
 import { RouteConfig } from '../types/routing';
@@ -41,6 +43,13 @@ export const publicRoutes: RouteConfig[] = [
     component: RedboatLandingPage,
     title: 'Welcome',
     description: 'Hotel Management System',
+    isPublic: true,
+  },
+  {
+    path: '/blocked',
+    component: Blocked,
+    title: 'Account Blocked',
+    description: 'Your account has been restricted',
     isPublic: true,
   },
   {
@@ -246,6 +255,15 @@ export const adminRoutes: RouteConfig[] = [
     title: 'Reports',
     description: 'Generate reports and analytics',
     icon: 'chart',
+    requiresAuth: true,
+    requiredRole: 'admin',
+  },
+  {
+    path: '/admin/activity-logs',
+    component: ActivityLogs,
+    title: 'Activity Logs',
+    description: 'System activity by users and admins',
+    icon: 'list',
     requiresAuth: true,
     requiredRole: 'admin',
   },

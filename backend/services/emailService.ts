@@ -30,6 +30,9 @@ export const buildAppEmailHtml = (title: string, bodyHtml: string): string => {
             <div style="margin:0 0 8px;color:#334155;font-size:14px;line-height:1.6;">
               ${bodyHtml}
             </div>
+            <div style="margin-top:12px;color:#64748b;font-size:12px;">
+              Standard check-in is 2:00 PM and check-out is 12:00 PM.
+            </div>
           </td>
         </tr>
         <tr>
@@ -149,8 +152,15 @@ export const buildChargeBreakdownHtml = (details: ChargeBreakdownDetails): strin
 
 export const sendEmail = async (to: string, subject: string, html: string) => {
   // Use your Gmail or another SMTP provider
-  const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASS;
+  const userRaw = process.env.EMAIL_USER;
+  const passRaw = process.env.EMAIL_PASS;
+
+  // Trim and sanitize common mistakes when copying Gmail App Passwords (often shown with spaces)
+  const user = userRaw ? userRaw.trim() : "";
+  let pass = passRaw ? passRaw.trim() : "";
+  if (pass && /\s/.test(pass)) {
+    pass = pass.replace(/\s+/g, "");
+  }
 
   if (!user || !pass) {
     console.warn("Email credentials not configured. Skipping actual send and logging email instead.");
@@ -161,7 +171,9 @@ export const sendEmail = async (to: string, subject: string, html: string) => {
   }
 
   const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
     auth: {
       user, // your Gmail address
       pass, // your App Password (not your real Gmail password)

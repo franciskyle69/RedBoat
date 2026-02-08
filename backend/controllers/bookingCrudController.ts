@@ -6,6 +6,9 @@ import { User } from '../models/User';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { sendAppEmail, buildBookingSummaryHtml, BookingSummaryDetails, getBookingReference } from '../services/emailService';
 import { calculateBookingPricing } from '../services/bookingService';
+import { logActivity } from '../services/activityLogService';
+import { PaymentController } from './paymentController';
+import { encrypt, decrypt } from '../utils/encryption';
 
 const formatDateShort = (date: Date | string | undefined): string | undefined => {
   if (!date) return undefined;
@@ -63,9 +66,23 @@ export class BookingCrudController {
         .populate("room", "roomNumber roomType price")
         .sort({ createdAt: -1 });
 
+      const enriched = bookings.map((b: any) => {
+        const o = b.toObject();
+        if (o?.contactNumber) {
+          o.contactNumber = decrypt(o.contactNumber) ?? o.contactNumber;
+        }
+        if (o.status === 'pending') {
+          const since: Date | undefined = o.pendingSince ? new Date(o.pendingSince) : (o.createdAt ? new Date(o.createdAt) : undefined);
+          if (since && !Number.isNaN(since.getTime())) {
+            o.pendingDurationSeconds = Math.max(0, Math.floor((Date.now() - since.getTime()) / 1000));
+          }
+        }
+        return o;
+      });
+
       res.json({
         message: "Bookings fetched successfully",
-        data: bookings,
+        data: enriched,
       });
     } catch (err) {
       console.error(err);
@@ -85,9 +102,23 @@ export class BookingCrudController {
         .populate("room", "roomNumber roomType price")
         .sort({ createdAt: -1 });
 
+      const enriched = bookings.map((b: any) => {
+        const o = b.toObject();
+        if (o?.contactNumber) {
+          o.contactNumber = decrypt(o.contactNumber) ?? o.contactNumber;
+        }
+        if (o.status === 'pending') {
+          const since: Date | undefined = o.pendingSince ? new Date(o.pendingSince) : (o.createdAt ? new Date(o.createdAt) : undefined);
+          if (since && !Number.isNaN(since.getTime())) {
+            o.pendingDurationSeconds = Math.max(0, Math.floor((Date.now() - since.getTime()) / 1000));
+          }
+        }
+        return o;
+      });
+
       res.json({
         message: "User bookings fetched successfully",
-        data: bookings,
+        data: enriched,
       });
     } catch (err) {
       console.error(err);
@@ -159,12 +190,19 @@ export class BookingCrudController {
         numberOfGuests,
         totalAmount: pricing.totalAmount,
         guestName,
-        contactNumber,
+        contactNumber: encrypt(contactNumber) ?? contactNumber,
         specialRequests
       });
 
       const savedBooking = await booking.save();
       await savedBooking.populate("room", "roomNumber roomType price");
+
+      await logActivity(req, {
+        action: 'create_booking',
+        resource: 'booking',
+        resourceId: (savedBooking._id as any).toString(),
+        details: { roomId, checkInDate, checkOutDate, numberOfGuests }
+      });
 
       // Notify user (booking received)
       await NotificationController.createForUser(payload.sub, 'success', 'Booking request submitted. Awaiting confirmation.', '/user/bookings');
@@ -298,6 +336,13 @@ export class BookingCrudController {
       await booking.save();
       await booking.populate("user", "username email firstName lastName emailNotifications");
       await booking.populate("room", "roomNumber roomType price");
+
+      await logActivity(req, {
+        action: 'update_booking_status',
+        resource: 'booking',
+        resourceId: bookingId,
+        details: { status, adminNotes }
+      });
 
       // Notify user on key status changes (in-app + optional email)
       try {
@@ -444,6 +489,13 @@ export class BookingCrudController {
       booking.paymentStatus = paymentStatus as "pending" | "paid" | "refunded";
       await booking.save();
 
+      await logActivity(req, {
+        action: 'update_payment_status',
+        resource: 'booking',
+        resourceId: bookingId,
+        details: { paymentStatus }
+      });
+
       // Notify user if payment was marked as paid by an admin/superadmin
       if (paymentStatus === "paid" && isAdmin) {
         const populated = await booking.populate("room", "roomNumber");
@@ -456,6 +508,15 @@ export class BookingCrudController {
           `Payment received for booking Room ${roomNumber}. Your booking is confirmed!`,
           '/user/bookings'
         );
+      }
+
+      // Email notifications to user and admins when marked as paid (admin or user action)
+      if (paymentStatus === "paid") {
+        try {
+          await PaymentController.notifyAdminsBookingPaid(bookingId);
+        } catch (e) {
+          console.error('Failed to send payment emails:', e);
+        }
       }
 
       res.json({ 

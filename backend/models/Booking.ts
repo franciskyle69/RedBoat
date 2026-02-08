@@ -28,6 +28,8 @@ export interface IBooking extends Document {
   lateCheckOutFee?: number;
   additionalCharges?: number;
   checkoutNotes?: string;
+  pendingSince?: Date;
+  pendingExpiresAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -71,6 +73,8 @@ const BookingSchema = new Schema<IBooking>({
   lateCheckOutFee: { type: Number, default: 0 },
   additionalCharges: { type: Number, default: 0 },
   checkoutNotes: { type: String },
+  pendingSince: { type: Date },
+  pendingExpiresAt: { type: Date },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
@@ -83,5 +87,34 @@ BookingSchema.index({ checkInDate: 1, checkOutDate: 1 }); // Date range queries
 BookingSchema.index({ room: 1, status: 1, checkInDate: 1, checkOutDate: 1 }); // Availability check
 BookingSchema.index({ createdAt: -1 }); // Recent bookings sort
 BookingSchema.index({ cancellationRequested: 1, status: 1 }); // Pending cancellations
+BookingSchema.index({ status: 1, pendingSince: 1 });
+
+BookingSchema.pre('save', function(next) {
+  try {
+    if (this.isNew) {
+      if (this.status === 'pending' && !this.pendingSince) {
+        this.pendingSince = new Date();
+      }
+    }
+    if (this.isModified('status')) {
+      if (this.status === 'pending' && !this.pendingSince) {
+        this.pendingSince = new Date();
+      }
+    }
+    // Maintain pendingExpiresAt if pending
+    if (this.status === 'pending' && this.pendingSince) {
+      const ttlHoursRaw = process.env.PENDING_TTL_HOURS;
+      const ttlHours = ttlHoursRaw ? parseInt(ttlHoursRaw, 10) : 24;
+      if (Number.isFinite(ttlHours) && ttlHours > 0) {
+        const expires = new Date(this.pendingSince.getTime() + ttlHours * 60 * 60 * 1000);
+        this.pendingExpiresAt = expires;
+      }
+    }
+    this.updatedAt = new Date();
+    next();
+  } catch (e) {
+    next(e as any);
+  }
+});
 
 export const Booking = mongoose.model<IBooking>("Booking", BookingSchema);

@@ -21,6 +21,7 @@ export function RouteGuard({
     isAuthenticated: false,
     loading: true
   });
+  const [blocked, setBlocked] = useState<boolean>(false);
   const [permission, setPermission] = useState<RoutePermission | null>(null);
   const location = useLocation();
 
@@ -41,6 +42,10 @@ export function RouteGuard({
           setUserContext(context);
           routingManager.setUserContext(context);
         } else {
+          // If server indicates account is blocked (403), mark blocked
+          if (response.status === 403) {
+            setBlocked(true);
+          }
           setUserContext({
             isAuthenticated: false,
             loading: false
@@ -79,6 +84,11 @@ export function RouteGuard({
   // Show loading spinner while checking authentication
   if (userContext.loading) {
     return <>{fallback || <LoadingSpinner />}</>;
+  }
+
+  // If blocked, redirect to /blocked (allow viewing the blocked page itself)
+  if (blocked && location.pathname !== '/blocked') {
+    return <Navigate to="/blocked" replace />;
   }
 
   // Debug logging

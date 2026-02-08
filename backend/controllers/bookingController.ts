@@ -7,6 +7,7 @@ import { User } from '../models/User';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { sendAppEmail, buildBookingSummaryHtml, BookingSummaryDetails, buildChargeBreakdownHtml, getBookingReference } from '../services/emailService';
 import { calculateBookingPricing } from '../services/bookingService';
+import { logActivity } from '../services/activityLogService';
 
 const formatDateShort = (date: Date | string | undefined): string | undefined => {
   if (!date) return undefined;
@@ -50,23 +51,43 @@ const buildBookingSummary = (booking: any, overrides: Partial<BookingSummaryDeta
 };
 
 export class BookingController {
-  // Get all bookings (admin only)
+  // Get all bookings (admin only). Expires pending bookings past TTL and returns pending duration info.
   static async getAllBookings(req: AuthenticatedRequest, res: Response) {
     try {
       const payload = req.user!;
-      
+
       if (payload.role !== "admin" && payload.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
+      const now = new Date();
+      await Booking.updateMany(
+        { status: "pending", pendingExpiresAt: { $lt: now } },
+        { $set: { status: "cancelled", updatedAt: now } }
+      );
+
       const bookings = await Booking.find({})
         .populate("user", "username")
         .populate("room", "roomNumber roomType price")
-        .sort({ createdAt: -1 });
+        .sort({ createdAt: -1 })
+        .lean();
+
+      const data = bookings.map((b: any) => {
+        const doc = { ...b };
+        if (b.status === "pending" && b.pendingSince) {
+          const since = new Date(b.pendingSince).getTime();
+          doc.pendingDurationMinutes = Math.floor((now.getTime() - since) / (60 * 1000));
+          if (b.pendingExpiresAt) {
+            const expires = new Date(b.pendingExpiresAt).getTime();
+            doc.pendingExpiresInMinutes = Math.max(0, Math.floor((expires - now.getTime()) / (60 * 1000)));
+          }
+        }
+        return doc;
+      });
 
       res.json({
         message: "Bookings fetched successfully",
-        data: bookings,
+        data,
       });
     } catch (err) {
       console.error(err);
@@ -881,6 +902,13 @@ export class BookingController {
           ? actualCheckInTime.toISOString()
           : undefined;
 
+      await logActivity(req, {
+        action: 'check_in',
+        resource: 'booking',
+        resourceId: bookingId,
+        details: { lateCheckInFee }
+      });
+
       res.json({
         message: "Guest checked in successfully",
         data: {
@@ -1162,6 +1190,13 @@ export class BookingController {
       console.log(`[CHECK-OUT] Booking ${bookingId} - User: ${(booking.user as any).email} - Room: ${(booking.room as any).roomNumber} - Admin: ${payload.email} - Time: ${actualCheckOutTime.toISOString()}${lateCheckOutFee > 0 ? ` - Late Fee: ₱${lateCheckOutFee}` : ''}${extendedStayCharge > 0 ? ` - Extended Stay: ₱${extendedStayCharge}` : ''}${balanceDue > 0 ? ` - Balance Due: ₱${balanceDue.toFixed(2)}` : ''}`);
 
       // Step 16: Return detailed response
+      await logActivity(req, {
+        action: 'check_out',
+        resource: 'booking',
+        resourceId: bookingId,
+        details: { lateCheckOutFee, extendedStayCharge, balanceDue }
+      });
+
       res.json({ 
         message: "Guest checked out successfully",
         data: {

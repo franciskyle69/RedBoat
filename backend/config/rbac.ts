@@ -33,7 +33,9 @@ ac.grant('admin')
   .readAny('housekeeping')
   .updateAny('housekeeping')
   // Reports
-  .readAny('report');
+  .readAny('report')
+  // Activity logs
+  .readAny('activity');
 
 // Superadmin inherits all admin permissions and can be treated as full system owner
 ac.grant('superadmin')

@@ -289,6 +289,13 @@ function Bookings() {
     return new Date(dateString).toLocaleDateString();
   };
 
+  const formatPendingDuration = (minutes: number) => {
+    if (minutes < 60) return `${minutes}m`;
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return m ? `${h}h ${m}m` : `${h}h`;
+  };
+
   const handleCreateWalkInBooking = async (data: {
     roomId: string;
     guestName: string;
@@ -424,17 +431,29 @@ function Bookings() {
                   <td>{booking.numberOfGuests}</td>
                   <td>₱{booking.totalAmount}</td>
                   <td>
-                    <span 
-                      className="status-badge"
-                      style={{ backgroundColor: getBookingStatusColor(booking.status) }}
-                    >
-                      {booking.status.replace("-", " ").toUpperCase()}
-                    </span>
-                    {booking.cancellationRequested && (
-                      <span className="status-badge" style={{ background: '#fef3c7', color: '#92400e', marginLeft: 6 }}>
-                        Cancel Requested
+                    <div className="status-cell">
+                      <span 
+                        className="status-badge"
+                        style={{ backgroundColor: getBookingStatusColor(booking.status) }}
+                      >
+                        {booking.status.replace("-", " ").toUpperCase()}
                       </span>
-                    )}
+                      {booking.status === "pending" && (booking.pendingDurationMinutes != null || booking.pendingExpiresInMinutes != null) && (
+                        <div className="pending-duration" style={{ fontSize: '0.75rem', color: 'var(--text-muted, #64748b)', marginTop: 4 }}>
+                          Pending {booking.pendingDurationMinutes != null ? `for ${formatPendingDuration(booking.pendingDurationMinutes)}` : ''}
+                          {booking.pendingExpiresInMinutes != null && (
+                            <span style={{ display: 'block' }}>
+                              {booking.pendingExpiresInMinutes === 0 ? 'Expired' : `Expires in ${formatPendingDuration(booking.pendingExpiresInMinutes)}`}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {booking.cancellationRequested && (
+                        <span className="status-badge" style={{ background: '#fef3c7', color: '#92400e', marginLeft: 6 }}>
+                          Cancel Requested
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td>
                     <div className="action-buttons">

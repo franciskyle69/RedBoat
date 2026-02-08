@@ -15,6 +15,14 @@ const formatPrice = (price: number) => {
   return price.toLocaleString('en-PH');
 };
 
+// Short human format for minutes -> e.g., 5m, 1h 20m
+const formatPendingDuration = (minutes: number) => {
+  if (minutes < 60) return `${minutes}m`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m ? `${h}h ${m}m` : `${h}h`;
+};
+
 function Bookings() {
   const [searchParams] = useSearchParams();
   const { notify } = useNotifications();
@@ -166,6 +174,9 @@ function Bookings() {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
   };
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
 
   const canCancelBooking = (booking: UserBooking) => {
     return booking.status === "pending" || booking.status === "confirmed";
@@ -270,7 +281,14 @@ function Bookings() {
                         <div className="room-type">{booking.room.roomType}</div>
                       </div>
                     </td>
-                    <td>{formatDate(booking.checkInDate)}</td>
+                    <td>
+                      {formatDate(booking.checkInDate)}
+                      {booking.actualCheckInTime && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #64748b)', marginTop: 2 }}>
+                          Checked in at {formatTime(booking.actualCheckInTime)}
+                        </div>
+                      )}
+                    </td>
                     <td>{formatDate(booking.checkOutDate)}</td>
                     <td>{booking.numberOfGuests}</td>
                     <td>₱{booking.totalAmount}</td>
@@ -281,6 +299,35 @@ function Bookings() {
                       >
                         {getBookingStatusLabel(booking.status)}
                       </span>
+                      {booking.status === "pending" && (() => {
+                        const pendingDurationMinutes =
+                          booking.pendingDurationMinutes != null
+                            ? booking.pendingDurationMinutes
+                            : typeof booking.pendingDurationSeconds === 'number'
+                              ? Math.floor(booking.pendingDurationSeconds / 60)
+                              : booking.pendingSince
+                                ? Math.floor((Date.now() - new Date(booking.pendingSince).getTime()) / 60000)
+                                : undefined;
+                        const pendingExpiresInMinutes =
+                          booking.pendingExpiresInMinutes != null
+                            ? booking.pendingExpiresInMinutes
+                            : booking.pendingExpiresAt
+                              ? Math.max(0, Math.floor((new Date(booking.pendingExpiresAt).getTime() - Date.now()) / 60000))
+                              : undefined;
+                        if (pendingDurationMinutes == null && pendingExpiresInMinutes == null) return null;
+                        return (
+                          <div className="pending-duration" style={{ fontSize: '0.75rem', color: 'var(--text-muted, #64748b)', marginTop: 4 }}>
+                            {pendingDurationMinutes != null && (
+                              <span>Pending for {formatPendingDuration(pendingDurationMinutes)}</span>
+                            )}
+                            {pendingExpiresInMinutes != null && (
+                              <span style={{ display: 'block' }}>
+                                {pendingExpiresInMinutes === 0 ? 'Expired' : `Expires in ${formatPendingDuration(pendingExpiresInMinutes)}`}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td>
                       <span
@@ -414,6 +461,11 @@ function Bookings() {
                   <div className="detail-row">
                     <strong>Check-in Date:</strong> {formatDate(selectedBooking.checkInDate)}
                   </div>
+                  {selectedBooking.actualCheckInTime && (
+                    <div className="detail-row" style={{ color: 'var(--text-muted, #64748b)' }}>
+                      <strong>Checked in at:</strong> {formatTime(selectedBooking.actualCheckInTime)}
+                    </div>
+                  )}
                   <div className="detail-row">
                     <strong>Check-out Date:</strong> {formatDate(selectedBooking.checkOutDate)}
                   </div>
@@ -432,6 +484,38 @@ function Bookings() {
                       {getBookingStatusLabel(selectedBooking.status)}
                     </span>
                   </div>
+                  {selectedBooking.status === "pending" && (() => {
+                    const pendingDurationMinutes =
+                      selectedBooking.pendingDurationMinutes != null
+                        ? selectedBooking.pendingDurationMinutes
+                        : typeof selectedBooking.pendingDurationSeconds === 'number'
+                          ? Math.floor(selectedBooking.pendingDurationSeconds / 60)
+                          : selectedBooking.pendingSince
+                            ? Math.floor((Date.now() - new Date(selectedBooking.pendingSince).getTime()) / 60000)
+                            : undefined;
+                    const pendingExpiresInMinutes =
+                      selectedBooking.pendingExpiresInMinutes != null
+                        ? selectedBooking.pendingExpiresInMinutes
+                        : selectedBooking.pendingExpiresAt
+                          ? Math.max(0, Math.floor((new Date(selectedBooking.pendingExpiresAt).getTime() - Date.now()) / 60000))
+                          : undefined;
+                    if (pendingDurationMinutes == null && pendingExpiresInMinutes == null) return null;
+                    return (
+                      <div className="detail-row" style={{ color: 'var(--text-muted, #64748b)' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          {pendingDurationMinutes != null && (
+                            <span><strong>Pending for:</strong> {formatPendingDuration(pendingDurationMinutes)}</span>
+                          )}
+                          {pendingExpiresInMinutes != null && (
+                            <span>
+                              <strong>{pendingExpiresInMinutes === 0 ? 'Status:' : 'Expires in:'}</strong>{' '}
+                              {pendingExpiresInMinutes === 0 ? 'Expired' : formatPendingDuration(pendingExpiresInMinutes)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
                   <div className="detail-row">
                     <strong>Payment Status:</strong> 
                     <span 

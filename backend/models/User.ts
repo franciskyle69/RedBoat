@@ -24,8 +24,12 @@ export interface IUser extends Document {
     zipCode?: string;
     country?: string;
   };
-  role: 'user' | 'admin' | 'superadmin';
+  addressEncrypted?: string;
+  role: string;
   adminPermissions?: AdminPermissions;
+  isBlocked?: boolean;
+  blockedAt?: Date;
+  blockedBy?: mongoose.Types.ObjectId;
   isEmailVerified: boolean;
   emailNotifications?: boolean;
   profilePicture?: string;
@@ -54,7 +58,8 @@ const UserSchema = new Schema<IUser>({
     zipCode: { type: String, required: false },
     country: { type: String, required: false }
   },
-  role: { type: String, enum: ["user", "admin", "superadmin"], default: "user" },
+  addressEncrypted: { type: String, required: false },
+  role: { type: String, default: "user" },
   adminPermissions: {
     manageBookings: { type: Boolean, default: true },
     manageRooms: { type: Boolean, default: true },
@@ -62,6 +67,9 @@ const UserSchema = new Schema<IUser>({
     manageUsers: { type: Boolean, default: true },
     viewReports: { type: Boolean, default: true }
   },
+  isBlocked: { type: Boolean, default: false },
+  blockedAt: { type: Date, required: false },
+  blockedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false },
   isEmailVerified: { type: Boolean, default: false },
   emailNotifications: { type: Boolean, default: true },
   profilePicture: { type: String, required: false },

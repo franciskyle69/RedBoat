@@ -226,6 +226,16 @@ function AdminLayout({ children, pageTitle }: AdminLayoutProps) {
           </Link>
         )}
 
+        {canReports && (
+          <Link
+            to="/admin/activity-logs"
+            className={`menu-item ${isActive("/admin/activity-logs") ? "active" : ""}`}
+          >
+            <span className="material-icons-outlined">list_alt</span>
+            Activity Logs
+          </Link>
+        )}
+
         <p className="menu-label">SYSTEM OPTION</p>
 
         <Link

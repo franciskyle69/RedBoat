@@ -36,4 +36,18 @@ router.put(
   asyncHandler(UserController.updateAdminPermissions)
 );
 
+router.put(
+  '/users/:userId/block',
+  requireAuth,
+  requirePermission('updateAny', 'user'),
+  asyncHandler(UserController.blockUser)
+);
+
+router.put(
+  '/users/:userId/unblock',
+  requireAuth,
+  requirePermission('updateAny', 'user'),
+  asyncHandler(UserController.unblockUser)
+);
+
 export default router;

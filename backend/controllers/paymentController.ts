@@ -58,7 +58,7 @@ function getStripeClient() {
 }
 
 export class PaymentController {
-  private static async notifyAdminsBookingPaid(bookingId: string) {
+  static async notifyAdminsBookingPaid(bookingId: string) {
     try {
       const booking = await Booking.findById(bookingId)
         .populate('user', 'username firstName lastName email emailNotifications')

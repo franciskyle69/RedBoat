@@ -19,6 +19,9 @@ import { PaymentController } from "./controllers/paymentController";
 import notificationRoutes from "./routes/notificationRoutes";
 import feedbackRoutes from "./routes/feedbackRoutes";
 import backupRoutes from "./routes/backupRoutes";
+import activityRoutes from "./routes/activityRoutes";
+import roleRoutes from "./routes/roleRoutes";
+import { Role } from "./models/Role";
 
 // Import middleware
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
@@ -66,6 +69,8 @@ app.use("/payments", paymentRoutes);
 app.use("/notifications", notificationRoutes);
 app.use("/feedback", feedbackRoutes);
 app.use("/backup", backupRoutes);
+app.use("/activity", activityRoutes);
+app.use("/", roleRoutes);
 
 // Test email endpoint (keeping for backward compatibility)
 app.post("/test-email", async (req, res) => {

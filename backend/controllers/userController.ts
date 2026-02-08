@@ -5,14 +5,17 @@ import { User } from '../models/User';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { optimizeAvatarImage, AVATAR_DIR } from '../utils/userAvatarUpload';
 import { validatePassword, PASSWORD_REQUIREMENTS } from '../utils/passwordValidation';
+import { logActivity } from '../services/activityLogService';
+import { encrypt, decrypt, encryptObject, decryptObject } from '../utils/encryption';
 
 export class UserController {
   // Get current user
   static async getCurrentUser(req: AuthenticatedRequest, res: Response) {
     try {
       const payload = req.user!;
-      const user = await User.findById(payload.sub).select("username email role firstName lastName profilePicture adminPermissions authProvider");
+      const user = await User.findById(payload.sub).select("username email role firstName lastName profilePicture adminPermissions authProvider isBlocked");
       if (!user) return res.status(401).json({ message: "Unauthorized" });
+      if ((user as any).isBlocked) return res.status(403).json({ message: "Your account has been blocked." });
       
       console.log("getCurrentUser - user:", user.email, "role:", user.role, "adminPermissions:", (user as any).adminPermissions);
       
@@ -35,13 +38,17 @@ export class UserController {
     }
   }
 
-  // Get user profile (detailed information)
+  // Get user profile (detailed information). Decrypts sensitive fields.
   static async getProfile(req: AuthenticatedRequest, res: Response) {
     try {
       const payload = req.user!;
-      const user = await User.findById(payload.sub).select("-password -googleCalendarTokens");
+      const user = await User.findById(payload.sub).select("-password -googleCalendarTokens").lean();
       if (!user) return res.status(401).json({ message: "Unauthorized" });
-      return res.json({ data: user });
+      const u = user as any;
+      if (u.phoneNumber) u.phoneNumber = decrypt(u.phoneNumber) ?? u.phoneNumber;
+      if (u.addressEncrypted) u.address = decryptObject(u.addressEncrypted) ?? u.address;
+      delete u.addressEncrypted;
+      return res.json({ data: u });
     } catch (err) {
       console.error(err);
       res.status(500).json({ message: "Server error" });
@@ -109,22 +116,36 @@ export class UserController {
         (user as any).isEmailVerified = false;
       }
 
-      // Update other profile fields if provided
+      // Update other profile fields if provided (encrypt sensitive fields)
       if (firstName !== undefined) user.firstName = firstName;
       if (lastName !== undefined) user.lastName = lastName;
-      if (phoneNumber !== undefined) user.phoneNumber = phoneNumber;
+      if (phoneNumber !== undefined) (user as any).phoneNumber = encrypt(phoneNumber) ?? phoneNumber;
       if (dateOfBirth !== undefined) user.dateOfBirth = new Date(dateOfBirth);
-      if (address !== undefined) user.address = address;
+      if (address !== undefined) {
+        (user as any).addressEncrypted = encryptObject(address) ?? undefined;
+        user.address = address;
+      }
       if (emailNotifications !== undefined) user.emailNotifications = Boolean(emailNotifications);
 
       user.updatedAt = new Date();
       await user.save();
 
-      // Return updated user without sensitive data
-      const updatedUser = await User.findById(payload.sub).select("-password -googleCalendarTokens");
+      await logActivity(req, {
+        action: 'update_profile',
+        resource: 'user',
+        resourceId: (user._id as any).toString(),
+        details: { username, email, firstName, lastName, phoneNumber, dateOfBirth, emailNotifications }
+      });
+
+      // Return updated user without sensitive data (decrypt for response)
+      const updatedUser = await User.findById(payload.sub).select("-password -googleCalendarTokens").lean();
+      const out = updatedUser as any;
+      if (out?.phoneNumber) out.phoneNumber = decrypt(out.phoneNumber) ?? out.phoneNumber;
+      if (out?.addressEncrypted) out.address = decryptObject(out.addressEncrypted) ?? out.address;
+      if (out) delete out.addressEncrypted;
       return res.json({
         message: "Profile updated successfully",
-        data: updatedUser,
+        data: out,
       });
     } catch (err) {
       console.error(err);
@@ -178,6 +199,12 @@ export class UserController {
       user.updatedAt = new Date();
       await user.save();
 
+      await logActivity(req, {
+        action: 'change_password',
+        resource: 'user',
+        resourceId: (user._id as any).toString()
+      });
+
       return res.json({ message: "Password updated successfully" });
     } catch (err) {
       console.error(err);
@@ -225,6 +252,13 @@ export class UserController {
         }
       }
 
+      await logActivity(req, {
+        action: 'upload_avatar',
+        resource: 'user',
+        resourceId: (user._id as any).toString(),
+        details: { newAvatar: relativePath }
+      });
+
       const updatedUser = await User.findById(payload.sub).select("-password -googleCalendarTokens");
       return res.json({
         message: "Avatar updated successfully",
@@ -245,28 +279,44 @@ export class UserController {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const users = await User.find({}).select("username email role createdAt firstName lastName phoneNumber isEmailVerified adminPermissions");
-      res.json({ data: users });
+      const users = await User.find({}).select("username email role createdAt firstName lastName phoneNumber isEmailVerified adminPermissions isBlocked blockedAt").lean();
+      const list = (users as any[]).map((u) => {
+        if (u.phoneNumber) u.phoneNumber = decrypt(u.phoneNumber) ?? u.phoneNumber;
+        return u;
+      });
+      res.json({ data: list });
     } catch (err) {
       console.error(err);
       res.status(500).json({ message: "Server error" });
     }
   }
 
-  // Update user role (admin only)
+  // Update user role (superadmin only). Role must exist in Role collection or be "user"/"admin".
   static async updateUserRole(req: AuthenticatedRequest, res: Response) {
     try {
       const payload = req.user!;
-      
+
       if (payload.role !== "superadmin") {
-        return res.status(403).json({ message: "Superadmin access required" });
+        return res.status(403).json({ message: "Superadmin access required to change user role" });
       }
 
       const { userId } = req.params;
-      const { role } = req.body;
+      const { role } = req.body as { role?: string };
 
-      if (!role || !["user", "admin"].includes(role)) {
-        return res.status(400).json({ message: "Valid role is required (user or admin)" });
+      if (!role || typeof role !== "string" || !role.trim()) {
+        return res.status(400).json({ message: "Valid role is required" });
+      }
+
+      const roleName = role.trim().toLowerCase();
+      if (roleName === "superadmin") {
+        return res.status(400).json({ message: "Cannot assign superadmin role via this endpoint" });
+      }
+
+      const { Role } = await import("../models/Role");
+      const validRoles = ["user", "admin"];
+      const roleExists = validRoles.includes(roleName) || (await Role.exists({ name: roleName }));
+      if (!roleExists) {
+        return res.status(400).json({ message: "Role does not exist. Create the role first or use user/admin." });
       }
 
       const user = await User.findById(userId);
@@ -274,9 +324,16 @@ export class UserController {
         return res.status(404).json({ message: "User not found" });
       }
 
-      user.role = role;
+      user.role = roleName;
       user.updatedAt = new Date();
       await user.save();
+
+      await logActivity(req, {
+        action: 'update_user_role',
+        resource: 'user',
+        resourceId: (user._id as any).toString(),
+        details: { role }
+      });
 
       res.json({ 
         message: "User role updated successfully", 
@@ -328,6 +385,13 @@ export class UserController {
       user.updatedAt = new Date();
       await user.save();
 
+      await logActivity(req, {
+        action: 'update_admin_permissions',
+        resource: 'user',
+        resourceId: (user._id as any).toString(),
+        details: updated
+      });
+
       return res.json({
         message: "Admin permissions updated successfully",
         data: {
@@ -335,6 +399,64 @@ export class UserController {
           adminPermissions: updated,
         },
       });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+
+  // Block user (admin/superadmin)
+  static async blockUser(req: AuthenticatedRequest, res: Response) {
+    try {
+      const payload = req.user!;
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      const { userId } = req.params;
+      const user = await User.findById(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      if (user.role === "superadmin") {
+        return res.status(403).json({ message: "Cannot block a superadmin" });
+      }
+      (user as any).isBlocked = true;
+      (user as any).blockedAt = new Date();
+      (user as any).blockedBy = payload.sub;
+      user.updatedAt = new Date();
+      await user.save();
+      await logActivity(req, {
+        action: "block_user",
+        resource: "user",
+        resourceId: (user._id as any).toString(),
+        details: { blockedBy: payload.sub },
+      });
+      return res.json({ message: "User blocked successfully", data: { userId, isBlocked: true } });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+
+  // Unblock user (admin/superadmin)
+  static async unblockUser(req: AuthenticatedRequest, res: Response) {
+    try {
+      const payload = req.user!;
+      if (payload.role !== "admin" && payload.role !== "superadmin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      const { userId } = req.params;
+      const user = await User.findById(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      (user as any).isBlocked = false;
+      (user as any).blockedAt = undefined;
+      (user as any).blockedBy = undefined;
+      user.updatedAt = new Date();
+      await user.save();
+      await logActivity(req, {
+        action: "unblock_user",
+        resource: "user",
+        resourceId: (user._id as any).toString(),
+      });
+      return res.json({ message: "User unblocked successfully", data: { userId, isBlocked: false } });
     } catch (err) {
       console.error(err);
       res.status(500).json({ message: "Server error" });

@@ -1,0 +1,1655 @@
+[
+  {
+    "_id": "69100b943c6f823527af7661",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-09T03:33:40.040Z",
+    "__v": 0
+  },
+  {
+    "_id": "6910c621cb698f588065bf0f",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "You have been checked in! Room: 201. Check-in time: 11/10/2025, 12:49:37 AM",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-09T16:49:37.631Z",
+    "__v": 0
+  },
+  {
+    "_id": "69112d2e6036e8e11ccdcd9b",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "warning",
+    "message": "You have been checked out! Room: 201. Balance due: ₱50.00",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-10T00:09:18.102Z",
+    "__v": 0
+  },
+  {
+    "_id": "69112d696036e8e11ccdcdf5",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-10T00:10:17.398Z",
+    "__v": 0
+  },
+  {
+    "_id": "69117605a048b3d1c38e92e1",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Booking status updated",
+    "isRead": true,
+    "createdAt": "2025-11-10T05:20:05.137Z",
+    "__v": 0
+  },
+  {
+    "_id": "69117610a048b3d1c38e92ed",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "error",
+    "message": "Payment required before check-in",
+    "isRead": true,
+    "createdAt": "2025-11-10T05:20:16.774Z",
+    "__v": 0
+  },
+  {
+    "_id": "69117616a048b3d1c38e92f7",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Payment received for booking Room 201. Your booking is confirmed!",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-10T05:20:22.198Z",
+    "__v": 0
+  },
+  {
+    "_id": "69117619a048b3d1c38e9302",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "error",
+    "message": "Room not ready for check-in",
+    "isRead": true,
+    "createdAt": "2025-11-10T05:20:25.076Z",
+    "__v": 0
+  },
+  {
+    "_id": "6911761aa048b3d1c38e9308",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "error",
+    "message": "Room not ready for check-in",
+    "isRead": true,
+    "createdAt": "2025-11-10T05:20:26.256Z",
+    "__v": 0
+  },
+  {
+    "_id": "6911762aa048b3d1c38e931a",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-10T05:20:42.885Z",
+    "__v": 0
+  },
+  {
+    "_id": "69117631a048b3d1c38e9329",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "error",
+    "message": "Payment required before check-in",
+    "isRead": true,
+    "createdAt": "2025-11-10T05:20:49.404Z",
+    "__v": 0
+  },
+  {
+    "_id": "69117634a048b3d1c38e9337",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "You have been checked in! Room: 201. Check-in time: 11/10/2025, 1:20:52 PM",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-10T05:20:52.997Z",
+    "__v": 0
+  },
+  {
+    "_id": "69117635a048b3d1c38e933c",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Guest checked in successfully",
+    "isRead": true,
+    "createdAt": "2025-11-10T05:20:53.029Z",
+    "__v": 0
+  },
+  {
+    "_id": "69117d744354d6499e3e4742",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Room created successfully",
+    "isRead": true,
+    "createdAt": "2025-11-10T05:51:48.637Z",
+    "__v": 0
+  },
+  {
+    "_id": "69135ed1c7b56ad396485fba",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-11T16:05:37.590Z",
+    "__v": 0
+  },
+  {
+    "_id": "69135ed1c7b56ad396485fbc",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Waiting for admin confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-11T16:05:37.600Z",
+    "__v": 0
+  },
+  {
+    "_id": "69135ed7c7b56ad396485fc7",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "error",
+    "message": "Error starting checkout",
+    "isRead": true,
+    "createdAt": "2025-11-11T16:05:43.796Z",
+    "__v": 0
+  },
+  {
+    "_id": "69135f9aaa422a75a16ade9e",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "warning",
+    "message": "Payment was canceled. You can try again anytime from your booking.",
+    "isRead": true,
+    "createdAt": "2025-11-11T16:08:58.435Z",
+    "__v": 0
+  },
+  {
+    "_id": "69135f9aaa422a75a16adea0",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "warning",
+    "message": "Payment was canceled. You can try again anytime from your booking.",
+    "isRead": true,
+    "createdAt": "2025-11-11T16:08:58.446Z",
+    "__v": 0
+  },
+  {
+    "_id": "69135fcdaa422a75a16adeb5",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Payment successful. Your booking will reflect as paid shortly.",
+    "isRead": true,
+    "createdAt": "2025-11-11T16:09:49.615Z",
+    "__v": 0
+  },
+  {
+    "_id": "69135fcdaa422a75a16adeb7",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Payment successful. Your booking will reflect as paid shortly.",
+    "isRead": true,
+    "createdAt": "2025-11-11T16:09:49.620Z",
+    "__v": 0
+  },
+  {
+    "_id": "6913631dd54e3bd8e8456e9e",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "123 completed payment for Room 203 (₱9000).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-11T16:23:57.861Z",
+    "__v": 0
+  },
+  {
+    "_id": "6913631dd54e3bd8e8456ea0",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Payment confirmed. Booking marked as paid.",
+    "isRead": true,
+    "createdAt": "2025-11-11T16:23:57.885Z",
+    "__v": 0
+  },
+  {
+    "_id": "6913631ed54e3bd8e8456ea7",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "123 completed payment for Room 203 (₱9000).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-11T16:23:58.248Z",
+    "__v": 0
+  },
+  {
+    "_id": "6913631ed54e3bd8e8456ea9",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Payment confirmed. Booking marked as paid.",
+    "isRead": true,
+    "createdAt": "2025-11-11T16:23:58.259Z",
+    "__v": 0
+  },
+  {
+    "_id": "69136595898990efb01c8653",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-11T16:34:29.019Z",
+    "__v": 0
+  },
+  {
+    "_id": "69136595898990efb01c8655",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Waiting for admin confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-11T16:34:29.032Z",
+    "__v": 0
+  },
+  {
+    "_id": "6913681c9bb02b72d14509ee",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Your booking for Room 202 is confirmed.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-11T16:45:16.554Z",
+    "__v": 0
+  },
+  {
+    "_id": "69170ddc8208d31465340182",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-14T11:09:16.913Z",
+    "__v": 0
+  },
+  {
+    "_id": "69170eac8208d314653401c3",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-14T11:12:44.821Z",
+    "__v": 0
+  },
+  {
+    "_id": "69170eae8208d314653401c8",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-14T11:12:46.502Z",
+    "__v": 0
+  },
+  {
+    "_id": "691710c68208d3146534022f",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-14T11:21:42.580Z",
+    "__v": 0
+  },
+  {
+    "_id": "691710c78208d31465340233",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-14T11:21:43.158Z",
+    "__v": 0
+  },
+  {
+    "_id": "691710cb8208d31465340238",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-14T11:21:47.556Z",
+    "__v": 0
+  },
+  {
+    "_id": "691711c08208d31465340267",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-14T11:25:52.759Z",
+    "__v": 0
+  },
+  {
+    "_id": "69173d814a2c751c82ce8668",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Room updated successfully",
+    "isRead": true,
+    "createdAt": "2025-11-14T14:32:33.727Z",
+    "__v": 0
+  },
+  {
+    "_id": "69173da94a2c751c82ce8680",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Room created successfully",
+    "isRead": true,
+    "createdAt": "2025-11-14T14:33:13.425Z",
+    "__v": 0
+  },
+  {
+    "_id": "69173e844a2c751c82ce86c1",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "error",
+    "message": "Please select between 3 and 5 images",
+    "isRead": true,
+    "createdAt": "2025-11-14T14:36:52.171Z",
+    "__v": 0
+  },
+  {
+    "_id": "69173e854a2c751c82ce86c4",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "error",
+    "message": "Please select between 3 and 5 images",
+    "isRead": true,
+    "createdAt": "2025-11-14T14:36:53.828Z",
+    "__v": 0
+  },
+  {
+    "_id": "69173e8e4a2c751c82ce86c9",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Room images updated",
+    "isRead": true,
+    "createdAt": "2025-11-14T14:37:02.281Z",
+    "__v": 0
+  },
+  {
+    "_id": "69173e904a2c751c82ce86cf",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Room updated successfully",
+    "isRead": true,
+    "createdAt": "2025-11-14T14:37:04.315Z",
+    "__v": 0
+  },
+  {
+    "_id": "691740334a2c751c82ce874a",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Room updated successfully",
+    "isRead": true,
+    "createdAt": "2025-11-14T14:44:03.285Z",
+    "__v": 0
+  },
+  {
+    "_id": "69174f2805ec27dc87e335e7",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "warning",
+    "message": "Payment was canceled. You can try again anytime from your booking.",
+    "isRead": true,
+    "createdAt": "2025-11-14T15:47:52.095Z",
+    "__v": 0
+  },
+  {
+    "_id": "6917d448483ff1c1a9ec5425",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Thank you for your feedback!",
+    "isRead": true,
+    "createdAt": "2025-11-15T01:15:52.809Z",
+    "__v": 0
+  },
+  {
+    "_id": "6919483c2e6a6c1c34c7ae09",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "123 completed payment for Room 202 (₱600).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T03:42:52.054Z",
+    "__v": 0
+  },
+  {
+    "_id": "691948412e6a6c1c34c7ae13",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Payment confirmed. Booking marked as paid.",
+    "isRead": true,
+    "createdAt": "2025-11-16T03:42:57.150Z",
+    "__v": 0
+  },
+  {
+    "_id": "691948412e6a6c1c34c7ae1a",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "123 completed payment for Room 202 (₱600).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T03:42:57.522Z",
+    "__v": 0
+  },
+  {
+    "_id": "691948462e6a6c1c34c7ae1c",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Payment confirmed. Booking marked as paid.",
+    "isRead": true,
+    "createdAt": "2025-11-16T03:43:02.588Z",
+    "__v": 0
+  },
+  {
+    "_id": "69194b9aec78a79e679ec6f9",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "warning",
+    "message": "123 requested a cancellation for Room 203.",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T03:57:14.099Z",
+    "__v": 0
+  },
+  {
+    "_id": "69194b9fec78a79e679ec6fe",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Cancellation request sent. Awaiting admin response.",
+    "isRead": true,
+    "createdAt": "2025-11-16T03:57:19.526Z",
+    "__v": 0
+  },
+  {
+    "_id": "691954faec78a79e679ec873",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:14.529Z",
+    "__v": 0
+  },
+  {
+    "_id": "691954fbec78a79e679ec87b",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:15.995Z",
+    "__v": 0
+  },
+  {
+    "_id": "691954fcec78a79e679ec883",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:16.467Z",
+    "__v": 0
+  },
+  {
+    "_id": "691954fdec78a79e679ec887",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "info",
+    "message": "123 created a new booking request for Room 202 (2 nights).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:17.432Z",
+    "__v": 0
+  },
+  {
+    "_id": "691954feec78a79e679ec88e",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:18.450Z",
+    "__v": 0
+  },
+  {
+    "_id": "691954feec78a79e679ec892",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "info",
+    "message": "123 created a new booking request for Room 202 (2 nights).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:18.523Z",
+    "__v": 0
+  },
+  {
+    "_id": "691954feec78a79e679ec899",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:18.657Z",
+    "__v": 0
+  },
+  {
+    "_id": "691954ffec78a79e679ec89d",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "info",
+    "message": "123 created a new booking request for Room 202 (2 nights).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:19.172Z",
+    "__v": 0
+  },
+  {
+    "_id": "691954ffec78a79e679ec8a4",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:19.837Z",
+    "__v": 0
+  },
+  {
+    "_id": "69195500ec78a79e679ec8a8",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "info",
+    "message": "123 created a new booking request for Room 202 (2 nights).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:20.913Z",
+    "__v": 0
+  },
+  {
+    "_id": "69195501ec78a79e679ec8af",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:21.518Z",
+    "__v": 0
+  },
+  {
+    "_id": "69195501ec78a79e679ec8b2",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Waiting for admin confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:21.886Z",
+    "__v": 0
+  },
+  {
+    "_id": "69195501ec78a79e679ec8b5",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Waiting for admin confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:21.901Z",
+    "__v": 0
+  },
+  {
+    "_id": "69195501ec78a79e679ec8b7",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Waiting for admin confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:21.909Z",
+    "__v": 0
+  },
+  {
+    "_id": "69195502ec78a79e679ec8bb",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "info",
+    "message": "123 created a new booking request for Room 202 (2 nights).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:22.155Z",
+    "__v": 0
+  },
+  {
+    "_id": "69195503ec78a79e679ec8be",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "info",
+    "message": "123 created a new booking request for Room 202 (2 nights).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:23.117Z",
+    "__v": 0
+  },
+  {
+    "_id": "69195503ec78a79e679ec8c0",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Waiting for admin confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:23.610Z",
+    "__v": 0
+  },
+  {
+    "_id": "69195504ec78a79e679ec8c3",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "info",
+    "message": "123 created a new booking request for Room 202 (2 nights).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:24.593Z",
+    "__v": 0
+  },
+  {
+    "_id": "69195504ec78a79e679ec8c5",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Waiting for admin confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:24.865Z",
+    "__v": 0
+  },
+  {
+    "_id": "69195505ec78a79e679ec8c7",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Waiting for admin confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:25.928Z",
+    "__v": 0
+  },
+  {
+    "_id": "69195507ec78a79e679ec8c9",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Waiting for admin confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:37:27.344Z",
+    "__v": 0
+  },
+  {
+    "_id": "691959ebec78a79e679ec9c9",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Thank you for your feedback!",
+    "isRead": true,
+    "createdAt": "2025-11-16T04:58:19.801Z",
+    "__v": 0
+  },
+  {
+    "_id": "69198680b3866d0b6e2d28f1",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:08:32.540Z",
+    "__v": 0
+  },
+  {
+    "_id": "69198681b3866d0b6e2d28f5",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:08:33.539Z",
+    "__v": 0
+  },
+  {
+    "_id": "691989d7b3866d0b6e2d2a44",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Your booking for Room 202 is confirmed.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:22:47.680Z",
+    "__v": 0
+  },
+  {
+    "_id": "691989d9b3866d0b6e2d2a49",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Payment received for booking Room 202. Your booking is confirmed!",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:22:49.638Z",
+    "__v": 0
+  },
+  {
+    "_id": "691989d9b3866d0b6e2d2a4e",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Payment status updated to paid",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:22:49.703Z",
+    "__v": 0
+  },
+  {
+    "_id": "691989dab3866d0b6e2d2a54",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Your booking for Room 202 is confirmed.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:22:50.541Z",
+    "__v": 0
+  },
+  {
+    "_id": "691989dbb3866d0b6e2d2a59",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Booking status updated",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:22:51.216Z",
+    "__v": 0
+  },
+  {
+    "_id": "691989ddb3866d0b6e2d2a61",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Booking status updated",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:22:53.191Z",
+    "__v": 0
+  },
+  {
+    "_id": "691989dfb3866d0b6e2d2a67",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Your booking for Room 202 is confirmed.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:22:55.046Z",
+    "__v": 0
+  },
+  {
+    "_id": "691989e1b3866d0b6e2d2a6c",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Payment received for booking Room 202. Your booking is confirmed!",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:22:57.685Z",
+    "__v": 0
+  },
+  {
+    "_id": "691989e1b3866d0b6e2d2a71",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Payment status updated to paid",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:22:57.734Z",
+    "__v": 0
+  },
+  {
+    "_id": "691989e1b3866d0b6e2d2a76",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Booking status updated",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:22:57.784Z",
+    "__v": 0
+  },
+  {
+    "_id": "691989e4b3866d0b6e2d2a7f",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Your booking for Room 202 is confirmed.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:23:00.469Z",
+    "__v": 0
+  },
+  {
+    "_id": "691989e7b3866d0b6e2d2a84",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Booking status updated",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:23:03.040Z",
+    "__v": 0
+  },
+  {
+    "_id": "691989ecb3866d0b6e2d2a8c",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Payment received for booking Room 202. Your booking is confirmed!",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:23:08.783Z",
+    "__v": 0
+  },
+  {
+    "_id": "691989ecb3866d0b6e2d2a91",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Payment status updated to paid",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:23:08.835Z",
+    "__v": 0
+  },
+  {
+    "_id": "691989efb3866d0b6e2d2a98",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Payment status updated to refunded",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:23:11.687Z",
+    "__v": 0
+  },
+  {
+    "_id": "691989f1b3866d0b6e2d2a9f",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Payment status updated to pending",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:23:13.667Z",
+    "__v": 0
+  },
+  {
+    "_id": "69198b5bb3866d0b6e2d2b09",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:29:15.889Z",
+    "__v": 0
+  },
+  {
+    "_id": "69198b5cb3866d0b6e2d2b0d",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:29:16.596Z",
+    "__v": 0
+  },
+  {
+    "_id": "69198cc17fc4917a8ed7164a",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "warning",
+    "message": "123 requested a cancellation for Room 202.",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:35:13.379Z",
+    "__v": 0
+  },
+  {
+    "_id": "69198cc77fc4917a8ed7164e",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Cancellation request sent. Awaiting admin response.",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:35:19.040Z",
+    "__v": 0
+  },
+  {
+    "_id": "69198cdfe1c43aad96f6e8db",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "warning",
+    "message": "123 requested a cancellation for Room 202.",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:35:43.976Z",
+    "__v": 0
+  },
+  {
+    "_id": "69198ce5e1c43aad96f6e8e1",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Cancellation request sent. Awaiting admin response.",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:35:49.122Z",
+    "__v": 0
+  },
+  {
+    "_id": "69198d6b3ce6d95169b56c70",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "warning",
+    "message": "123 requested a cancellation for Room 202.",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T08:38:03.643Z",
+    "__v": 0
+  },
+  {
+    "_id": "6919d0006fb81d5d3c3ef6e6",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Your booking cancellation was approved.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T13:22:08.947Z",
+    "__v": 0
+  },
+  {
+    "_id": "6919d0036fb81d5d3c3ef6ea",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "error",
+    "message": "Error approving cancellation",
+    "isRead": true,
+    "createdAt": "2025-11-16T13:22:11.041Z",
+    "__v": 0
+  },
+  {
+    "_id": "6919d0066fb81d5d3c3ef6f1",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Your booking cancellation was approved.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T13:22:14.153Z",
+    "__v": 0
+  },
+  {
+    "_id": "6919d0076fb81d5d3c3ef6f3",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Cancellation approved",
+    "isRead": true,
+    "createdAt": "2025-11-16T13:22:15.386Z",
+    "__v": 0
+  },
+  {
+    "_id": "6919d0096fb81d5d3c3ef6f9",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Cancellation approved",
+    "isRead": true,
+    "createdAt": "2025-11-16T13:22:17.252Z",
+    "__v": 0
+  },
+  {
+    "_id": "6919d0096fb81d5d3c3ef700",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Your booking cancellation was approved.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T13:22:17.928Z",
+    "__v": 0
+  },
+  {
+    "_id": "6919d00f6fb81d5d3c3ef706",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Cancellation approved",
+    "isRead": true,
+    "createdAt": "2025-11-16T13:22:23.940Z",
+    "__v": 0
+  },
+  {
+    "_id": "6919d4a76fb81d5d3c3ef7f5",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T13:41:59.307Z",
+    "__v": 0
+  },
+  {
+    "_id": "6919d4a96fb81d5d3c3ef7f9",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "info",
+    "message": "Francis created a new booking request for Room 203 (2 nights).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T13:42:01.980Z",
+    "__v": 0
+  },
+  {
+    "_id": "6919d8ba6fb81d5d3c3ef895",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Your booking for Room 203 is confirmed.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T13:59:22.209Z",
+    "__v": 0
+  },
+  {
+    "_id": "6919d9b46fb81d5d3c3ef8be",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Payment received for booking Room 203. Your booking is confirmed!",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-16T14:03:32.472Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abc6b98655479f5e47dc6",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Room activated successfully",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:10:51.534Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abc7a98655479f5e47dcd",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Room updated successfully",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:11:06.546Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abd9898655479f5e47f47",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:15:52.081Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abd9998655479f5e47f4f",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:15:53.387Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abd9b98655479f5e47f57",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:15:55.877Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abd9c98655479f5e47f5f",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:15:56.052Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abd9c98655479f5e47f67",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:15:56.208Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abd9c98655479f5e47f6b",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "info",
+    "message": "Francis created a new booking request for Room 201 (1 night).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:15:56.546Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abd9f98655479f5e47f6e",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "info",
+    "message": "Francis created a new booking request for Room 201 (1 night).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:15:59.731Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abda098655479f5e47f71",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "info",
+    "message": "Francis created a new booking request for Room 201 (1 night).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:16:00.091Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abda298655479f5e47f74",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "info",
+    "message": "Francis created a new booking request for Room 201 (1 night).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:16:02.045Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abda298655479f5e47f7b",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:16:02.657Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abda498655479f5e47f83",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:16:04.355Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abda498655479f5e47f8b",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:16:04.391Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abda498655479f5e47f8e",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Waiting for admin confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:16:04.815Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abda498655479f5e47f91",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Booking request submitted. Waiting for admin confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:16:04.830Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abda598655479f5e47f99",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "info",
+    "message": "Francis created a new booking request for Room 201 (1 night).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:16:05.532Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abda798655479f5e47fa3",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "info",
+    "message": "Francis created a new booking request for Room 201 (1 night).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:16:07.632Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abda898655479f5e47fa6",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "info",
+    "message": "Francis created a new booking request for Room 201 (1 night).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:16:08.495Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abdae98655479f5e47fba",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "info",
+    "message": "Francis created a new booking request for Room 201 (1 night).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:16:14.711Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abddf98655479f5e47ff8",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeper assigned",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:17:03.955Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abde198655479f5e47ffc",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:17:05.769Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abde998655479f5e48004",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:17:13.212Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abdec98655479f5e48008",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:17:16.206Z",
+    "__v": 0
+  },
+  {
+    "_id": "691abe6198655479f5e4807e",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Booking status updated",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:19:13.539Z",
+    "__v": 0
+  },
+  {
+    "_id": "691ac17798655479f5e481a8",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Francis completed payment for Room 201 (₱500).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:32:23.799Z",
+    "__v": 0
+  },
+  {
+    "_id": "691ac17e98655479f5e481b9",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Francis completed payment for Room 201 (₱500).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-17T06:32:30.835Z",
+    "__v": 0
+  },
+  {
+    "_id": "691bb7d7aeb24ce0701d04ea",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-18T00:03:35.658Z",
+    "__v": 0
+  },
+  {
+    "_id": "691bbf88aeb24ce0701d0728",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "User role updated to admin",
+    "isRead": true,
+    "createdAt": "2025-11-18T00:36:24.607Z",
+    "__v": 0
+  },
+  {
+    "_id": "691bbf8aaeb24ce0701d072e",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "User role updated to user",
+    "isRead": true,
+    "createdAt": "2025-11-18T00:36:26.233Z",
+    "__v": 0
+  },
+  {
+    "_id": "691c7a54a129da057d1ca51b",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-18T13:53:24.153Z",
+    "__v": 0
+  },
+  {
+    "_id": "691c7a54a129da057d1ca51f",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-18T13:53:24.930Z",
+    "__v": 0
+  },
+  {
+    "_id": "691c7a55a129da057d1ca524",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-18T13:53:25.463Z",
+    "__v": 0
+  },
+  {
+    "_id": "691c7a56a129da057d1ca529",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-18T13:53:26.124Z",
+    "__v": 0
+  },
+  {
+    "_id": "691f19c7a9c78301023659bf",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Room created successfully",
+    "isRead": true,
+    "createdAt": "2025-11-20T13:38:15.797Z",
+    "__v": 0
+  },
+  {
+    "_id": "691f1a05a9c78301023659dc",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Room created successfully",
+    "isRead": true,
+    "createdAt": "2025-11-20T13:39:17.487Z",
+    "__v": 0
+  },
+  {
+    "_id": "691f1e596743bf4bfbbbea9a",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Room updated successfully",
+    "isRead": true,
+    "createdAt": "2025-11-20T13:57:45.179Z",
+    "__v": 0
+  },
+  {
+    "_id": "691f208db33ab0c6839a260a",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Room updated successfully",
+    "isRead": true,
+    "createdAt": "2025-11-20T14:07:09.982Z",
+    "__v": 0
+  },
+  {
+    "_id": "691f262fb33ab0c6839a27d9",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Room updated successfully",
+    "isRead": true,
+    "createdAt": "2025-11-20T14:31:11.957Z",
+    "__v": 0
+  },
+  {
+    "_id": "691f384710bc47ce5598c796",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Room updated successfully",
+    "isRead": true,
+    "createdAt": "2025-11-20T15:48:23.370Z",
+    "__v": 0
+  },
+  {
+    "_id": "691f407a10bc47ce5598c8d8",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Room updated successfully",
+    "isRead": true,
+    "createdAt": "2025-11-20T16:23:22.965Z",
+    "__v": 0
+  },
+  {
+    "_id": "691f408b10bc47ce5598c8e1",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Room images updated",
+    "isRead": true,
+    "createdAt": "2025-11-20T16:23:39.497Z",
+    "__v": 0
+  },
+  {
+    "_id": "691f40ba10bc47ce5598c8ee",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Room images updated",
+    "isRead": true,
+    "createdAt": "2025-11-20T16:24:26.642Z",
+    "__v": 0
+  },
+  {
+    "_id": "691f40bb10bc47ce5598c8f2",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Room updated successfully",
+    "isRead": true,
+    "createdAt": "2025-11-20T16:24:27.642Z",
+    "__v": 0
+  },
+  {
+    "_id": "692319a4c1ec229e94d9bfe9",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Room deleted successfully",
+    "isRead": true,
+    "createdAt": "2025-11-23T14:26:44.691Z",
+    "__v": 0
+  },
+  {
+    "_id": "692319a6c1ec229e94d9bfee",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Room deleted successfully",
+    "isRead": true,
+    "createdAt": "2025-11-23T14:26:46.575Z",
+    "__v": 0
+  },
+  {
+    "_id": "6923263acda44328d15141b6",
+    "user": "691173cd33361fc72bb90afc",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-23T15:20:26.243Z",
+    "__v": 0
+  },
+  {
+    "_id": "6923263fcda44328d15141bc",
+    "user": "691173cd33361fc72bb90afc",
+    "type": "success",
+    "message": "Booking request submitted. Waiting for admin confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-23T15:20:31.966Z",
+    "__v": 0
+  },
+  {
+    "_id": "6923267acda44328d1514203",
+    "user": "691173cd33361fc72bb90afc",
+    "type": "success",
+    "message": "Your booking for Room 405 is confirmed.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-23T15:21:30.214Z",
+    "__v": 0
+  },
+  {
+    "_id": "69232d07adc81243c990aaa0",
+    "user": "691173cd33361fc72bb90afc",
+    "type": "success",
+    "message": "Payment received for booking Room 405. Your booking is confirmed!",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-23T15:49:27.705Z",
+    "__v": 0
+  },
+  {
+    "_id": "6923317bfba24a80f164b206",
+    "user": "691173cd33361fc72bb90afc",
+    "type": "success",
+    "message": "You have been checked in! Room: 405. Check-in time: 11/24/2025, 12:08:27 AM",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-23T16:08:27.794Z",
+    "__v": 0
+  },
+  {
+    "_id": "692332b0fba24a80f164b2b9",
+    "user": "691173cd33361fc72bb90afc",
+    "type": "warning",
+    "message": "You have been checked out! Room: 405. Balance due: ₱50.00",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-23T16:13:36.427Z",
+    "__v": 0
+  },
+  {
+    "_id": "69293e18357ea2646d25ad71",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": true,
+    "createdAt": "2025-11-28T06:15:52.652Z",
+    "__v": 0
+  },
+  {
+    "_id": "692941c2357ea2646d25ae5f",
+    "user": "691173cd33361fc72bb90afc",
+    "type": "error",
+    "message": "Please select a rating and enter a comment.",
+    "isRead": true,
+    "createdAt": "2025-11-28T06:31:30.819Z",
+    "__v": 0
+  },
+  {
+    "_id": "692941c5357ea2646d25ae64",
+    "user": "691173cd33361fc72bb90afc",
+    "type": "success",
+    "message": "Thank you for rating your stay!",
+    "isRead": true,
+    "createdAt": "2025-11-28T06:31:33.883Z",
+    "__v": 0
+  },
+  {
+    "_id": "692a68450541b543329ab4a6",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "info",
+    "message": "Franciskyle created a new booking request for Room 403 (2 nights).",
+    "href": "/admin/bookings",
+    "isRead": true,
+    "createdAt": "2025-11-29T03:28:05.751Z",
+    "__v": 0
+  },
+  {
+    "_id": "692dd070b2ba9b097d15c1e5",
+    "user": "691173cd33361fc72bb90afc",
+    "type": "success",
+    "message": "Booking request submitted. Awaiting confirmation.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-12-01T17:29:20.936Z",
+    "__v": 0
+  },
+  {
+    "_id": "692dd074b2ba9b097d15c1e9",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "info",
+    "message": "Mealan created a new booking request for Room 401 (2 nights).",
+    "href": "/admin/bookings",
+    "isRead": false,
+    "createdAt": "2025-12-01T17:29:24.162Z",
+    "__v": 0
+  },
+  {
+    "_id": "692e3aa07e84ed0baee2ff12",
+    "user": "691173cd33361fc72bb90afc",
+    "type": "success",
+    "message": "Your booking for Room 401 is confirmed.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-12-02T01:02:24.192Z",
+    "__v": 0
+  },
+  {
+    "_id": "692e3aa17e84ed0baee2ff18",
+    "user": "691173cd33361fc72bb90afc",
+    "type": "success",
+    "message": "Your booking for Room 401 is confirmed.",
+    "href": "/user/bookings",
+    "isRead": true,
+    "createdAt": "2025-12-02T01:02:25.656Z",
+    "__v": 0
+  },
+  {
+    "_id": "692e3acb7e84ed0baee2ff41",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Mealan completed payment for Room 401 (₱4200).",
+    "href": "/admin/bookings",
+    "isRead": false,
+    "createdAt": "2025-12-02T01:03:07.539Z",
+    "__v": 0
+  },
+  {
+    "_id": "692e3ad17e84ed0baee2ff55",
+    "user": "691173cd33361fc72bb90afc",
+    "type": "success",
+    "message": "Payment confirmed. Booking marked as paid.",
+    "isRead": true,
+    "createdAt": "2025-12-02T01:03:13.124Z",
+    "__v": 0
+  },
+  {
+    "_id": "692e3ad17e84ed0baee2ff5c",
+    "user": "690ffef34f144e91ce99d1f7",
+    "type": "success",
+    "message": "Mealan completed payment for Room 401 (₱4200).",
+    "href": "/admin/bookings",
+    "isRead": false,
+    "createdAt": "2025-12-02T01:03:13.678Z",
+    "__v": 0
+  },
+  {
+    "_id": "692e3ad77e84ed0baee2ff66",
+    "user": "691173cd33361fc72bb90afc",
+    "type": "success",
+    "message": "Payment confirmed. Booking marked as paid.",
+    "isRead": true,
+    "createdAt": "2025-12-02T01:03:19.153Z",
+    "__v": 0
+  },
+  {
+    "_id": "692e7fa789bf987bbdb4f3f6",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "error",
+    "message": "Error fetching rooms",
+    "isRead": true,
+    "createdAt": "2025-12-02T05:56:55.856Z",
+    "__v": 0
+  },
+  {
+    "_id": "692ea42b2592d7252a1069af",
+    "user": "690f109ead39ad0003044bdb",
+    "type": "success",
+    "message": "Housekeeping status updated",
+    "isRead": false,
+    "createdAt": "2025-12-02T08:32:43.874Z",
+    "__v": 0
+  }
+]

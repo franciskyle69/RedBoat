@@ -13,6 +13,9 @@ const jwtSecret = process.env.JWT_SECRET || "dev_secret";
 const jwtExpiresIn = process.env.JWT_EXPIRES_IN || "7d";
 const isProduction = process.env.NODE_ENV === "production";
 
+const MAX_LOGIN_ATTEMPTS = parseInt(process.env.MAX_LOGIN_ATTEMPTS || "5", 10);
+const LOCKOUT_MINUTES = parseInt(process.env.LOCKOUT_MINUTES || "15", 10);
+
 // Store pending verifications (in production, use Redis or database)
 const pendingVerifications = new Map<string, { 
   username: string; 
@@ -229,6 +232,16 @@ export class AuthController {
         return res.status(403).json({ message: "Your account has been blocked. Please contact support." });
       }
 
+      // Check lockout (too many failed attempts)
+      const lockoutUntil = user.lockoutUntil;
+      if (lockoutUntil && new Date() < lockoutUntil) {
+        const retryAfter = Math.ceil((lockoutUntil.getTime() - Date.now()) / 60);
+        return res.status(429).json({
+          message: `Too many failed login attempts. Try again in ${retryAfter} minute(s).`,
+          lockoutUntil: lockoutUntil.toISOString(),
+        });
+      }
+
       // Check if user signed up with Google OAuth
       if (user.authProvider === 'google') {
         return res.status(400).json({ message: "This account uses Google Sign-In. Please use the Google button to log in." });
@@ -240,8 +253,30 @@ export class AuthController {
       }
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
-        return res.status(400).json({ message: "Invalid email or password" });
+        const attempts = (user.loginAttempts ?? 0) + 1;
+        const updates: { loginAttempts: number; lockoutUntil?: Date } = { loginAttempts: attempts };
+        if (attempts >= MAX_LOGIN_ATTEMPTS) {
+          updates.lockoutUntil = new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000);
+          await User.findByIdAndUpdate(user._id, updates);
+          return res.status(429).json({
+            message: `Too many failed login attempts. Account locked for ${LOCKOUT_MINUTES} minutes.`,
+            lockoutUntil: updates.lockoutUntil.toISOString(),
+          });
+        }
+        await User.findByIdAndUpdate(user._id, updates);
+        const remaining = MAX_LOGIN_ATTEMPTS - attempts;
+        return res.status(400).json({
+          message: remaining <= 1
+            ? "Invalid email or password. One more failed attempt will lock your account."
+            : "Invalid email or password",
+        });
       }
+
+      // Success: clear attempt count and lockout
+      await User.findByIdAndUpdate(user._id, {
+        $set: { loginAttempts: 0 },
+        $unset: { lockoutUntil: 1 },
+      });
 
       const token = jwt.sign({ sub: (user._id as any).toString(), email: user.email, role: user.role }, jwtSecret, { expiresIn: jwtExpiresIn } as SignOptions);
       await logActivity(req, {

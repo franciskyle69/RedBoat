@@ -29,6 +29,7 @@ const AdminBookings = lazy(() => import('../pages/Admin/Bookings'));
 const AdminCalendar = lazy(() => import('../pages/Admin/Calendar'));
 const Housekeeping = lazy(() => import('../pages/Admin/Housekeeping'));
 const Reports = lazy(() => import('../pages/Admin/Reports'));
+const RevenueTracking = lazy(() => import('../pages/Admin/RevenueTracking'));
 const AdminSettings = lazy(() => import('../pages/Admin/Settings'));
 const AdminBackup = lazy(() => import('../pages/Admin/Backup'));
 const ActivityLogs = lazy(() => import('../pages/Admin/ActivityLogs'));
@@ -255,6 +256,15 @@ export const adminRoutes: RouteConfig[] = [
     title: 'Reports',
     description: 'Generate reports and analytics',
     icon: 'chart',
+    requiresAuth: true,
+    requiredRole: 'admin',
+  },
+  {
+    path: '/admin/revenue-tracking',
+    component: RevenueTracking,
+    title: 'Revenue Tracking',
+    description: 'Monitor payments and revenue',
+    icon: 'payments',
     requiresAuth: true,
     requiredRole: 'admin',
   },

@@ -15,6 +15,7 @@ export interface IBooking extends Document {
   paymentMethod?: 'stripe' | 'cash' | 'bank_transfer' | 'other';
   paymentDate?: Date;
   stripePaymentIntentId?: string;
+  transactionId?: string;
   adminNotes?: string;
   googleCalendarEventId?: string;
   cancellationRequested?: boolean;
@@ -60,6 +61,7 @@ const BookingSchema = new Schema<IBooking>({
   },
   paymentDate: { type: Date },
   stripePaymentIntentId: { type: String },
+  transactionId: { type: String },
   adminNotes: { type: String },
   googleCalendarEventId: { type: String, required: false },
   cancellationRequested: { type: Boolean, default: false },

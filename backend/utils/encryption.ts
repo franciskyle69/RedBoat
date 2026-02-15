@@ -9,7 +9,6 @@ const PREFIX = 'enc:';
 function getKey(): Buffer | null {
   const raw = process.env.ENCRYPTION_KEY;
   if (!raw || raw.length < 32) return null;
-  if (Buffer.isBuffer(raw)) return raw.slice(0, KEY_LEN);
   const buf = Buffer.from(raw, 'utf8');
   if (buf.length >= KEY_LEN) return buf.slice(0, KEY_LEN);
   return crypto.scryptSync(raw, 'salt', KEY_LEN);

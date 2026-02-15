@@ -228,6 +228,16 @@ function AdminLayout({ children, pageTitle }: AdminLayoutProps) {
 
         {canReports && (
           <Link
+            to="/admin/revenue-tracking"
+            className={`menu-item ${isActive("/admin/revenue-tracking") ? "active" : ""}`}
+          >
+            <span className="material-icons-outlined">payments</span>
+            Revenue Tracking
+          </Link>
+        )}
+
+        {canReports && (
+          <Link
             to="/admin/activity-logs"
             className={`menu-item ${isActive("/admin/activity-logs") ? "active" : ""}`}
           >

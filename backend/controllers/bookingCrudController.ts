@@ -146,7 +146,7 @@ export class BookingCrudController {
       if (!room) {
         // List all available rooms for debugging
         const allRooms = await Room.find({}).select('_id roomNumber');
-        console.log("Available room IDs:", allRooms.map(r => ({ id: r._id.toString(), number: r.roomNumber })));
+        console.log("Available room IDs:", allRooms.map((r) => ({ id: String(r._id), number: r.roomNumber })));
         return res.status(404).json({ message: "Room not found" });
       }
 
@@ -441,7 +441,11 @@ export class BookingCrudController {
   static async updatePaymentStatus(req: AuthenticatedRequest, res: Response) {
     try {
       const { bookingId } = req.params;
-      const { paymentStatus } = req.body;
+      const { paymentStatus, paymentMethod, transactionId } = req.body as {
+        paymentStatus: "pending" | "paid" | "refunded";
+        paymentMethod?: "stripe" | "cash" | "bank_transfer" | "other";
+        transactionId?: string;
+      };
       const payload = req.user!;
 
       if (!bookingId || !paymentStatus) {
@@ -487,13 +491,24 @@ export class BookingCrudController {
       }
 
       booking.paymentStatus = paymentStatus as "pending" | "paid" | "refunded";
+      if (paymentStatus === "paid") {
+        booking.paymentDate = new Date();
+        if (paymentMethod) {
+          booking.paymentMethod = paymentMethod;
+        } else if (!booking.paymentMethod) {
+          booking.paymentMethod = "other";
+        }
+        if (transactionId) {
+          booking.transactionId = transactionId;
+        }
+      }
       await booking.save();
 
       await logActivity(req, {
         action: 'update_payment_status',
         resource: 'booking',
         resourceId: bookingId,
-        details: { paymentStatus }
+        details: { paymentStatus, paymentMethod, transactionId }
       });
 
       // Notify user if payment was marked as paid by an admin/superadmin

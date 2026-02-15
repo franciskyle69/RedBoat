@@ -119,6 +119,16 @@ function UserManagement() {
     ...roles.filter((r) => !["user", "admin", "superadmin"].includes(r.name)).map((r) => ({ name: r.name, label: r.name })),
   ];
 
+  const loadRoles = async () => {
+    setRolesLoading(true);
+    try {
+      const rolesRes = await RolesApi.getRoles().catch(() => []);
+      setRoles(Array.isArray(rolesRes) ? rolesRes : []);
+    } finally {
+      setRolesLoading(false);
+    }
+  };
+
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
       await UsersApi.updateUserRole(userId, newRole as 'user' | 'admin');

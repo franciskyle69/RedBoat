@@ -30,6 +30,8 @@ export interface IUser extends Document {
   isBlocked?: boolean;
   blockedAt?: Date;
   blockedBy?: mongoose.Types.ObjectId;
+  loginAttempts?: number;
+  lockoutUntil?: Date;
   isEmailVerified: boolean;
   emailNotifications?: boolean;
   profilePicture?: string;
@@ -70,6 +72,8 @@ const UserSchema = new Schema<IUser>({
   isBlocked: { type: Boolean, default: false },
   blockedAt: { type: Date, required: false },
   blockedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false },
+  loginAttempts: { type: Number, default: 0 },
+  lockoutUntil: { type: Date, required: false },
   isEmailVerified: { type: Boolean, default: false },
   emailNotifications: { type: Boolean, default: true },
   profilePicture: { type: String, required: false },

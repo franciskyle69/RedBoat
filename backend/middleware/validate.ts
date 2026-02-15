@@ -71,6 +71,7 @@ export const authSchemas = {
 
 const bookingStatusEnum = z.enum(['pending', 'confirmed', 'checked-in', 'checked-out', 'cancelled']);
 const paymentStatusEnum = z.enum(['pending', 'paid', 'refunded']);
+const paymentMethodEnum = z.enum(['stripe', 'cash', 'bank_transfer', 'other']);
 
 export const bookingSchemas = {
   createBooking: z.object({
@@ -98,6 +99,8 @@ export const bookingSchemas = {
   }),
   updatePaymentStatus: z.object({
     paymentStatus: paymentStatusEnum,
+    paymentMethod: paymentMethodEnum.optional(),
+    transactionId: z.string().max(200).optional(),
   }),
 };
 

@@ -5,7 +5,8 @@
     "dev": "ts-node-dev --respawn --transpile-only server.ts",
     "build": "tsc",
     "preview": "vite preview",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "seed:test": "node scripts/seed-test-accounts.js"
   },
   "dependencies": {
     "@types/adm-zip": "^0.5.7",

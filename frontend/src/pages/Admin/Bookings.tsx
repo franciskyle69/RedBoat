@@ -218,10 +218,57 @@ function Bookings() {
 
   const updatePaymentStatus = async (bookingId: string, paymentStatus: "pending" | "paid" | "refunded") => {
     try {
-      await BookingsApi.updatePayment(bookingId, paymentStatus as BookingsApi.PaymentStatus);
+      let options: { paymentMethod?: BookingsApi.PaymentMethod; transactionId?: string } | undefined;
+      if (paymentStatus === "paid") {
+        const bookingForUpdate = bookings.find((b) => b._id === bookingId);
+        const defaultMethod = bookingForUpdate?.paymentMethod || "cash";
+        const result = await Swal.fire({
+          title: "Record payment",
+          html: `
+            <div style="display:flex;flex-direction:column;gap:12px;text-align:left;">
+              <label style="font-size:0.9rem;">Payment method</label>
+              <select id="payment-method" class="swal2-select" style="width:100%;">
+                <option value="cash">Cash</option>
+                <option value="bank_transfer">Bank transfer</option>
+                <option value="stripe">Stripe</option>
+                <option value="other">Other</option>
+              </select>
+              <label style="font-size:0.9rem;">Transaction reference (optional)</label>
+              <input id="payment-transaction" class="swal2-input" placeholder="e.g. receipt #, bank ref" />
+            </div>
+          `,
+          focusConfirm: false,
+          showCancelButton: true,
+          didOpen: () => {
+            const select = document.getElementById("payment-method") as HTMLSelectElement | null;
+            if (select) select.value = defaultMethod;
+          },
+          preConfirm: () => {
+            const methodEl = document.getElementById("payment-method") as HTMLSelectElement | null;
+            const txEl = document.getElementById("payment-transaction") as HTMLInputElement | null;
+            const paymentMethod = (methodEl?.value || "other") as BookingsApi.PaymentMethod;
+            const transactionId = txEl?.value?.trim();
+            return {
+              paymentMethod,
+              transactionId: transactionId || undefined,
+            };
+          },
+        });
+
+        if (result.isDismissed) return;
+        options = result.value;
+      }
+
+      await BookingsApi.updatePayment(bookingId, paymentStatus as BookingsApi.PaymentStatus, options);
         await fetchBookings();
         if (selectedBooking && selectedBooking._id === bookingId) {
-          setSelectedBooking({ ...selectedBooking, paymentStatus });
+          setSelectedBooking({
+            ...selectedBooking,
+            paymentStatus,
+            paymentMethod: options?.paymentMethod ?? selectedBooking.paymentMethod,
+            transactionId: options?.transactionId ?? selectedBooking.transactionId,
+            paymentDate: paymentStatus === "paid" ? new Date().toISOString() : selectedBooking.paymentDate,
+          });
         }
         
         // Show appropriate SweetAlert based on payment status

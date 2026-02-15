@@ -1,6 +1,7 @@
 export type BookingStatus = "pending" | "confirmed" | "checked-in" | "checked-out" | "cancelled";
 
 export type PaymentStatus = "pending" | "paid" | "refunded";
+export type PaymentMethod = "stripe" | "cash" | "bank_transfer" | "other";
 
 export interface BaseBooking {
   _id: string;
@@ -18,8 +19,9 @@ export interface BaseBooking {
   status: BookingStatus;
   specialRequests?: string;
   paymentStatus: PaymentStatus;
-  paymentMethod?: 'stripe' | 'cash' | 'bank_transfer' | 'other';
+  paymentMethod?: PaymentMethod;
   paymentDate?: string;
+  transactionId?: string;
   adminNotes?: string;
   createdAt: string;
   updatedAt: string;
@@ -109,12 +111,16 @@ export async function updateStatus(id: string, status: string, adminNotes?: stri
   return json;
 }
 
-export async function updatePayment(id: string, paymentStatus: PaymentStatus) {
+export async function updatePayment(
+  id: string,
+  paymentStatus: PaymentStatus,
+  options?: { paymentMethod?: PaymentMethod; transactionId?: string }
+) {
   const res = await fetch(`${BASE}/bookings/${id}/payment`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: JSON.stringify({ paymentStatus }),
+    body: JSON.stringify({ paymentStatus, ...options }),
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {

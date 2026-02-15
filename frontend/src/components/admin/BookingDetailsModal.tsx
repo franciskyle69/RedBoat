@@ -12,6 +12,11 @@ interface BookingDetailsModalProps {
 }
 
 export default function BookingDetailsModal({ booking, formatDate, adminNotes, setAdminNotes, updatePaymentStatus, updateBookingStatus, onClose }: BookingDetailsModalProps) {
+  const formatPaymentMethod = (method?: string) => {
+    if (!method) return "N/A";
+    return method.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
   return (
     <div className="modal-overlay">
       <div className="modal-content">
@@ -92,6 +97,19 @@ export default function BookingDetailsModal({ booking, formatDate, adminNotes, s
                   {getPaymentReference(booking._id)}
                 </span>
               )}
+              {(booking.paymentMethod || booking.paymentDate || booking.transactionId) && (
+                <div style={{ marginTop: "10px", fontSize: "0.9rem", color: "#475569" }}>
+                  {booking.paymentMethod && (
+                    <div><strong>Method:</strong> {formatPaymentMethod(booking.paymentMethod)}</div>
+                  )}
+                  {booking.paymentDate && (
+                    <div><strong>Paid on:</strong> {formatDate(booking.paymentDate)}</div>
+                  )}
+                  {booking.transactionId && (
+                    <div><strong>Reference:</strong> {booking.transactionId}</div>
+                  )}
+                </div>
+              )}
               <div style={{ marginTop: "10px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
                 {booking.paymentStatus !== "paid" && (
                   <button
@@ -106,7 +124,7 @@ export default function BookingDetailsModal({ booking, formatDate, adminNotes, s
                       fontSize: "14px"
                     }}
                   >
-                    Mark as Paid
+                    Paid in Cash
                   </button>
                 )}
                 {booking.paymentStatus !== "refunded" && booking.paymentStatus === "paid" && (
